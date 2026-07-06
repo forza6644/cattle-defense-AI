@@ -85,6 +85,11 @@ namespace Stonehold
                 }
             }
 
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayImpact(splashRadius > 0f, slowMultiplier < 1f);
+            }
+
             if (splashRadius > 0f)
             {
                 var all = EnemyManager.All;

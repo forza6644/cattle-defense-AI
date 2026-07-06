@@ -126,12 +126,40 @@ namespace Stonehold
                     new Vector2(0.5f, 0.46f), new Vector2(startX + i * spacing, 0f), () => SetQuality(level));
             }
 
-            CreateButton(dim.rectTransform, "BackButton", "Back", new Vector2(280f, 64f),
-                new Vector2(0.5f, 0.28f), Vector2.zero, () => ShowSettings(false));
+            CreateVolumeRow(dim.rectTransform, "Master", 0.38f,
+                () => AudioManager.Instance != null ? AudioManager.Instance.MasterVolume : 1f,
+                v => { if (AudioManager.Instance != null) AudioManager.Instance.SetMasterVolume(v); });
+            CreateVolumeRow(dim.rectTransform, "Music", 0.30f,
+                () => AudioManager.Instance != null ? AudioManager.Instance.MusicVolume : 0.6f,
+                v => { if (AudioManager.Instance != null) AudioManager.Instance.SetMusicVolume(v); });
+            CreateVolumeRow(dim.rectTransform, "SFX", 0.22f,
+                () => AudioManager.Instance != null ? AudioManager.Instance.SfxVolume : 0.9f,
+                v => { if (AudioManager.Instance != null) AudioManager.Instance.SetSfxVolume(v); });
+
+            CreateButton(dim.rectTransform, "BackButton", "Back", new Vector2(280f, 60f),
+                new Vector2(0.5f, 0.1f), Vector2.zero, () => ShowSettings(false));
 
             settingsGroup = dim.gameObject.AddComponent<CanvasGroup>();
             ShowSettings(false);
             RefreshQualityLabel();
+        }
+
+        /// <summary>A label + [-]/[+] control that steps a 0..1 volume in 0.1 increments.</summary>
+        private void CreateVolumeRow(RectTransform parent, string label, float y,
+            System.Func<float> getter, System.Action<float> setter)
+        {
+            Text nameLabel = CreateText(parent, label + "Label", label, 28, new Color(0.85f, 0.85f, 0.9f));
+            Place(nameLabel.rectTransform, new Vector2(0.5f, y), new Vector2(-260f, 0f), new Vector2(220f, 46f));
+
+            Text value = CreateText(parent, label + "Value", "", 28, Color.white);
+            Place(value.rectTransform, new Vector2(0.5f, y), new Vector2(60f, 0f), new Vector2(120f, 46f));
+            System.Action refresh = () => value.text = Mathf.RoundToInt(getter() * 100f) + "%";
+            refresh();
+
+            CreateButton(parent, label + "Minus", "-", new Vector2(60f, 56f), new Vector2(0.5f, y), new Vector2(-60f, 0f),
+                () => { setter(Mathf.Clamp01(getter() - 0.1f)); refresh(); });
+            CreateButton(parent, label + "Plus", "+", new Vector2(60f, 56f), new Vector2(0.5f, y), new Vector2(180f, 0f),
+                () => { setter(Mathf.Clamp01(getter() + 0.1f)); refresh(); });
         }
 
         // ------------------------------------------------------------- Helpers
@@ -170,7 +198,15 @@ namespace Stonehold
 
             Button button = bg.gameObject.AddComponent<Button>();
             button.targetGraphic = bg;
-            button.onClick.AddListener(onClick);
+            button.onClick.AddListener(() =>
+            {
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayButton();
+                }
+
+                onClick();
+            });
 
             Text text = CreateText(bg.rectTransform, "Label", label, 30, Color.white);
             Stretch(text.rectTransform);

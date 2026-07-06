@@ -86,6 +86,11 @@ namespace Stonehold
 
             GameObject shot = Instantiate(data.projectilePrefab, transform.position, Quaternion.identity);
 
+            if (data.attackSound != null && AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySfx(data.attackSound, 0.7f);
+            }
+
             Projectile projectile = shot.GetComponent<Projectile>();
             if (projectile != null)
             {

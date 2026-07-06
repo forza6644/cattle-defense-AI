@@ -161,6 +161,11 @@ namespace Stonehold
                 VfxManager.Instance.PlayPlace(slot.transform.position);
             }
 
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayPlace();
+            }
+
             Debug.Log("Placed " + towerData.towerName + " for " + towerData.cost + " gold.");
             return true;
         }

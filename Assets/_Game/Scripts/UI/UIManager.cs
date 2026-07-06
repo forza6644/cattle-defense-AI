@@ -367,6 +367,11 @@ namespace Stonehold
                     VfxManager.Instance.PlayUpgrade(selectedTower.transform.position + Vector3.up * 0.5f);
                 }
 
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayUpgrade();
+                }
+
                 RefreshTowerPanel();
             }
         }
@@ -628,7 +633,15 @@ namespace Stonehold
 
             Button button = bg.gameObject.AddComponent<Button>();
             button.targetGraphic = bg;
-            button.onClick.AddListener(onClick);
+            button.onClick.AddListener(() =>
+            {
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayButton();
+                }
+
+                onClick();
+            });
 
             Text text = CreateText(bg.rectTransform, "Label", label, 24, Color.white, TextAnchor.MiddleCenter);
             text.rectTransform.anchorMin = Vector2.zero;
