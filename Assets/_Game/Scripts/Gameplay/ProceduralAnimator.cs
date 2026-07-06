@@ -27,10 +27,17 @@ namespace Stonehold
         private bool moving;
         private float hitTimer;
         private float attackTimer;
+        private float flashTimer;
         private bool dead;
+
+        private Renderer[] renderers;
+        private Color[] baseColors;
+        private MaterialPropertyBlock mpb;
 
         private const float HitDuration = 0.16f;
         private const float AttackDuration = 0.18f;
+        private const float FlashDuration = 0.12f;
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         private void Awake()
         {
@@ -41,10 +48,20 @@ namespace Stonehold
 
             baseLocalPos = model.localPosition;
             baseScale = model.localScale;
+
+            renderers = model.GetComponentsInChildren<Renderer>();
+            baseColors = new Color[renderers.Length];
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Material shared = renderers[i].sharedMaterial;
+                baseColors[i] = shared != null && shared.HasProperty(BaseColorId) ? shared.GetColor(BaseColorId) : Color.white;
+            }
+
+            mpb = new MaterialPropertyBlock();
         }
 
         public void SetMoving(bool value) => moving = value;
-        public void PlayHit() => hitTimer = HitDuration;
+        public void PlayHit() { hitTimer = HitDuration; flashTimer = FlashDuration; }
         public void PlayAttack() => attackTimer = AttackDuration;
 
         public void PlayDeath(Action onComplete)
@@ -93,6 +110,36 @@ namespace Stonehold
             }
 
             model.localScale = scale;
+
+            UpdateFlash();
+        }
+
+        private void UpdateFlash()
+        {
+            if (renderers == null)
+            {
+                return;
+            }
+
+            if (flashTimer > 0f)
+            {
+                flashTimer -= Time.deltaTime;
+                float f = Mathf.Clamp01(flashTimer / FlashDuration);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    renderers[i].GetPropertyBlock(mpb);
+                    mpb.SetColor(BaseColorId, Color.Lerp(baseColors[i], Color.white, f));
+                    renderers[i].SetPropertyBlock(mpb);
+                }
+
+                if (flashTimer <= 0f)
+                {
+                    for (int i = 0; i < renderers.Length; i++)
+                    {
+                        renderers[i].SetPropertyBlock(null);
+                    }
+                }
+            }
         }
 
         private IEnumerator DeathRoutine(Action onComplete)

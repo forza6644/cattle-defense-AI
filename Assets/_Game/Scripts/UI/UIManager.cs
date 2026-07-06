@@ -50,6 +50,7 @@ namespace Stonehold
         private RectTransform floatingRoot;
         private readonly List<RectTransform> barBackgrounds = new List<RectTransform>();
         private readonly List<RectTransform> barFills = new List<RectTransform>();
+        private readonly List<Image> barFillImages = new List<Image>();
 
         // Gameplay references
         private EconomyManager economy;
@@ -196,8 +197,9 @@ namespace Stonehold
         {
             RectTransform rect = text.rectTransform;
             Vector2 start = rect.anchoredPosition;
+            float driftX = Random.Range(-28f, 28f);
             Color color = text.color;
-            const float duration = 0.8f;
+            const float duration = 0.85f;
 
             for (float t = 0f; t < duration; t += Time.deltaTime)
             {
@@ -207,7 +209,10 @@ namespace Stonehold
                 }
 
                 float k = t / duration;
-                rect.anchoredPosition = start + Vector2.up * (70f * k);
+                float pop = k < 0.15f ? Mathf.Lerp(0.3f, 1.25f, k / 0.15f) : Mathf.Lerp(1.25f, 1f, (k - 0.15f) / 0.85f);
+                rect.localScale = Vector3.one * pop;
+                float ease = 1f - (1f - k) * (1f - k); // ease-out
+                rect.anchoredPosition = start + new Vector2(driftX * ease, 85f * ease);
                 color.a = 1f - k * k;
                 text.color = color;
                 yield return null;
@@ -231,8 +236,12 @@ namespace Stonehold
             {
                 Enemy enemy = i < enemies.Count ? enemies[i] : null;
                 Vector2 local = default;
+                float pct = enemy != null && enemy.MaxHealth > 0f ? Mathf.Clamp01(enemy.CurrentHealth / enemy.MaxHealth) : 0f;
+
+                // Only show a bar for enemies that exist, are damaged, and are on-screen.
                 bool used = enemy != null
                     && enemy.MaxHealth > 0f
+                    && pct < 0.999f
                     && TryWorldToCanvas(enemy.transform.position + Vector3.up * 1.4f, out local);
 
                 barBackgrounds[i].gameObject.SetActive(used);
@@ -242,8 +251,10 @@ namespace Stonehold
                 }
 
                 barBackgrounds[i].anchoredPosition = local;
-                float pct = Mathf.Clamp01(enemy.CurrentHealth / enemy.MaxHealth);
                 barFills[i].localScale = new Vector3(pct, 1f, 1f);
+                barFillImages[i].color = pct > 0.5f
+                    ? Color.Lerp(new Color(0.95f, 0.85f, 0.2f), new Color(0.35f, 0.85f, 0.3f), (pct - 0.5f) * 2f)
+                    : Color.Lerp(new Color(0.9f, 0.2f, 0.2f), new Color(0.95f, 0.85f, 0.2f), pct * 2f);
             }
         }
 
@@ -265,6 +276,7 @@ namespace Stonehold
             bg.gameObject.SetActive(false);
             barBackgrounds.Add(bgRect);
             barFills.Add(fillRect);
+            barFillImages.Add(fill);
         }
 
         private bool TryWorldToCanvas(Vector3 worldPos, out Vector2 local)
@@ -422,14 +434,33 @@ namespace Stonehold
 
         private IEnumerator FadePanel(CanvasGroup group, float targetAlpha)
         {
+            RectTransform rt = group.transform as RectTransform;
+            bool overlay = rt != null && rt.anchorMin == Vector2.zero && rt.anchorMax == Vector2.one;
             float startAlpha = group.alpha;
+
+            Vector3 startScale = group.transform.localScale;
+            if (!overlay && targetAlpha > 0.5f && startAlpha < 0.5f)
+            {
+                startScale = Vector3.one * 0.9f; // pop in from slightly small
+            }
+
             for (float t = 0f; t < PanelFadeSeconds; t += Time.unscaledDeltaTime)
             {
-                group.alpha = Mathf.Lerp(startAlpha, targetAlpha, t / PanelFadeSeconds);
+                float k = t / PanelFadeSeconds;
+                group.alpha = Mathf.Lerp(startAlpha, targetAlpha, k);
+                if (!overlay)
+                {
+                    group.transform.localScale = Vector3.Lerp(startScale, Vector3.one, k);
+                }
+
                 yield return null;
             }
 
             group.alpha = targetAlpha;
+            if (!overlay)
+            {
+                group.transform.localScale = Vector3.one;
+            }
         }
 
         // ------------------------------------------------------------ UI build

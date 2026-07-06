@@ -20359,6 +20359,7 @@ GameObject:
   - component: {fileID: 1728329845}
   - component: {fileID: 1728329844}
   - component: {fileID: 1728329847}
+  - component: {fileID: 1728329848}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -20484,6 +20485,22 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &1728329848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1728329843}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 365a4b57358a9564b96110818f0644f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CameraRig
+  swayAmplitude: 0.12
+  swaySpeed: 0.35
+  maxShakeOffset: 0.6
+  maxShakeAngle: 2.5
 --- !u!1 &1730102738
 GameObject:
   m_ObjectHideFlags: 0

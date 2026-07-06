@@ -80,7 +80,15 @@ namespace Stonehold
 
         // -------------------------------------------------------- Public Play API
 
-        public void PlayExplosion(Vector3 pos) => Play(explosionPrefab, pos);
+        public void PlayExplosion(Vector3 pos)
+        {
+            Play(explosionPrefab, pos);
+            if (CameraRig.Instance != null)
+            {
+                CameraRig.Instance.Shake(0.35f);
+            }
+        }
+
         public void PlayFrost(Vector3 pos) => Play(frostPrefab, pos);
         public void PlayHit(Vector3 pos) => Play(hitPrefab, pos);
         public void PlayPlace(Vector3 pos) => Play(placePrefab, pos);
@@ -100,6 +108,11 @@ namespace Stonehold
             if (castle != null)
             {
                 Play(castleHitPrefab, castle.position + Vector3.up * 1f);
+            }
+
+            if (CameraRig.Instance != null)
+            {
+                CameraRig.Instance.Shake(0.5f);
             }
         }
 

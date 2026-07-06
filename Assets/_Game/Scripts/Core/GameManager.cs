@@ -87,7 +87,14 @@ namespace Stonehold
         public void Restart()
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            if (SceneFader.Instance != null)
+            {
+                SceneFader.Instance.FadeToScene(SceneManager.GetActiveScene().name);
+            }
+            else
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            }
         }
 
         private void OnCastleDefeated()

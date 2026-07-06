@@ -19,6 +19,8 @@ namespace Stonehold
         private RectTransform canvasRect;
         private CanvasGroup settingsGroup;
         private Text qualityLabel;
+        private RectTransform titleRect;
+        private float introTime;
 
         private void Awake()
         {
@@ -26,9 +28,29 @@ namespace Stonehold
             BuildMenu();
         }
 
+        private void Update()
+        {
+            if (titleRect == null)
+            {
+                return;
+            }
+
+            introTime += Time.unscaledDeltaTime;
+            float pop = introTime < 0.45f ? Mathf.SmoothStep(0.55f, 1f, introTime / 0.45f) : 1f;
+            float pulse = 1f + Mathf.Sin(Time.unscaledTime * 1.6f) * 0.02f;
+            titleRect.localScale = Vector3.one * (pop * pulse);
+        }
+
         private void Play()
         {
-            SceneManager.LoadScene(gameSceneName);
+            if (SceneFader.Instance != null)
+            {
+                SceneFader.Instance.FadeToScene(gameSceneName);
+            }
+            else
+            {
+                SceneManager.LoadScene(gameSceneName);
+            }
         }
 
         private void QuitGame()
@@ -85,6 +107,7 @@ namespace Stonehold
             Text title = CreateText(canvasRect, "Title", "STONEHOLD", 110, new Color(1f, 0.85f, 0.35f));
             title.fontStyle = FontStyle.Bold;
             Place(title.rectTransform, new Vector2(0.5f, 0.72f), Vector2.zero, new Vector2(1200f, 140f));
+            titleRect = title.rectTransform;
 
             Text subtitle = CreateText(canvasRect, "Subtitle", "Defend the keep. Hold the line.", 30, new Color(0.8f, 0.8f, 0.85f));
             Place(subtitle.rectTransform, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(900f, 50f));
