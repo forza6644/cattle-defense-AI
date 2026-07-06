@@ -1,57 +1,656 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 namespace Stonehold
 {
     /// <summary>
-    /// Extremely simple HUD: builds a top-left gold label in code (legacy UI Text
-    /// with Unity's built-in font, so no TMP setup is needed) and keeps it in sync
-    /// with the EconomyManager.
+    /// Builds and runs the whole in-game UI from code (legacy uGUI Text, built-in
+    /// font, responsive CanvasScaler): HUD (gold, wave, castle HP), enemy health
+    /// bars, damage numbers and gold popups, animated wave banner, build menu,
+    /// tower upgrade/sell panel, pause menu and victory/defeat screens.
+    /// Everything it displays is driven by gameplay events — no game logic here.
     /// </summary>
     public class UIManager : MonoBehaviour
     {
-        private Text goldLabel;
+        public static UIManager Instance { get; private set; }
+
+        private const float PanelFadeSeconds = 0.15f;
+
+        private Font font;
+        private RectTransform canvasRect;
+
+        // HUD
+        private Text goldText;
+        private Text waveText;
+        private Text castleHpText;
+        private RectTransform castleHpFill;
+        private Image castleHpFillImage;
+
+        // Banner
+        private CanvasGroup bannerGroup;
+        private Text bannerText;
+
+        // Panels
+        private CanvasGroup buildMenuGroup;
+        private CanvasGroup towerPanelGroup;
+        private CanvasGroup pauseGroup;
+        private CanvasGroup victoryGroup;
+        private CanvasGroup defeatGroup;
+        private Text towerPanelTitle;
+        private Text upgradeButtonLabel;
+        private Text sellButtonLabel;
+        private readonly List<Text> buildButtonLabels = new List<Text>();
+
+        // Floating text + enemy bars
+        private RectTransform barsRoot;
+        private RectTransform floatingRoot;
+        private readonly List<RectTransform> barBackgrounds = new List<RectTransform>();
+        private readonly List<RectTransform> barFills = new List<RectTransform>();
+
+        // Gameplay references
+        private EconomyManager economy;
+        private WaveManager waves;
+        private Castle castle;
+        private GameManager game;
+        private TowerManager towers;
+        private Camera cam;
+
+        // Selection
+        private TowerSlot selectedSlot;
+        private Tower selectedTower;
 
         private void Awake()
         {
-            BuildGoldLabel();
+            Instance = this;
+            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         }
 
-        private void BuildGoldLabel()
+        private void Start()
         {
-            GameObject canvasObject = new GameObject("HUD Canvas");
-            Canvas canvas = canvasObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasObject.AddComponent<CanvasScaler>();
+            economy = EconomyManager.Instance;
+            waves = FindFirstObjectByType<WaveManager>();
+            castle = FindFirstObjectByType<Castle>();
+            game = GameManager.Instance;
+            towers = FindFirstObjectByType<TowerManager>();
+            cam = Camera.main;
 
-            GameObject labelObject = new GameObject("GoldLabel");
-            labelObject.transform.SetParent(canvasObject.transform, false);
+            BuildUI();
 
-            goldLabel = labelObject.AddComponent<Text>();
-            goldLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            goldLabel.fontSize = 28;
-            goldLabel.color = Color.yellow;
-            goldLabel.alignment = TextAnchor.UpperLeft;
-            goldLabel.horizontalOverflow = HorizontalWrapMode.Overflow;
-            goldLabel.verticalOverflow = VerticalWrapMode.Overflow;
-            goldLabel.text = "Gold: 0";
+            if (economy != null) economy.GoldChanged += RefreshGold;
+            if (waves != null) waves.WaveStarted += OnWaveStarted;
+            if (castle != null) castle.HealthChanged += RefreshCastleHealth;
+            if (game != null) game.StateChanged += OnStateChanged;
+            Enemy.AnyDamaged += OnEnemyDamaged;
+            Enemy.AnyKilled += OnEnemyKilled;
 
-            RectTransform rect = goldLabel.rectTransform;
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(15f, -15f);
-            rect.sizeDelta = new Vector2(400f, 60f);
+            RefreshGold();
+            RefreshCastleHealth();
+            waveText.text = "Wave -/" + (waves != null ? waves.TotalWaves.ToString() : "-");
         }
 
-        private void Update()
+        private void OnDestroy()
         {
-            if (goldLabel == null || EconomyManager.Instance == null)
+            if (economy != null) economy.GoldChanged -= RefreshGold;
+            if (waves != null) waves.WaveStarted -= OnWaveStarted;
+            if (castle != null) castle.HealthChanged -= RefreshCastleHealth;
+            if (game != null) game.StateChanged -= OnStateChanged;
+            Enemy.AnyDamaged -= OnEnemyDamaged;
+            Enemy.AnyKilled -= OnEnemyKilled;
+
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
+        // ------------------------------------------------------------------ HUD
+
+        private void RefreshGold()
+        {
+            goldText.text = "Gold: " + (economy != null ? economy.Gold : 0);
+            RefreshBuildMenu();
+            RefreshTowerPanel();
+        }
+
+        private void RefreshCastleHealth()
+        {
+            if (castle == null)
             {
                 return;
             }
 
-            goldLabel.text = "Gold: " + EconomyManager.Instance.Gold;
+            float pct = castle.MaxHealth > 0 ? (float)castle.CurrentHealth / castle.MaxHealth : 0f;
+            castleHpFill.localScale = new Vector3(pct, 1f, 1f);
+            castleHpFillImage.color = Color.Lerp(new Color(0.85f, 0.2f, 0.2f), new Color(0.25f, 0.8f, 0.3f), pct);
+            castleHpText.text = castle.CurrentHealth + " / " + castle.MaxHealth;
+        }
+
+        private void OnWaveStarted(int number, WaveData wave)
+        {
+            waveText.text = "Wave " + number + "/" + waves.TotalWaves;
+            StartCoroutine(PlayBanner("Wave " + number + " - " + wave.waveLabel));
+        }
+
+        private IEnumerator PlayBanner(string message)
+        {
+            bannerText.text = message;
+            RectTransform rect = bannerText.rectTransform;
+
+            for (float t = 0f; t < 0.25f; t += Time.deltaTime)
+            {
+                float k = t / 0.25f;
+                bannerGroup.alpha = k;
+                rect.localScale = Vector3.one * Mathf.Lerp(0.7f, 1f, k);
+                yield return null;
+            }
+
+            bannerGroup.alpha = 1f;
+            rect.localScale = Vector3.one;
+            yield return new WaitForSeconds(1.2f);
+
+            for (float t = 0f; t < 0.5f; t += Time.deltaTime)
+            {
+                bannerGroup.alpha = 1f - t / 0.5f;
+                yield return null;
+            }
+
+            bannerGroup.alpha = 0f;
+        }
+
+        // ------------------------------------------------- Damage numbers / gold
+
+        private void OnEnemyDamaged(Enemy enemy, float amount)
+        {
+            SpawnFloatingText("-" + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 0.8f,
+                new Color(1f, 0.55f, 0.2f), 30);
+        }
+
+        private void OnEnemyKilled(Enemy enemy, int gold)
+        {
+            SpawnFloatingText("+" + gold, enemy.transform.position + Vector3.up * 1.2f,
+                new Color(1f, 0.9f, 0.2f), 34);
+        }
+
+        private void SpawnFloatingText(string message, Vector3 worldPos, Color color, int size)
+        {
+            if (!TryWorldToCanvas(worldPos, out Vector2 local))
+            {
+                return;
+            }
+
+            Text text = CreateText(floatingRoot, "Floating", message, size, color, TextAnchor.MiddleCenter);
+            text.fontStyle = FontStyle.Bold;
+            text.raycastTarget = false;
+            RectTransform rect = text.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(200f, 50f);
+            rect.anchoredPosition = local;
+            StartCoroutine(AnimateFloatingText(text));
+        }
+
+        private IEnumerator AnimateFloatingText(Text text)
+        {
+            RectTransform rect = text.rectTransform;
+            Vector2 start = rect.anchoredPosition;
+            Color color = text.color;
+            const float duration = 0.8f;
+
+            for (float t = 0f; t < duration; t += Time.deltaTime)
+            {
+                if (text == null)
+                {
+                    yield break;
+                }
+
+                float k = t / duration;
+                rect.anchoredPosition = start + Vector2.up * (70f * k);
+                color.a = 1f - k * k;
+                text.color = color;
+                yield return null;
+            }
+
+            Destroy(text.gameObject);
+        }
+
+        // ---------------------------------------------------------- Enemy bars
+
+        private void LateUpdate()
+        {
+            Enemy[] enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
+
+            while (barBackgrounds.Count < enemies.Length)
+            {
+                CreateEnemyBar();
+            }
+
+            for (int i = 0; i < barBackgrounds.Count; i++)
+            {
+                bool used = i < enemies.Length
+                    && enemies[i].MaxHealth > 0f
+                    && TryWorldToCanvas(enemies[i].transform.position + Vector3.up * 1.4f, out Vector2 local);
+
+                barBackgrounds[i].gameObject.SetActive(used);
+                if (!used)
+                {
+                    continue;
+                }
+
+                TryWorldToCanvas(enemies[i].transform.position + Vector3.up * 1.4f, out Vector2 pos);
+                barBackgrounds[i].anchoredPosition = pos;
+                float pct = Mathf.Clamp01(enemies[i].CurrentHealth / enemies[i].MaxHealth);
+                barFills[i].localScale = new Vector3(pct, 1f, 1f);
+            }
+        }
+
+        private void CreateEnemyBar()
+        {
+            Image bg = CreateImage(barsRoot, "EnemyBarBg", new Color(0f, 0f, 0f, 0.65f));
+            RectTransform bgRect = bg.rectTransform;
+            bgRect.anchorMin = bgRect.anchorMax = new Vector2(0.5f, 0.5f);
+            bgRect.sizeDelta = new Vector2(64f, 9f);
+
+            Image fill = CreateImage(bgRect, "Fill", new Color(0.9f, 0.25f, 0.25f));
+            RectTransform fillRect = fill.rectTransform;
+            fillRect.anchorMin = new Vector2(0f, 0f);
+            fillRect.anchorMax = new Vector2(1f, 1f);
+            fillRect.pivot = new Vector2(0f, 0.5f);
+            fillRect.offsetMin = new Vector2(1.5f, 1.5f);
+            fillRect.offsetMax = new Vector2(-1.5f, -1.5f);
+
+            bg.gameObject.SetActive(false);
+            barBackgrounds.Add(bgRect);
+            barFills.Add(fillRect);
+        }
+
+        private bool TryWorldToCanvas(Vector3 worldPos, out Vector2 local)
+        {
+            local = Vector2.zero;
+            if (cam == null)
+            {
+                cam = Camera.main;
+                if (cam == null)
+                {
+                    return false;
+                }
+            }
+
+            Vector3 screen = cam.WorldToScreenPoint(worldPos);
+            if (screen.z < 0f)
+            {
+                return false;
+            }
+
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screen, null, out local);
+            return true;
+        }
+
+        // ------------------------------------------------------ Selection panels
+
+        public void ShowBuildMenu(TowerSlot slot)
+        {
+            selectedSlot = slot;
+            selectedTower = null;
+            RefreshBuildMenu();
+            ShowPanel(buildMenuGroup, true);
+            ShowPanel(towerPanelGroup, false);
+        }
+
+        public void ShowTowerPanel(Tower tower)
+        {
+            selectedTower = tower;
+            selectedSlot = null;
+            RefreshTowerPanel();
+            ShowPanel(towerPanelGroup, true);
+            ShowPanel(buildMenuGroup, false);
+        }
+
+        public void HideSelectionPanels()
+        {
+            selectedSlot = null;
+            selectedTower = null;
+            ShowPanel(buildMenuGroup, false);
+            ShowPanel(towerPanelGroup, false);
+        }
+
+        private void RefreshBuildMenu()
+        {
+            if (towers == null || buildButtonLabels.Count == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < towers.AvailableTowers.Length && i < buildButtonLabels.Count; i++)
+            {
+                TowerData data = towers.AvailableTowers[i];
+                bool affordable = economy != null && economy.Gold >= data.cost;
+                buildButtonLabels[i].text = data.towerName + "\n" + data.cost + " g";
+                buildButtonLabels[i].color = affordable ? Color.white : new Color(1f, 0.45f, 0.45f);
+            }
+        }
+
+        private void RefreshTowerPanel()
+        {
+            if (selectedTower == null)
+            {
+                return;
+            }
+
+            towerPanelTitle.text = selectedTower.Data.towerName + "  -  Level " + selectedTower.Level
+                + "  (damage " + selectedTower.Damage.ToString("0.#") + ")";
+
+            if (selectedTower.IsMaxLevel)
+            {
+                upgradeButtonLabel.text = "MAX LEVEL";
+                upgradeButtonLabel.color = new Color(0.7f, 0.7f, 0.7f);
+            }
+            else
+            {
+                bool affordable = economy != null && economy.Gold >= selectedTower.UpgradeCost;
+                upgradeButtonLabel.text = "Upgrade\n" + selectedTower.UpgradeCost + " g";
+                upgradeButtonLabel.color = affordable ? Color.white : new Color(1f, 0.45f, 0.45f);
+            }
+
+            sellButtonLabel.text = "Sell\n+" + towers.GetSellValue(selectedTower) + " g";
+        }
+
+        private void OnUpgradeClicked()
+        {
+            if (selectedTower != null && selectedTower.TryUpgrade())
+            {
+                RefreshTowerPanel();
+            }
+        }
+
+        private void OnSellClicked()
+        {
+            if (selectedTower != null && towers != null)
+            {
+                towers.SellTower(selectedTower);
+                HideSelectionPanels();
+            }
+        }
+
+        private void OnBuildClicked(int index)
+        {
+            if (selectedSlot == null || towers == null || index >= towers.AvailableTowers.Length)
+            {
+                return;
+            }
+
+            if (towers.PlaceTower(selectedSlot, towers.AvailableTowers[index]))
+            {
+                HideSelectionPanels();
+            }
+        }
+
+        // -------------------------------------------------------- State screens
+
+        private void OnStateChanged(GameState state)
+        {
+            HideSelectionPanels();
+            ShowPanel(pauseGroup, state == GameState.Paused);
+            ShowPanel(victoryGroup, state == GameState.Victory);
+            ShowPanel(defeatGroup, state == GameState.Defeat);
+        }
+
+        private void ShowPanel(CanvasGroup group, bool visible)
+        {
+            if (group == null)
+            {
+                return;
+            }
+
+            group.interactable = visible;
+            group.blocksRaycasts = visible;
+            StartCoroutine(FadePanel(group, visible ? 1f : 0f));
+        }
+
+        private IEnumerator FadePanel(CanvasGroup group, float targetAlpha)
+        {
+            float startAlpha = group.alpha;
+            for (float t = 0f; t < PanelFadeSeconds; t += Time.unscaledDeltaTime)
+            {
+                group.alpha = Mathf.Lerp(startAlpha, targetAlpha, t / PanelFadeSeconds);
+                yield return null;
+            }
+
+            group.alpha = targetAlpha;
+        }
+
+        // ------------------------------------------------------------ UI build
+
+        private void BuildUI()
+        {
+            if (FindFirstObjectByType<EventSystem>() == null)
+            {
+                new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            }
+
+            GameObject canvasObject = new GameObject("HUD Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            Canvas canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasRect = canvas.GetComponent<RectTransform>();
+
+            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            // Draw order: enemy bars underneath, floating text, HUD, panels on top.
+            barsRoot = CreateRoot(canvasRect, "EnemyBars");
+            floatingRoot = CreateRoot(canvasRect, "FloatingText");
+
+            // Gold (top-left)
+            goldText = CreateText(canvasRect, "GoldText", "Gold: 0", 40, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
+            SetAnchored(goldText.rectTransform, new Vector2(0f, 1f), new Vector2(25f, -20f), new Vector2(400f, 60f));
+
+            // Wave counter (top-center)
+            waveText = CreateText(canvasRect, "WaveText", "Wave -", 40, Color.white, TextAnchor.UpperCenter);
+            SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(400f, 60f));
+
+            // Castle HP bar (top-right)
+            Image hpBg = CreateImage(canvasRect, "CastleHpBar", new Color(0f, 0f, 0f, 0.6f));
+            SetAnchored(hpBg.rectTransform, new Vector2(1f, 1f), new Vector2(-190f, -35f), new Vector2(320f, 34f));
+            castleHpFillImage = CreateImage(hpBg.rectTransform, "Fill", new Color(0.25f, 0.8f, 0.3f));
+            castleHpFill = castleHpFillImage.rectTransform;
+            castleHpFill.anchorMin = Vector2.zero;
+            castleHpFill.anchorMax = Vector2.one;
+            castleHpFill.pivot = new Vector2(0f, 0.5f);
+            castleHpFill.offsetMin = new Vector2(2f, 2f);
+            castleHpFill.offsetMax = new Vector2(-2f, -2f);
+            castleHpText = CreateText(hpBg.rectTransform, "Label", "10 / 10", 22, Color.white, TextAnchor.MiddleCenter);
+            castleHpText.rectTransform.anchorMin = Vector2.zero;
+            castleHpText.rectTransform.anchorMax = Vector2.one;
+            castleHpText.rectTransform.offsetMin = Vector2.zero;
+            castleHpText.rectTransform.offsetMax = Vector2.zero;
+
+            // Pause button (under the HP bar)
+            CreateButton(canvasRect, "PauseButton", "Pause", new Vector2(120f, 44f), new Vector2(1f, 1f),
+                new Vector2(-90f, -90f), () => { if (game != null) game.TogglePause(); });
+
+            // Wave banner (center)
+            bannerText = CreateText(canvasRect, "WaveBanner", "", 72, Color.white, TextAnchor.MiddleCenter);
+            bannerText.fontStyle = FontStyle.Bold;
+            SetAnchored(bannerText.rectTransform, new Vector2(0.5f, 0.68f), Vector2.zero, new Vector2(1200f, 110f));
+            bannerGroup = bannerText.gameObject.AddComponent<CanvasGroup>();
+            bannerGroup.alpha = 0f;
+            bannerGroup.blocksRaycasts = false;
+
+            BuildBuildMenu();
+            BuildTowerPanel();
+            pauseGroup = BuildOverlay("PauseMenu", "PAUSED", Color.white,
+                new (string, UnityEngine.Events.UnityAction)[] {
+                    ("Resume", () => { if (game != null) game.TogglePause(); }),
+                    ("Restart", () => { if (game != null) game.Restart(); }) });
+            victoryGroup = BuildOverlay("VictoryScreen", "VICTORY!", new Color(1f, 0.85f, 0.2f),
+                new (string, UnityEngine.Events.UnityAction)[] {
+                    ("Play Again", () => { if (game != null) game.Restart(); }) });
+            defeatGroup = BuildOverlay("DefeatScreen", "DEFEAT", new Color(0.95f, 0.3f, 0.25f),
+                new (string, UnityEngine.Events.UnityAction)[] {
+                    ("Retry", () => { if (game != null) game.Restart(); }) });
+        }
+
+        private void BuildBuildMenu()
+        {
+            buildMenuGroup = CreateBottomPanel("BuildMenu", out RectTransform panel);
+            CreateText(panel, "Title", "Build Tower", 26, Color.white, TextAnchor.UpperCenter)
+                .rectTransform.SetAnchored(new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(400f, 34f));
+
+            int count = towers != null ? towers.AvailableTowers.Length : 0;
+            float spacing = 190f;
+            float startX = -(count - 1) * spacing / 2f;
+
+            for (int i = 0; i < count; i++)
+            {
+                int index = i;
+                Button button = CreateButton(panel, "Build_" + i, "", new Vector2(170f, 74f), new Vector2(0.5f, 0f),
+                    new Vector2(startX + i * spacing, 55f), () => OnBuildClicked(index));
+                buildButtonLabels.Add(button.GetComponentInChildren<Text>());
+            }
+
+            CreateButton(panel, "Cancel", "X", new Vector2(44f, 44f), new Vector2(1f, 1f),
+                new Vector2(-30f, -28f), HideSelectionPanels);
+        }
+
+        private void BuildTowerPanel()
+        {
+            towerPanelGroup = CreateBottomPanel("TowerPanel", out RectTransform panel);
+            towerPanelTitle = CreateText(panel, "Title", "", 26, Color.white, TextAnchor.UpperCenter);
+            towerPanelTitle.rectTransform.SetAnchored(new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(680f, 34f));
+
+            Button upgrade = CreateButton(panel, "Upgrade", "Upgrade", new Vector2(190f, 74f), new Vector2(0.5f, 0f),
+                new Vector2(-110f, 55f), OnUpgradeClicked);
+            upgradeButtonLabel = upgrade.GetComponentInChildren<Text>();
+
+            Button sell = CreateButton(panel, "Sell", "Sell", new Vector2(190f, 74f), new Vector2(0.5f, 0f),
+                new Vector2(110f, 55f), OnSellClicked);
+            sellButtonLabel = sell.GetComponentInChildren<Text>();
+
+            CreateButton(panel, "Close", "X", new Vector2(44f, 44f), new Vector2(1f, 1f),
+                new Vector2(-30f, -28f), HideSelectionPanels);
+        }
+
+        private CanvasGroup CreateBottomPanel(string name, out RectTransform panel)
+        {
+            Image bg = CreateImage(canvasRect, name, new Color(0.08f, 0.08f, 0.12f, 0.92f));
+            panel = bg.rectTransform;
+            SetAnchored(panel, new Vector2(0.5f, 0f), new Vector2(0f, 105f), new Vector2(720f, 190f));
+
+            CanvasGroup group = bg.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.interactable = false;
+            group.blocksRaycasts = false;
+            return group;
+        }
+
+        private CanvasGroup BuildOverlay(string name, string title, Color titleColor,
+            (string label, UnityEngine.Events.UnityAction action)[] buttons)
+        {
+            Image dim = CreateImage(canvasRect, name, new Color(0f, 0f, 0f, 0.72f));
+            RectTransform rect = dim.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            Text titleText = CreateText(rect, "Title", title, 96, titleColor, TextAnchor.MiddleCenter);
+            titleText.fontStyle = FontStyle.Bold;
+            SetAnchored(titleText.rectTransform, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(1200f, 130f));
+
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                CreateButton(rect, buttons[i].label, buttons[i].label, new Vector2(260f, 70f), new Vector2(0.5f, 0.42f),
+                    new Vector2(0f, -i * 90f), buttons[i].action);
+            }
+
+            CanvasGroup group = dim.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.interactable = false;
+            group.blocksRaycasts = false;
+            return group;
+        }
+
+        // ------------------------------------------------------------- Helpers
+
+        private static RectTransform CreateRoot(RectTransform parent, string name)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            RectTransform rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            return rect;
+        }
+
+        private Text CreateText(RectTransform parent, string name, string content, int size, Color color, TextAnchor anchor)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            Text text = go.AddComponent<Text>();
+            text.font = font;
+            text.text = content;
+            text.fontSize = size;
+            text.color = color;
+            text.alignment = anchor;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.raycastTarget = false;
+            return text;
+        }
+
+        private static Image CreateImage(RectTransform parent, string name, Color color)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            Image image = go.AddComponent<Image>();
+            image.color = color;
+            return image;
+        }
+
+        private Button CreateButton(RectTransform parent, string name, string label, Vector2 size,
+            Vector2 anchor, Vector2 position, UnityEngine.Events.UnityAction onClick)
+        {
+            Image bg = CreateImage(parent, name, new Color(0.22f, 0.25f, 0.34f, 0.95f));
+            bg.raycastTarget = true;
+            SetAnchored(bg.rectTransform, anchor, position, size);
+
+            Button button = bg.gameObject.AddComponent<Button>();
+            button.targetGraphic = bg;
+            button.onClick.AddListener(onClick);
+
+            Text text = CreateText(bg.rectTransform, "Label", label, 24, Color.white, TextAnchor.MiddleCenter);
+            text.rectTransform.anchorMin = Vector2.zero;
+            text.rectTransform.anchorMax = Vector2.one;
+            text.rectTransform.offsetMin = Vector2.zero;
+            text.rectTransform.offsetMax = Vector2.zero;
+            return button;
+        }
+
+        private static void SetAnchored(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size)
+        {
+            rect.anchorMin = anchor;
+            rect.anchorMax = anchor;
+            rect.pivot = anchor;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+        }
+    }
+
+    internal static class RectTransformExtensions
+    {
+        public static void SetAnchored(this RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size)
+        {
+            rect.anchorMin = anchor;
+            rect.anchorMax = anchor;
+            rect.pivot = anchor;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
         }
     }
 }

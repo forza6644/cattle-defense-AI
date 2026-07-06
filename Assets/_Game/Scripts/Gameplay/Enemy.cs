@@ -1,14 +1,22 @@
+using System;
 using UnityEngine;
 
 namespace Stonehold
 {
     /// <summary>
     /// Runtime component placed on every enemy prefab. All stats (HP, speed, gold,
-    /// castle damage) come from the assigned EnemyData asset — nothing hardcoded.
-    /// Supports a simple non-stacking slow effect (newest slow replaces the current).
+    /// castle damage) come from the assigned EnemyData asset. Supports a simple
+    /// non-stacking slow effect. Raises static events the UI listens to for
+    /// damage numbers, gold popups and health bars.
     /// </summary>
     public class Enemy : MonoBehaviour
     {
+        /// <summary>Raised whenever any enemy takes damage: (enemy, amount).</summary>
+        public static event Action<Enemy, float> AnyDamaged;
+
+        /// <summary>Raised when any enemy dies to a tower: (enemy, gold awarded).</summary>
+        public static event Action<Enemy, int> AnyKilled;
+
         [SerializeField] private EnemyData data;
         [SerializeField] private float arriveDistance = 0.1f;
 
@@ -20,6 +28,7 @@ namespace Stonehold
 
         public EnemyData Data => data;
         public float CurrentHealth => currentHealth;
+        public float MaxHealth => data != null ? data.health : 0f;
         public bool IsSlowed => slowTimer > 0f;
 
         private void Awake()
@@ -45,6 +54,8 @@ namespace Stonehold
         public void TakeDamage(float amount)
         {
             currentHealth -= amount;
+            AnyDamaged?.Invoke(this, amount);
+
             if (currentHealth <= 0f)
             {
                 Kill();
@@ -66,6 +77,7 @@ namespace Stonehold
                 EconomyManager.Instance.AddGold(data.goldReward);
             }
 
+            AnyKilled?.Invoke(this, data.goldReward);
             Destroy(gameObject);
         }
 

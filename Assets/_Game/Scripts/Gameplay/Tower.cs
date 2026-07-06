@@ -4,8 +4,8 @@ namespace Stonehold
 {
     /// <summary>
     /// Tower combat + upgrades. Every stat (damage, range, fire rate, splash, slow,
-    /// costs, max level) comes from the assigned TowerData asset — nothing hardcoded.
-    /// Finds the nearest enemy in range and fires a projectile on a cooldown.
+    /// costs, max level) comes from the assigned TowerData asset. Tracks the total
+    /// gold invested (placement + upgrades) so selling can refund a fraction of it.
     /// </summary>
     public class Tower : MonoBehaviour
     {
@@ -16,6 +16,13 @@ namespace Stonehold
 
         public TowerData Data => data;
         public int Level => level;
+        public bool IsMaxLevel => data != null && level >= data.maxLevel;
+
+        /// <summary>The slot this tower stands on (null for pre-placed towers).</summary>
+        public TowerSlot Slot { get; set; }
+
+        /// <summary>Gold spent on this tower so far (placement + upgrades).</summary>
+        public int TotalInvested { get; private set; }
 
         /// <summary>Current damage: base scaled by the per-level multiplier.</summary>
         public float Damage => data.damage * Mathf.Pow(data.damageMultiplierPerLevel, level - 1);
@@ -32,26 +39,28 @@ namespace Stonehold
             {
                 Debug.LogWarning(name + ": TowerData not assigned.");
                 enabled = false;
+                return;
             }
+
+            TotalInvested = data.cost;
         }
 
-        /// <summary>Called when the player clicks this tower. Spends gold and upgrades.</summary>
+        /// <summary>Spends gold and upgrades this tower one level.</summary>
         public bool TryUpgrade()
         {
-            if (level >= data.maxLevel)
+            if (IsMaxLevel)
             {
-                Debug.Log(data.towerName + " is already at max level (" + data.maxLevel + ").");
                 return false;
             }
 
             int cost = UpgradeCost;
             if (EconomyManager.Instance == null || !EconomyManager.Instance.TrySpend(cost))
             {
-                Debug.Log("Not enough gold to upgrade (need " + cost + ").");
                 return false;
             }
 
             level++;
+            TotalInvested += cost;
             Debug.Log(data.towerName + " upgraded to level " + level + " for " + cost + " gold (damage now " + Damage + ").");
             return true;
         }
