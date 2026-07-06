@@ -3,33 +3,44 @@ using UnityEngine;
 namespace Stonehold
 {
     /// <summary>
-    /// Tower combat + upgrades. Finds the nearest enemy in range and fires a
-    /// projectile on a cooldown. Can be upgraded up to level 3; each upgrade
-    /// increases damage by 50%.
+    /// Tower combat + upgrades. Every stat (damage, range, fire rate, splash, slow,
+    /// costs, max level) comes from the assigned TowerData asset — nothing hardcoded.
+    /// Finds the nearest enemy in range and fires a projectile on a cooldown.
     /// </summary>
     public class Tower : MonoBehaviour
     {
-        [SerializeField] private float range = 8f;
-        [SerializeField] private float fireCooldown = 1f;
-        [SerializeField] private GameObject projectilePrefab;
-        [SerializeField] private float damage = 10f;
+        [SerializeField] private TowerData data;
 
-        private const int MaxLevel = 3;
         private int level = 1;
         private float cooldownTimer;
 
+        public TowerData Data => data;
         public int Level => level;
-        public float Damage => damage;
 
-        /// <summary>Cost to upgrade from the current level. 1->2 = 50, 2->3 = 100.</summary>
-        public int UpgradeCost => level == 1 ? 50 : 100;
+        /// <summary>Current damage: base scaled by the per-level multiplier.</summary>
+        public float Damage => data.damage * Mathf.Pow(data.damageMultiplierPerLevel, level - 1);
+
+        /// <summary>Current range: base scaled by the per-level multiplier.</summary>
+        public float Range => data.range * Mathf.Pow(data.rangeMultiplierPerLevel, level - 1);
+
+        /// <summary>Cost to upgrade from the current level: base cost x current level.</summary>
+        public int UpgradeCost => data.cost * level;
+
+        private void Awake()
+        {
+            if (data == null)
+            {
+                Debug.LogWarning(name + ": TowerData not assigned.");
+                enabled = false;
+            }
+        }
 
         /// <summary>Called when the player clicks this tower. Spends gold and upgrades.</summary>
         public bool TryUpgrade()
         {
-            if (level >= MaxLevel)
+            if (level >= data.maxLevel)
             {
-                Debug.Log("Tower is already at max level (" + MaxLevel + ").");
+                Debug.Log(data.towerName + " is already at max level (" + data.maxLevel + ").");
                 return false;
             }
 
@@ -41,8 +52,7 @@ namespace Stonehold
             }
 
             level++;
-            damage *= 1.5f;
-            Debug.Log("Tower upgraded to level " + level + " for " + cost + " gold (damage now " + damage + ").");
+            Debug.Log(data.towerName + " upgraded to level " + level + " for " + cost + " gold (damage now " + Damage + ").");
             return true;
         }
 
@@ -54,7 +64,7 @@ namespace Stonehold
             if (target != null && cooldownTimer <= 0f)
             {
                 Fire(target);
-                cooldownTimer = fireCooldown;
+                cooldownTimer = data.fireRate > 0f ? 1f / data.fireRate : 1f;
             }
         }
 
@@ -63,7 +73,7 @@ namespace Stonehold
             Enemy[] enemies = Object.FindObjectsByType<Enemy>(FindObjectsSortMode.None);
 
             Enemy nearest = null;
-            float bestDistance = range;
+            float bestDistance = Range;
 
             foreach (Enemy enemy in enemies)
             {
@@ -80,17 +90,17 @@ namespace Stonehold
 
         private void Fire(Enemy target)
         {
-            if (projectilePrefab == null)
+            if (data.projectilePrefab == null)
             {
                 return;
             }
 
-            GameObject shot = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+            GameObject shot = Instantiate(data.projectilePrefab, transform.position, Quaternion.identity);
 
             Projectile projectile = shot.GetComponent<Projectile>();
             if (projectile != null)
             {
-                projectile.SetTarget(target);
+                projectile.Init(target, Damage, data.splashRadius, data.slowMultiplier, data.slowDuration);
             }
         }
     }

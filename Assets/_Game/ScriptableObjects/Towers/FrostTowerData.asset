@@ -12,12 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b0a908e4efb804b88ca332b61428d8, type: 3}
   m_Name: FrostTowerData
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerData
-  towerName: 
-  prefab: {fileID: 0}
-  damage: 0
-  range: 0
-  fireRate: 0
-  cost: 0
-  maxLevel: 0
-  damageMultiplierPerLevel: 0
-  rangeMultiplierPerLevel: 0
+  towerName: Frost Tower
+  prefab: {fileID: 6746232236379199591, guid: 8635300014eb584499a2a20547bde947, type: 3}
+  damage: 3
+  range: 7
+  fireRate: 0.8
+  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  splashRadius: 0
+  slowMultiplier: 0.6
+  slowDuration: 2
+  cost: 80
+  maxLevel: 3
+  damageMultiplierPerLevel: 1.5
+  rangeMultiplierPerLevel: 1.1

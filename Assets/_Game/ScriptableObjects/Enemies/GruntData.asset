@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 023039d46d0c89b45a888656b243966f, type: 3}
   m_Name: GruntData
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
-  enemyName: 
-  prefab: {fileID: 0}
-  health: 0
-  moveSpeed: 0
-  goldReward: 0
-  castleDamage: 0
+  enemyName: Grunt
+  prefab: {fileID: 5225040395024732567, guid: cdc605a01e222bf43b99d976ead66ad4, type: 3}
+  health: 20
+  moveSpeed: 3
+  goldReward: 5
+  castleDamage: 1

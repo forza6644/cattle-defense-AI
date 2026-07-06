@@ -12,12 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b0a908e4efb804b88ca332b61428d8, type: 3}
   m_Name: CannonTowerData
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerData
-  towerName: 
-  prefab: {fileID: 0}
-  damage: 0
-  range: 0
-  fireRate: 0
-  cost: 0
-  maxLevel: 0
-  damageMultiplierPerLevel: 0
-  rangeMultiplierPerLevel: 0
+  towerName: Cannon Tower
+  prefab: {fileID: 735014437353856166, guid: 7d714dff3143cc144bea75ed23375a70, type: 3}
+  damage: 25
+  range: 7
+  fireRate: 0.4
+  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  splashRadius: 2.5
+  slowMultiplier: 1
+  slowDuration: 0
+  cost: 120
+  maxLevel: 3
+  damageMultiplierPerLevel: 1.5
+  rangeMultiplierPerLevel: 1.1

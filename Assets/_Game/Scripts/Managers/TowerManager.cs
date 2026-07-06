@@ -6,12 +6,11 @@ namespace Stonehold
     /// <summary>
     /// Handles player input for towers (new Input System). On left click it raycasts
     /// from the camera: clicking a Tower upgrades it, clicking an empty TowerSlot
-    /// places an Arrow Tower if the player can afford it.
+    /// places a tower. Which tower gets placed (and its cost) comes from TowerData.
     /// </summary>
     public class TowerManager : MonoBehaviour
     {
-        [SerializeField] private GameObject arrowTowerPrefab;
-        [SerializeField] private int towerCost = 50;
+        [SerializeField] private TowerData placedTowerData; // Arrow Tower for now.
 
         private Camera cam;
 
@@ -66,21 +65,21 @@ namespace Stonehold
                 return;
             }
 
-            if (arrowTowerPrefab == null)
+            if (placedTowerData == null || placedTowerData.prefab == null)
             {
-                Debug.LogWarning("TowerManager: arrowTowerPrefab not assigned.");
+                Debug.LogWarning("TowerManager: placedTowerData (or its prefab) not assigned.");
                 return;
             }
 
-            if (EconomyManager.Instance == null || !EconomyManager.Instance.TrySpend(towerCost))
+            if (EconomyManager.Instance == null || !EconomyManager.Instance.TrySpend(placedTowerData.cost))
             {
-                Debug.Log("Not enough gold to place a tower (need " + towerCost + ").");
+                Debug.Log("Not enough gold to place a tower (need " + placedTowerData.cost + ").");
                 return;
             }
 
-            Instantiate(arrowTowerPrefab, slot.transform.position, Quaternion.identity);
+            Instantiate(placedTowerData.prefab, slot.transform.position, Quaternion.identity);
             slot.SetOccupied(true);
-            Debug.Log("Placed Arrow Tower for " + towerCost + " gold.");
+            Debug.Log("Placed " + placedTowerData.towerName + " for " + placedTowerData.cost + " gold.");
         }
     }
 }

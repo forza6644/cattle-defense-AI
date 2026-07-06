@@ -12,12 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6b0a908e4efb804b88ca332b61428d8, type: 3}
   m_Name: ArrowTowerData
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerData
-  towerName: 
-  prefab: {fileID: 0}
-  damage: 0
-  range: 0
-  fireRate: 0
-  cost: 0
-  maxLevel: 0
-  damageMultiplierPerLevel: 0
-  rangeMultiplierPerLevel: 0
+  towerName: Arrow Tower
+  prefab: {fileID: 1423488070482060831, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
+  damage: 10
+  range: 8
+  fireRate: 1
+  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  splashRadius: 0
+  slowMultiplier: 1
+  slowDuration: 0
+  cost: 50
+  maxLevel: 3
+  damageMultiplierPerLevel: 1.5
+  rangeMultiplierPerLevel: 1.1

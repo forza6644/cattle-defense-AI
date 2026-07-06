@@ -125,3 +125,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbfa37ea1597d90448868b4bc8bac8f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.Tower
+  data: {fileID: 11400000, guid: 924a652a880951e49870402480d94dd0, type: 2}

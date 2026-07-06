@@ -3,20 +3,36 @@ using UnityEngine;
 namespace Stonehold
 {
     /// <summary>
-    /// Runtime component placed on every enemy prefab.
-    /// Moves in a straight line toward the Castle. If a tower kills it, it awards
-    /// gold (Kill). If it reaches the Castle instead, it damages the Castle and is
-    /// removed with no reward.
+    /// Runtime component placed on every enemy prefab. All stats (HP, speed, gold,
+    /// castle damage) come from the assigned EnemyData asset — nothing hardcoded.
+    /// Supports a simple non-stacking slow effect (newest slow replaces the current).
     /// </summary>
     public class Enemy : MonoBehaviour
     {
-        [SerializeField] private float moveSpeed = 3f;
+        [SerializeField] private EnemyData data;
         [SerializeField] private float arriveDistance = 0.1f;
-        [SerializeField] private int castleDamage = 1;
-        [SerializeField] private int goldReward = 5;
 
         private Transform target;
         private Castle targetCastle;
+        private float currentHealth;
+        private float slowMultiplier = 1f;
+        private float slowTimer;
+
+        public EnemyData Data => data;
+        public float CurrentHealth => currentHealth;
+        public bool IsSlowed => slowTimer > 0f;
+
+        private void Awake()
+        {
+            if (data == null)
+            {
+                Debug.LogWarning(name + ": EnemyData not assigned.");
+                enabled = false;
+                return;
+            }
+
+            currentHealth = data.health;
+        }
 
         /// <summary>Called by the spawner right after this enemy is created.</summary>
         public void SetTarget(Transform castle)
@@ -25,12 +41,29 @@ namespace Stonehold
             targetCastle = castle != null ? castle.GetComponent<Castle>() : null;
         }
 
-        /// <summary>Called by a tower's projectile. Awards gold, then destroys the enemy.</summary>
+        /// <summary>Called by projectiles. Kills the enemy (awarding gold) at 0 HP.</summary>
+        public void TakeDamage(float amount)
+        {
+            currentHealth -= amount;
+            if (currentHealth <= 0f)
+            {
+                Kill();
+            }
+        }
+
+        /// <summary>Non-stacking slow: the newest slow replaces the current one.</summary>
+        public void ApplySlow(float multiplier, float duration)
+        {
+            slowMultiplier = Mathf.Clamp01(multiplier);
+            slowTimer = duration;
+        }
+
+        /// <summary>Death by tower: awards gold, then removes the enemy.</summary>
         public void Kill()
         {
             if (EconomyManager.Instance != null)
             {
-                EconomyManager.Instance.AddGold(goldReward);
+                EconomyManager.Instance.AddGold(data.goldReward);
             }
 
             Destroy(gameObject);
@@ -43,16 +76,26 @@ namespace Stonehold
                 return;
             }
 
+            if (slowTimer > 0f)
+            {
+                slowTimer -= Time.deltaTime;
+                if (slowTimer <= 0f)
+                {
+                    slowMultiplier = 1f;
+                }
+            }
+
+            float speed = data.moveSpeed * slowMultiplier;
             transform.position = Vector3.MoveTowards(
                 transform.position,
                 target.position,
-                moveSpeed * Time.deltaTime);
+                speed * Time.deltaTime);
 
             if (Vector3.Distance(transform.position, target.position) <= arriveDistance)
             {
                 if (targetCastle != null)
                 {
-                    targetCastle.TakeDamage(castleDamage);
+                    targetCastle.TakeDamage(data.castleDamage);
                 }
 
                 Destroy(gameObject); // Reached the castle: no gold reward.

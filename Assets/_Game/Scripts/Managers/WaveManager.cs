@@ -5,12 +5,14 @@ namespace Stonehold
 {
     /// <summary>
     /// Spawns continuous waves of enemies. Each wave spawns a random 5-10 enemies
-    /// one at a time; the wave ends once every enemy is gone (killed or reached the
-    /// castle). After a short delay the next wave begins. Loops until game over.
+    /// one at a time; every Nth spawn is a Brute (heavy enemy). The wave ends once
+    /// every enemy is gone. After a short delay the next wave begins. Loops until
+    /// game over.
     /// </summary>
     public class WaveManager : MonoBehaviour
     {
         [SerializeField] private GameObject enemyPrefab;
+        [SerializeField] private GameObject brutePrefab;
         [SerializeField] private GameObject spawnPoint;
         [SerializeField] private GameObject castle;
 
@@ -19,6 +21,8 @@ namespace Stonehold
         [SerializeField] private int maxEnemiesPerWave = 10;
         [SerializeField] private float spawnInterval = 0.8f;
         [SerializeField] private float timeBetweenWaves = 3f;
+        [Tooltip("Every Nth spawn in a wave is a Brute. 0 = never spawn Brutes.")]
+        [SerializeField] private int bruteEvery = 5;
 
         private int waveNumber;
 
@@ -50,7 +54,8 @@ namespace Stonehold
                         yield break;
                     }
 
-                    SpawnEnemy();
+                    bool spawnBrute = brutePrefab != null && bruteEvery > 0 && (i + 1) % bruteEvery == 0;
+                    SpawnEnemy(spawnBrute ? brutePrefab : enemyPrefab);
                     yield return new WaitForSeconds(spawnInterval);
                 }
 
@@ -70,9 +75,9 @@ namespace Stonehold
             }
         }
 
-        private void SpawnEnemy()
+        private void SpawnEnemy(GameObject prefab)
         {
-            GameObject spawned = Instantiate(enemyPrefab, spawnPoint.transform.position, Quaternion.identity);
+            GameObject spawned = Instantiate(prefab, spawnPoint.transform.position, Quaternion.identity);
 
             Enemy enemy = spawned.GetComponent<Enemy>();
             if (enemy != null)

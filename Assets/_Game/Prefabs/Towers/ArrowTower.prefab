@@ -125,7 +125,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbfa37ea1597d90448868b4bc8bac8f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.Tower
-  range: 8
-  fireCooldown: 1
-  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
-  damage: 10
+  data: {fileID: 11400000, guid: 913ec32bacf11ea4fa33ef148ee83271, type: 2}
