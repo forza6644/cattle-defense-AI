@@ -1,68 +1,78 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
 namespace Stonehold
 {
     /// <summary>
-    /// Spawns continuous waves of enemies. Each wave spawns a random 5-10 enemies
-    /// one at a time; every Nth spawn is a Brute (heavy enemy). The wave ends once
-    /// every enemy is gone. After a short delay the next wave begins. Loops until
-    /// game over.
+    /// Runs the scripted waves defined in GameConfig, in order. Each WaveData lists
+    /// spawn entries (which enemy, how many, how fast); entries spawn sequentially.
+    /// A wave ends when every enemy is gone. Clearing the final wave raises
+    /// AllWavesCleared (the run's win condition).
     /// </summary>
     public class WaveManager : MonoBehaviour
     {
-        [SerializeField] private GameObject enemyPrefab;
-        [SerializeField] private GameObject brutePrefab;
+        [SerializeField] private GameConfig config;
         [SerializeField] private GameObject spawnPoint;
         [SerializeField] private GameObject castle;
 
-        [Header("Wave Settings")]
-        [SerializeField] private int minEnemiesPerWave = 5;
-        [SerializeField] private int maxEnemiesPerWave = 10;
-        [SerializeField] private float spawnInterval = 0.8f;
-        [SerializeField] private float timeBetweenWaves = 3f;
-        [Tooltip("Every Nth spawn in a wave is a Brute. 0 = never spawn Brutes.")]
-        [SerializeField] private int bruteEvery = 5;
+        /// <summary>Raised at the start of each wave: (wave number, wave data).</summary>
+        public event Action<int, WaveData> WaveStarted;
 
-        private int waveNumber;
+        /// <summary>Raised when the last scripted wave has been cleared.</summary>
+        public event Action AllWavesCleared;
+
+        public int CurrentWave { get; private set; }
+        public int TotalWaves => config != null && config.waves != null ? config.waves.Length : 0;
+
+        private Castle castleComponent;
+
+        private bool IsGameOver => castleComponent != null && castleComponent.IsGameOver;
 
         private void Start()
         {
-            if (enemyPrefab == null || spawnPoint == null || castle == null)
+            if (config == null || config.waves == null || config.waves.Length == 0 || spawnPoint == null || castle == null)
             {
-                Debug.LogWarning("WaveManager: assign enemyPrefab, spawnPoint and castle in the Inspector.");
+                Debug.LogWarning("WaveManager: assign config (with waves), spawnPoint and castle in the Inspector.");
                 return;
             }
 
+            castleComponent = castle.GetComponent<Castle>();
             StartCoroutine(RunWaves());
         }
 
         private IEnumerator RunWaves()
         {
-            Castle castleComponent = castle.GetComponent<Castle>();
-
-            while (castleComponent == null || !castleComponent.IsGameOver)
+            for (int w = 0; w < config.waves.Length; w++)
             {
-                waveNumber++;
-                int enemyCount = Random.Range(minEnemiesPerWave, maxEnemiesPerWave + 1);
-                Debug.Log("Wave " + waveNumber + " starting - " + enemyCount + " enemies");
-
-                for (int i = 0; i < enemyCount; i++)
+                if (IsGameOver)
                 {
-                    if (castleComponent != null && castleComponent.IsGameOver)
-                    {
-                        yield break;
-                    }
+                    yield break;
+                }
 
-                    bool spawnBrute = brutePrefab != null && bruteEvery > 0 && (i + 1) % bruteEvery == 0;
-                    SpawnEnemy(spawnBrute ? brutePrefab : enemyPrefab);
-                    yield return new WaitForSeconds(spawnInterval);
+                CurrentWave = w + 1;
+                WaveData wave = config.waves[w];
+                WaveStarted?.Invoke(CurrentWave, wave);
+                Debug.Log("Wave " + CurrentWave + "/" + TotalWaves + " (" + wave.waveLabel + ") starting");
+
+                foreach (WaveData.SpawnEntry entry in wave.spawns)
+                {
+                    for (int i = 0; i < entry.count; i++)
+                    {
+                        if (IsGameOver)
+                        {
+                            yield break;
+                        }
+
+                        SpawnEnemy(entry.enemy);
+                        yield return new WaitForSeconds(entry.spawnInterval);
+                    }
                 }
 
                 // Wave ends when every spawned enemy is gone (killed or reached castle).
                 while (AnyEnemiesAlive())
                 {
-                    if (castleComponent != null && castleComponent.IsGameOver)
+                    if (IsGameOver)
                     {
                         yield break;
                     }
@@ -70,14 +80,27 @@ namespace Stonehold
                     yield return null;
                 }
 
-                Debug.Log("Wave " + waveNumber + " cleared");
-                yield return new WaitForSeconds(timeBetweenWaves);
+                Debug.Log("Wave " + CurrentWave + " cleared");
+
+                if (w < config.waves.Length - 1)
+                {
+                    yield return new WaitForSeconds(config.timeBetweenWaves);
+                }
             }
+
+            Debug.Log("All " + TotalWaves + " waves cleared - VICTORY");
+            AllWavesCleared?.Invoke();
         }
 
-        private void SpawnEnemy(GameObject prefab)
+        private void SpawnEnemy(EnemyData enemyData)
         {
-            GameObject spawned = Instantiate(prefab, spawnPoint.transform.position, Quaternion.identity);
+            if (enemyData == null || enemyData.prefab == null)
+            {
+                Debug.LogWarning("WaveManager: wave entry has no enemy/prefab assigned.");
+                return;
+            }
+
+            GameObject spawned = Instantiate(enemyData.prefab, spawnPoint.transform.position, Quaternion.identity);
 
             Enemy enemy = spawned.GetComponent<Enemy>();
             if (enemy != null)
@@ -88,7 +111,7 @@ namespace Stonehold
 
         private bool AnyEnemiesAlive()
         {
-            return Object.FindObjectsByType<Enemy>(FindObjectsSortMode.None).Length > 0;
+            return UnityEngine.Object.FindObjectsByType<Enemy>(FindObjectsSortMode.None).Length > 0;
         }
     }
 }

@@ -12,6 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68488f49cd6e52642a055dc873c13365, type: 3}
   m_Name: GameConfig
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.GameConfig
-  startingGold: 0
-  castleMaxHealth: 0
-  waves: []
+  startingGold: 100
+  sellRefundPercent: 0.6
+  castleMaxHealth: 10
+  waves:
+  - {fileID: 11400000, guid: ca2339b7cda3a0e47976d9750e641abf, type: 2}
+  - {fileID: 11400000, guid: a203b083d7c5ee04185017e607525b7e, type: 2}
+  - {fileID: 11400000, guid: 6ea2866d790b06e43a4d7b69db60a8d8, type: 2}
+  - {fileID: 11400000, guid: 3c07c5b2db61bc645a32bff61e9a64db, type: 2}
+  - {fileID: 11400000, guid: 1bd04918942a2ce48820922df5e56559, type: 2}
+  timeBetweenWaves: 5

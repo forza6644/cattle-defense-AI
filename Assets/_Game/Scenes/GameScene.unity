@@ -190,7 +190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f75b6bed360cd504b97661c5f254b8f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EconomyManager
-  startingGold: 100
+  config: {fileID: 11400000, guid: 3f5b0f12658ec5f4facaf976d2a6431c, type: 2}
 --- !u!114 &271979489
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -216,15 +216,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c516a1e36811ce408e87091be739c8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WaveManager
-  enemyPrefab: {fileID: 5225040395024732567, guid: cdc605a01e222bf43b99d976ead66ad4, type: 3}
-  brutePrefab: {fileID: 5555025361673445348, guid: d97830f8f2ae43f4c9a978d818dcf3de, type: 3}
+  config: {fileID: 11400000, guid: 3f5b0f12658ec5f4facaf976d2a6431c, type: 2}
   spawnPoint: {fileID: 512017373}
   castle: {fileID: 2024639240}
-  minEnemiesPerWave: 5
-  maxEnemiesPerWave: 10
-  spawnInterval: 0.8
-  timeBetweenWaves: 3
-  bruteEvery: 5
 --- !u!114 &271979491
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1140,7 +1134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72b87129ced12424eb35390b2a8b4131, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.Castle
-  maxHealth: 10
+  config: {fileID: 11400000, guid: 3f5b0f12658ec5f4facaf976d2a6431c, type: 2}
 --- !u!1 &2070454615
 GameObject:
   m_ObjectHideFlags: 0

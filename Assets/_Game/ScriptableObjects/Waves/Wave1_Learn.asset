@@ -12,5 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f8a368fe325e4fbb2f112cc8a91c7, type: 3}
   m_Name: Wave1_Learn
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WaveData
-  waveLabel: 
-  spawns: []
+  waveLabel: Learn
+  spawns:
+  - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+    count: 5
+    spawnInterval: 1.2

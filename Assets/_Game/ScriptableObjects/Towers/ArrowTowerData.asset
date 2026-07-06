@@ -23,5 +23,5 @@ MonoBehaviour:
   slowDuration: 0
   cost: 50
   maxLevel: 3
-  damageMultiplierPerLevel: 1.5
+  damageMultiplierPerLevel: 2
   rangeMultiplierPerLevel: 1.1
