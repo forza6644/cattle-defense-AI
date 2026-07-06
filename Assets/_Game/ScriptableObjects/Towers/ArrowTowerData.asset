@@ -18,6 +18,7 @@ MonoBehaviour:
   range: 8
   fireRate: 1
   projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  projectileTrailColor: {r: 1, g: 0.95, b: 0.55, a: 1}
   splashRadius: 0
   slowMultiplier: 1
   slowDuration: 0

@@ -89,7 +89,7 @@ namespace Stonehold
             Projectile projectile = shot.GetComponent<Projectile>();
             if (projectile != null)
             {
-                projectile.Init(target, Damage, data.splashRadius, data.slowMultiplier, data.slowDuration);
+                projectile.Init(target, Damage, data.splashRadius, data.slowMultiplier, data.slowDuration, data.projectileTrailColor);
             }
         }
     }

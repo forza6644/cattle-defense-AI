@@ -21,6 +21,8 @@ namespace Stonehold
 
         [Header("Projectile")]
         public GameObject projectilePrefab;
+        [Tooltip("Colour of the projectile's trail (Arrow white, Cannon orange, Frost cyan).")]
+        public Color projectileTrailColor = Color.white;
 
         [Header("Splash (Cannon)")]
         [Tooltip("0 = single target. > 0 damages every enemy within this radius of the impact point.")]

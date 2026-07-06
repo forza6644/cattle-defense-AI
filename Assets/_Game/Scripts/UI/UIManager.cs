@@ -362,6 +362,11 @@ namespace Stonehold
         {
             if (selectedTower != null && selectedTower.TryUpgrade())
             {
+                if (VfxManager.Instance != null)
+                {
+                    VfxManager.Instance.PlayUpgrade(selectedTower.transform.position + Vector3.up * 0.5f);
+                }
+
                 RefreshTowerPanel();
             }
         }

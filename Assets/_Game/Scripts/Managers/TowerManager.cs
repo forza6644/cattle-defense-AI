@@ -156,6 +156,11 @@ namespace Stonehold
                 tower.Slot = slot;
             }
 
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayPlace(slot.transform.position);
+            }
+
             Debug.Log("Placed " + towerData.towerName + " for " + towerData.cost + " gold.");
             return true;
         }

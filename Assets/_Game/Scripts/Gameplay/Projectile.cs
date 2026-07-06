@@ -6,8 +6,9 @@ namespace Stonehold
     /// A shot fired by a tower. Flies straight at its target and, on contact,
     /// deals the damage it was given by the tower. Splash radius > 0 damages every
     /// registered enemy near the impact; a slow multiplier &lt; 1 also slows them.
-    /// Splash iterates the EnemyManager registry — no scene scans, no allocations.
+    /// Tints its trail per-tower and asks the VfxManager for the right impact effect.
     /// </summary>
+    [RequireComponent(typeof(TrailRenderer))]
     public class Projectile : MonoBehaviour
     {
         [SerializeField] private float speed = 12f;
@@ -18,15 +19,30 @@ namespace Stonehold
         private float splashRadius;
         private float slowMultiplier = 1f;
         private float slowDuration;
+        private TrailRenderer trail;
 
         /// <summary>Called by the tower right after this projectile is spawned.</summary>
-        public void Init(Enemy targetEnemy, float damageAmount, float splash, float slowMult, float slowDur)
+        public void Init(Enemy targetEnemy, float damageAmount, float splash, float slowMult, float slowDur, Color trailColor)
         {
             target = targetEnemy;
             damage = damageAmount;
             splashRadius = splash;
             slowMultiplier = slowMult;
             slowDuration = slowDur;
+
+            if (trail == null)
+            {
+                trail = GetComponent<TrailRenderer>();
+            }
+
+            if (trail != null)
+            {
+                trail.Clear();
+                trail.startColor = trailColor;
+                Color end = trailColor;
+                end.a = 0f;
+                trail.endColor = end;
+            }
         }
 
         private void Update()
@@ -53,9 +69,24 @@ namespace Stonehold
         {
             Vector3 impactPoint = target.transform.position;
 
+            if (VfxManager.Instance != null)
+            {
+                if (splashRadius > 0f)
+                {
+                    VfxManager.Instance.PlayExplosion(impactPoint);
+                }
+                else if (slowMultiplier < 1f)
+                {
+                    VfxManager.Instance.PlayFrost(impactPoint);
+                }
+                else
+                {
+                    VfxManager.Instance.PlayHit(impactPoint);
+                }
+            }
+
             if (splashRadius > 0f)
             {
-                // Backwards: HitEnemy can kill, which unregisters mid-iteration.
                 var all = EnemyManager.All;
                 for (int i = all.Count - 1; i >= 0; i--)
                 {

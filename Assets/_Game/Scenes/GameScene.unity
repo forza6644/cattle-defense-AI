@@ -3787,6 +3787,7 @@ GameObject:
   - component: {fileID: 271979487}
   - component: {fileID: 271979486}
   - component: {fileID: 271979485}
+  - component: {fileID: 271979493}
   m_Layer: 0
   m_Name: _Systems
   m_TagString: Untagged
@@ -3902,6 +3903,28 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &271979493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271979484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c92d3056b07262f428426cad794122b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.VfxManager
+  explosionPrefab: {fileID: 2168574084428502761, guid: 7e67fbe39d9bdaf4894520721b3e5506, type: 3}
+  frostPrefab: {fileID: 6368929490777763342, guid: e9221f3eef0b2384daa255fe57246f18, type: 3}
+  hitPrefab: {fileID: 130233192880185347, guid: ce0cea2ba205f254e9a0d7b43e00736b, type: 3}
+  deathPrefab: {fileID: 7220617438423370594, guid: cf6a15c8ba60b654ca04f3eba2dd3e7a, type: 3}
+  goldPrefab: {fileID: 6301537167845354985, guid: 35a25d5d09dc93940ac15edade566b15, type: 3}
+  placePrefab: {fileID: 1722911329257847981, guid: e7c33892e2ee2ec498858067462e8d6b, type: 3}
+  upgradePrefab: {fileID: 6382589540382912062, guid: eca390b61aa5b9648b228f06a7daa39d, type: 3}
+  castleHitPrefab: {fileID: 5114657991444617810, guid: e00d113a8dc8c2940b6a75a040ecc556, type: 3}
+  victoryPrefab: {fileID: 7345852566203339527, guid: 9af813024d1d18d4eb8e7fca7c9f7d2c, type: 3}
+  defeatPrefab: {fileID: 1841468767201677496, guid: 4f8d3b12acc47d34eb65c842a6f68529, type: 3}
 --- !u!1 &297102851
 GameObject:
   m_ObjectHideFlags: 0
