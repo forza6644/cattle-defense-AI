@@ -13,6 +13,7 @@ namespace Stonehold
 
         private int level = 1;
         private float cooldownTimer;
+        private ProceduralAnimator animator;
 
         public TowerData Data => data;
         public int Level => level;
@@ -43,6 +44,7 @@ namespace Stonehold
             }
 
             TotalInvested = data.cost;
+            animator = GetComponent<ProceduralAnimator>();
         }
 
         /// <summary>Spends gold and upgrades this tower one level.</summary>
@@ -82,6 +84,11 @@ namespace Stonehold
             if (data.projectilePrefab == null)
             {
                 return;
+            }
+
+            if (animator != null)
+            {
+                animator.PlayAttack();
             }
 
             GameObject shot = Instantiate(data.projectilePrefab, transform.position, Quaternion.identity);

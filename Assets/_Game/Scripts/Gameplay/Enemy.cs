@@ -22,6 +22,7 @@ namespace Stonehold
 
         private Transform target;
         private Castle targetCastle;
+        private ProceduralAnimator animator;
         private float currentHealth;
         private float slowMultiplier = 1f;
         private float slowTimer;
@@ -42,6 +43,11 @@ namespace Stonehold
             }
 
             currentHealth = data.health;
+            animator = GetComponent<ProceduralAnimator>();
+            if (animator != null)
+            {
+                animator.SetMoving(true);
+            }
         }
 
         private void OnEnable()
@@ -79,6 +85,10 @@ namespace Stonehold
             {
                 Kill();
             }
+            else if (animator != null)
+            {
+                animator.PlayHit();
+            }
         }
 
         /// <summary>Non-stacking slow: the newest slow replaces the current one.</summary>
@@ -105,7 +115,15 @@ namespace Stonehold
             }
 
             AnyKilled?.Invoke(this, data.goldReward);
-            Destroy(gameObject);
+
+            if (animator != null)
+            {
+                animator.PlayDeath(() => Destroy(gameObject));
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
 
         private void Update()
