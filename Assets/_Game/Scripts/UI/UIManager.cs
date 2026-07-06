@@ -220,18 +220,20 @@ namespace Stonehold
 
         private void LateUpdate()
         {
-            Enemy[] enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
+            var enemies = EnemyManager.All;
 
-            while (barBackgrounds.Count < enemies.Length)
+            while (barBackgrounds.Count < enemies.Count)
             {
                 CreateEnemyBar();
             }
 
             for (int i = 0; i < barBackgrounds.Count; i++)
             {
-                bool used = i < enemies.Length
-                    && enemies[i].MaxHealth > 0f
-                    && TryWorldToCanvas(enemies[i].transform.position + Vector3.up * 1.4f, out Vector2 local);
+                Enemy enemy = i < enemies.Count ? enemies[i] : null;
+                Vector2 local = default;
+                bool used = enemy != null
+                    && enemy.MaxHealth > 0f
+                    && TryWorldToCanvas(enemy.transform.position + Vector3.up * 1.4f, out local);
 
                 barBackgrounds[i].gameObject.SetActive(used);
                 if (!used)
@@ -239,9 +241,8 @@ namespace Stonehold
                     continue;
                 }
 
-                TryWorldToCanvas(enemies[i].transform.position + Vector3.up * 1.4f, out Vector2 pos);
-                barBackgrounds[i].anchoredPosition = pos;
-                float pct = Mathf.Clamp01(enemies[i].CurrentHealth / enemies[i].MaxHealth);
+                barBackgrounds[i].anchoredPosition = local;
+                float pct = Mathf.Clamp01(enemy.CurrentHealth / enemy.MaxHealth);
                 barFills[i].localScale = new Vector3(pct, 1f, 1f);
             }
         }

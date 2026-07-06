@@ -26,6 +26,7 @@ namespace Stonehold
         {
             Instance = this;
             Time.timeScale = 1f;
+            Application.targetFrameRate = 60;
         }
 
         private void Start()

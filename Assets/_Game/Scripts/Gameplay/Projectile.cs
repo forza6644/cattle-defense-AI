@@ -5,7 +5,8 @@ namespace Stonehold
     /// <summary>
     /// A shot fired by a tower. Flies straight at its target and, on contact,
     /// deals the damage it was given by the tower. Splash radius > 0 damages every
-    /// enemy near the impact; a slow multiplier &lt; 1 also slows what it hits.
+    /// registered enemy near the impact; a slow multiplier &lt; 1 also slows them.
+    /// Splash iterates the EnemyManager registry — no scene scans, no allocations.
     /// </summary>
     public class Projectile : MonoBehaviour
     {
@@ -54,10 +55,17 @@ namespace Stonehold
 
             if (splashRadius > 0f)
             {
-                Enemy[] enemies = Object.FindObjectsByType<Enemy>(FindObjectsSortMode.None);
-                foreach (Enemy enemy in enemies)
+                // Backwards: HitEnemy can kill, which unregisters mid-iteration.
+                var all = EnemyManager.All;
+                for (int i = all.Count - 1; i >= 0; i--)
                 {
-                    if (Vector3.Distance(impactPoint, enemy.transform.position) <= splashRadius)
+                    if (i >= all.Count)
+                    {
+                        continue;
+                    }
+
+                    Enemy enemy = all[i];
+                    if (enemy != null && Vector3.Distance(impactPoint, enemy.transform.position) <= splashRadius)
                     {
                         HitEnemy(enemy);
                     }

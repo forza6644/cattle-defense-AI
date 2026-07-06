@@ -5,10 +5,12 @@ using UnityEngine.InputSystem;
 namespace Stonehold
 {
     /// <summary>
-    /// Player interaction with towers. On left click (new Input System) it raycasts
-    /// from the camera: clicking a Tower opens the upgrade/sell panel, clicking an
-    /// empty TowerSlot opens the build menu. Placement, upgrade and sell all move
-    /// gold through the EconomyManager; costs and refunds come from ScriptableObjects.
+    /// Player interaction with towers. Supports mouse (desktop) and touch (mobile)
+    /// through the new Input System: both funnel into one world-click handler that
+    /// raycasts from the camera. Clicking a Tower opens the upgrade/sell panel,
+    /// clicking an empty TowerSlot opens the build menu. Placement, upgrade and
+    /// sell all move gold through the EconomyManager; costs and refunds come from
+    /// ScriptableObjects.
     /// </summary>
     public class TowerManager : MonoBehaviour
     {
@@ -21,17 +23,67 @@ namespace Stonehold
 
         private void Update()
         {
-            if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame)
+            if (!TryGetPointerPress(out Vector2 screenPos))
             {
                 return;
             }
 
-            // Clicks on UI elements belong to the UI, not the world.
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            // Presses on UI elements belong to the UI, not the world.
+            if (IsPointerOverUI())
             {
                 return;
             }
 
+            HandleWorldClick(screenPos);
+        }
+
+        /// <summary>True on the frame a mouse click or first touch began.</summary>
+        private static bool TryGetPointerPress(out Vector2 screenPos)
+        {
+            if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+            {
+                screenPos = Mouse.current.position.ReadValue();
+                return true;
+            }
+
+            if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+            {
+                screenPos = Touchscreen.current.primaryTouch.position.ReadValue();
+                return true;
+            }
+
+            screenPos = default;
+            return false;
+        }
+
+        private static bool IsPointerOverUI()
+        {
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null)
+            {
+                return false;
+            }
+
+            if (eventSystem.IsPointerOverGameObject())
+            {
+                return true;
+            }
+
+            // Touch pointers are tracked by finger id in the UI module.
+            if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+            {
+                int touchId = Touchscreen.current.primaryTouch.touchId.ReadValue();
+                if (eventSystem.IsPointerOverGameObject(touchId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void HandleWorldClick(Vector2 screenPos)
+        {
             if (cam == null)
             {
                 cam = Camera.main;
@@ -41,7 +93,6 @@ namespace Stonehold
                 }
             }
 
-            Vector2 screenPos = Mouse.current.position.ReadValue();
             Ray ray = cam.ScreenPointToRay(screenPos);
 
             if (!Physics.Raycast(ray, out RaycastHit hit, 1000f))

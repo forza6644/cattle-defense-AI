@@ -5,9 +5,9 @@ namespace Stonehold
 {
     /// <summary>
     /// Runtime component placed on every enemy prefab. All stats (HP, speed, gold,
-    /// castle damage) come from the assigned EnemyData asset. Supports a simple
-    /// non-stacking slow effect. Raises static events the UI listens to for
-    /// damage numbers, gold popups and health bars.
+    /// castle damage) come from the assigned EnemyData asset. Registers itself with
+    /// the EnemyManager registry while alive. Supports a simple non-stacking slow.
+    /// Raises static events the UI listens to for damage numbers and gold popups.
     /// </summary>
     public class Enemy : MonoBehaviour
     {
@@ -25,6 +25,7 @@ namespace Stonehold
         private float currentHealth;
         private float slowMultiplier = 1f;
         private float slowTimer;
+        private bool isDead;
 
         public EnemyData Data => data;
         public float CurrentHealth => currentHealth;
@@ -43,6 +44,19 @@ namespace Stonehold
             currentHealth = data.health;
         }
 
+        private void OnEnable()
+        {
+            if (data != null)
+            {
+                EnemyManager.Register(this);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            EnemyManager.Unregister(this);
+        }
+
         /// <summary>Called by the spawner right after this enemy is created.</summary>
         public void SetTarget(Transform castle)
         {
@@ -53,6 +67,11 @@ namespace Stonehold
         /// <summary>Called by projectiles. Kills the enemy (awarding gold) at 0 HP.</summary>
         public void TakeDamage(float amount)
         {
+            if (isDead)
+            {
+                return;
+            }
+
             currentHealth -= amount;
             AnyDamaged?.Invoke(this, amount);
 
@@ -72,6 +91,14 @@ namespace Stonehold
         /// <summary>Death by tower: awards gold, then removes the enemy.</summary>
         public void Kill()
         {
+            if (isDead)
+            {
+                return;
+            }
+
+            isDead = true;
+            EnemyManager.Unregister(this);
+
             if (EconomyManager.Instance != null)
             {
                 EconomyManager.Instance.AddGold(data.goldReward);
@@ -83,7 +110,7 @@ namespace Stonehold
 
         private void Update()
         {
-            if (target == null)
+            if (target == null || isDead)
             {
                 return;
             }
@@ -105,6 +132,9 @@ namespace Stonehold
 
             if (Vector3.Distance(transform.position, target.position) <= arriveDistance)
             {
+                isDead = true;
+                EnemyManager.Unregister(this);
+
                 if (targetCastle != null)
                 {
                     targetCastle.TakeDamage(data.castleDamage);

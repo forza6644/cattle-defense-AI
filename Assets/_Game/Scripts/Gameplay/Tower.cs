@@ -4,8 +4,8 @@ namespace Stonehold
 {
     /// <summary>
     /// Tower combat + upgrades. Every stat (damage, range, fire rate, splash, slow,
-    /// costs, max level) comes from the assigned TowerData asset. Tracks the total
-    /// gold invested (placement + upgrades) so selling can refund a fraction of it.
+    /// costs, max level) comes from the assigned TowerData asset. Target acquisition
+    /// goes through the EnemyManager registry (no scene scans, no allocations).
     /// </summary>
     public class Tower : MonoBehaviour
     {
@@ -69,32 +69,12 @@ namespace Stonehold
         {
             cooldownTimer -= Time.deltaTime;
 
-            Enemy target = FindNearestEnemyInRange();
+            Enemy target = EnemyManager.FindNearest(transform.position, Range);
             if (target != null && cooldownTimer <= 0f)
             {
                 Fire(target);
                 cooldownTimer = data.fireRate > 0f ? 1f / data.fireRate : 1f;
             }
-        }
-
-        private Enemy FindNearestEnemyInRange()
-        {
-            Enemy[] enemies = Object.FindObjectsByType<Enemy>(FindObjectsSortMode.None);
-
-            Enemy nearest = null;
-            float bestDistance = Range;
-
-            foreach (Enemy enemy in enemies)
-            {
-                float distance = Vector3.Distance(transform.position, enemy.transform.position);
-                if (distance <= bestDistance)
-                {
-                    bestDistance = distance;
-                    nearest = enemy;
-                }
-            }
-
-            return nearest;
         }
 
         private void Fire(Enemy target)

@@ -7,8 +7,8 @@ namespace Stonehold
     /// <summary>
     /// Runs the scripted waves defined in GameConfig, in order. Each WaveData lists
     /// spawn entries (which enemy, how many, how fast); entries spawn sequentially.
-    /// A wave ends when every enemy is gone. Clearing the final wave raises
-    /// AllWavesCleared (the run's win condition).
+    /// A wave ends when the EnemyManager registry is empty. Clearing the final wave
+    /// raises AllWavesCleared (the run's win condition).
     /// </summary>
     public class WaveManager : MonoBehaviour
     {
@@ -70,7 +70,7 @@ namespace Stonehold
                 }
 
                 // Wave ends when every spawned enemy is gone (killed or reached castle).
-                while (AnyEnemiesAlive())
+                while (EnemyManager.AliveCount > 0)
                 {
                     if (IsGameOver)
                     {
@@ -78,6 +78,11 @@ namespace Stonehold
                     }
 
                     yield return null;
+                }
+
+                if (IsGameOver)
+                {
+                    yield break;
                 }
 
                 Debug.Log("Wave " + CurrentWave + " cleared");
@@ -107,11 +112,6 @@ namespace Stonehold
             {
                 enemy.SetTarget(castle.transform);
             }
-        }
-
-        private bool AnyEnemiesAlive()
-        {
-            return UnityEngine.Object.FindObjectsByType<Enemy>(FindObjectsSortMode.None).Length > 0;
         }
     }
 }
