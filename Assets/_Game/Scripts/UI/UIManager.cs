@@ -43,6 +43,7 @@ namespace Stonehold
         private Text towerPanelTitle;
         private Text upgradeButtonLabel;
         private Text sellButtonLabel;
+        private Button upgradeButton;
         private readonly List<Text> buildButtonLabels = new List<Text>();
         private readonly List<Button> buildButtons = new List<Button>();
 
@@ -392,8 +393,10 @@ namespace Stonehold
                 string lockMessage = locked ? unlocks.GetLockMessage(data).Replace("Unlocks after ", "Locked: ") : string.Empty;
                 buildButtonLabels[i].text = locked
                     ? data.towerName + "\n" + lockMessage
-                    : data.towerName + "\n" + data.cost + " g";
-                buildButtonLabels[i].fontSize = locked ? 20 : 24;
+                    : affordable
+                        ? data.towerName + "\n" + data.cost + " g"
+                        : data.towerName + "\nNeed " + GetGoldShortfall(data.cost) + " g";
+                buildButtonLabels[i].fontSize = locked || !affordable ? 20 : 24;
                 buildButtonLabels[i].color = locked
                     ? new Color(0.65f, 0.65f, 0.7f)
                     : affordable ? Color.white : new Color(1f, 0.45f, 0.45f);
@@ -402,7 +405,9 @@ namespace Stonehold
                 {
                     buildButtons[i].targetGraphic.color = locked
                         ? new Color(0.12f, 0.12f, 0.16f, 0.95f)
-                        : new Color(0.22f, 0.25f, 0.34f, 0.95f);
+                        : affordable
+                            ? new Color(0.22f, 0.25f, 0.34f, 0.95f)
+                            : new Color(0.17f, 0.11f, 0.12f, 0.95f);
                 }
             }
         }
@@ -420,13 +425,21 @@ namespace Stonehold
             if (selectedTower.IsMaxLevel)
             {
                 upgradeButtonLabel.text = "MAX LEVEL";
+                upgradeButtonLabel.fontSize = 24;
                 upgradeButtonLabel.color = new Color(0.7f, 0.7f, 0.7f);
+                SetButtonVisual(upgradeButton, new Color(0.12f, 0.12f, 0.16f, 0.95f));
             }
             else
             {
                 bool affordable = economy != null && economy.Gold >= selectedTower.UpgradeCost;
-                upgradeButtonLabel.text = "Upgrade\n" + selectedTower.UpgradeCost + " g";
+                upgradeButtonLabel.text = affordable
+                    ? "Upgrade\n" + selectedTower.UpgradeCost + " g"
+                    : "Upgrade\nNeed " + GetGoldShortfall(selectedTower.UpgradeCost) + " g";
+                upgradeButtonLabel.fontSize = affordable ? 24 : 20;
                 upgradeButtonLabel.color = affordable ? Color.white : new Color(1f, 0.45f, 0.45f);
+                SetButtonVisual(upgradeButton, affordable
+                    ? new Color(0.22f, 0.25f, 0.34f, 0.95f)
+                    : new Color(0.17f, 0.11f, 0.12f, 0.95f));
             }
 
             sellButtonLabel.text = "Sell\n+" + towers.GetSellValue(selectedTower) + " g";
@@ -434,7 +447,25 @@ namespace Stonehold
 
         private void OnUpgradeClicked()
         {
-            if (selectedTower != null && selectedTower.TryUpgrade())
+            if (selectedTower == null)
+            {
+                return;
+            }
+
+            if (selectedTower.IsMaxLevel)
+            {
+                ShowBanner(selectedTower.Data.towerName + " is already max level");
+                return;
+            }
+
+            if (economy == null || economy.Gold < selectedTower.UpgradeCost)
+            {
+                ShowBanner("Need " + GetGoldShortfall(selectedTower.UpgradeCost) + " more gold to upgrade");
+                RefreshTowerPanel();
+                return;
+            }
+
+            if (selectedTower.TryUpgrade())
             {
                 if (VfxManager.Instance != null)
                 {
@@ -470,6 +501,13 @@ namespace Stonehold
             if (unlocks != null && !unlocks.IsTowerUnlocked(tower))
             {
                 ShowBanner(tower.towerName + " locked - " + unlocks.GetLockMessage(tower));
+                return;
+            }
+
+            if (economy == null || economy.Gold < tower.cost)
+            {
+                ShowBanner("Need " + GetGoldShortfall(tower.cost) + " more gold for " + tower.towerName);
+                RefreshBuildMenu();
                 return;
             }
 
@@ -636,6 +674,7 @@ namespace Stonehold
 
             Button upgrade = CreateButton(panel, "Upgrade", "Upgrade", new Vector2(190f, 74f), new Vector2(0.5f, 0f),
                 new Vector2(-110f, 55f), OnUpgradeClicked);
+            upgradeButton = upgrade;
             upgradeButtonLabel = upgrade.GetComponentInChildren<Text>();
 
             Button sell = CreateButton(panel, "Sell", "Sell", new Vector2(190f, 74f), new Vector2(0.5f, 0f),
@@ -750,6 +789,20 @@ namespace Stonehold
             text.rectTransform.offsetMin = Vector2.zero;
             text.rectTransform.offsetMax = Vector2.zero;
             return button;
+        }
+
+        private int GetGoldShortfall(int cost)
+        {
+            int currentGold = economy != null ? economy.Gold : 0;
+            return Mathf.Max(0, cost - currentGold);
+        }
+
+        private static void SetButtonVisual(Button button, Color color)
+        {
+            if (button != null && button.targetGraphic != null)
+            {
+                button.targetGraphic.color = color;
+            }
         }
 
         private static void SetAnchored(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size)
