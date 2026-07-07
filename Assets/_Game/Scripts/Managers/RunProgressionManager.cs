@@ -93,11 +93,17 @@ namespace Stonehold
 
         public int GetXpNeededForNextLevel()
         {
-            // Level 1 -> 2: 100 XP
-            // Level 2 -> 3: 150 XP
-            // Level 3 -> 4: 200 XP
-            // etc.
-            return 100 + (currentLevel - 1) * 50;
+            switch (currentLevel)
+            {
+                case 1: return 25;
+                case 2: return 60;
+                case 3: return 120;
+                case 4: return 250;
+                case 5: return 400;
+                case 6: return 600;
+                case 7: return 900;
+                default: return 900 + (currentLevel - 7) * 400;
+            }
         }
 
         public void AddXp(int amount)
@@ -148,6 +154,15 @@ namespace Stonehold
             var chosenList = new System.Collections.Generic.List<CardChoice>();
             var rng = new System.Random();
 
+            // Determine active/placed defender count
+            var slots = UnityEngine.Object.FindObjectsByType<TowerSlot>();
+            int emptySlotsCount = 0;
+            foreach (var s in slots)
+            {
+                if (!s.IsOccupied) emptySlotsCount++;
+            }
+            int placedCount = slots.Length - emptySlotsCount;
+
             // Compile candidate lists
             var addCandidates = GetAddCandidates();
             var upgradeCandidates = GetUpgradeCandidates();
@@ -155,20 +170,31 @@ namespace Stonehold
 
             for (int i = 0; i < 3; i++)
             {
+                bool hasAdd = addCandidates.Count > 0;
+                bool hasUpgrade = upgradeCandidates.Count > 0;
+                bool hasBoost = boostCandidates.Count > 0;
+
+                // Force at least one Add Defender card if player has <= 2 placed defenders and empty slots exist
+                bool forceAdd = (i == 0) && (placedCount <= 2) && hasAdd;
+
+                if (forceAdd)
+                {
+                    int idx = rng.Next(addCandidates.Count);
+                    chosenList.Add(addCandidates[idx]);
+                    addCandidates.RemoveAt(idx);
+                    continue;
+                }
+
                 // Determine weights
                 float addWeight = 0f;
                 float upgradeWeight = 0f;
                 float boostWeight = 0f;
 
-                bool hasAdd = addCandidates.Count > 0;
-                bool hasUpgrade = upgradeCandidates.Count > 0;
-                bool hasBoost = boostCandidates.Count > 0;
-
                 if (hasAdd)
                 {
-                    addWeight = 0.6f;
-                    upgradeWeight = hasUpgrade ? 0.2f : 0f;
-                    boostWeight = hasBoost ? 0.2f : 0f;
+                    addWeight = 0.7f;
+                    upgradeWeight = hasUpgrade ? 0.15f : 0f;
+                    boostWeight = hasBoost ? 0.15f : 0f;
                 }
                 else
                 {
@@ -236,7 +262,7 @@ namespace Stonehold
             var candidates = new System.Collections.Generic.List<CardChoice>();
 
             // Find all empty slots
-            var slots = UnityEngine.Object.FindObjectsByType<TowerSlot>(UnityEngine.FindObjectsSortMode.None);
+            var slots = UnityEngine.Object.FindObjectsByType<TowerSlot>();
             int emptySlotsCount = 0;
             foreach (var s in slots)
             {
@@ -249,7 +275,7 @@ namespace Stonehold
             }
 
             // Find placed defender IDs (only those on wall slots)
-            var activeTowers = UnityEngine.Object.FindObjectsByType<Tower>(UnityEngine.FindObjectsSortMode.None);
+            var activeTowers = UnityEngine.Object.FindObjectsByType<Tower>();
             var placedIds = new System.Collections.Generic.HashSet<string>();
             foreach (var t in activeTowers)
             {
@@ -276,7 +302,7 @@ namespace Stonehold
                                 $"Places a new {displayName} onto the wall for free.",
                                 () => {
                                     // Find first available slot
-                                    var sortedSlots = UnityEngine.Object.FindObjectsByType<TowerSlot>(UnityEngine.FindObjectsSortMode.None);
+                                    var sortedSlots = UnityEngine.Object.FindObjectsByType<TowerSlot>();
                                     System.Array.Sort(sortedSlots, (a, b) => string.Compare(a.name, b.name));
                                     foreach (var s in sortedSlots)
                                     {
@@ -304,7 +330,7 @@ namespace Stonehold
         {
             var candidates = new System.Collections.Generic.List<CardChoice>();
 
-            var activeTowers = UnityEngine.Object.FindObjectsByType<Tower>(UnityEngine.FindObjectsSortMode.None);
+            var activeTowers = UnityEngine.Object.FindObjectsByType<Tower>();
             foreach (var t in activeTowers)
             {
                 if (t != null && t.Slot != null && t.Data != null && !t.IsMaxLevel)
