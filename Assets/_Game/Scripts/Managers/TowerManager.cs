@@ -32,7 +32,32 @@ namespace Stonehold
 
         private void PlaceStartingDefender()
         {
-            TowerData startingDefender = config != null ? config.defaultStartingDefender : null;
+            string selectedId = SaveManager.SelectedStartingDefenderId;
+            if (string.IsNullOrEmpty(selectedId))
+            {
+                selectedId = "archer_defender";
+            }
+
+            TowerData startingDefender = null;
+            if (availableTowers != null)
+            {
+                foreach (var t in availableTowers)
+                {
+                    if (t != null && t.defenderId == selectedId)
+                    {
+                        startingDefender = t;
+                        break;
+                    }
+                }
+            }
+
+            // Fallback to default config starting defender
+            if (startingDefender == null && config != null)
+            {
+                startingDefender = config.defaultStartingDefender;
+            }
+
+            // Final fallback to archer_defender
             if (startingDefender == null && availableTowers != null)
             {
                 foreach (var t in availableTowers)

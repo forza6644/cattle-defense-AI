@@ -29,6 +29,31 @@ namespace Stonehold
         private Button startButton;
         private Text startButtonLabel;
 
+        private Text defenderNameText;
+        private Button prevDefenderBtn;
+        private Button nextDefenderBtn;
+        private int currentDefenderIndex = 0;
+
+        private struct DefenderInfo
+        {
+            public string id;
+            public string displayName;
+            public DefenderInfo(string id, string displayName)
+            {
+                this.id = id;
+                this.displayName = displayName;
+            }
+        }
+
+        private readonly DefenderInfo[] lobbyDefenders = new DefenderInfo[]
+        {
+            new DefenderInfo("archer_defender", "Archer Defender"),
+            new DefenderInfo("machine_gun_soldier", "Machine Gun Soldier"),
+            new DefenderInfo("catapult_defender", "Catapult Defender"),
+            new DefenderInfo("ice_mage", "Ice Mage"),
+            new DefenderInfo("sniper", "Sniper")
+        };
+
         private void Awake()
         {
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -113,21 +138,21 @@ namespace Stonehold
             // Title
             Text title = CreateText(canvasRect, "Title", "STONEHOLD", 110, new Color(1f, 0.85f, 0.35f));
             title.fontStyle = FontStyle.Bold;
-            Place(title.rectTransform, new Vector2(0.5f, 0.72f), Vector2.zero, new Vector2(1200f, 140f));
+            Place(title.rectTransform, new Vector2(0.5f, 0.74f), Vector2.zero, new Vector2(1200f, 140f));
             titleRect = title.rectTransform;
 
             Text subtitle = CreateText(canvasRect, "Subtitle", "Defend the keep. Hold the line.", 30, new Color(0.8f, 0.8f, 0.85f));
-            Place(subtitle.rectTransform, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(900f, 50f));
+            Place(subtitle.rectTransform, new Vector2(0.5f, 0.65f), Vector2.zero, new Vector2(900f, 50f));
 
             // Main buttons
-            startButton = CreateButton(canvasRect, "StartButton", "Start Stage", new Vector2(340f, 84f), new Vector2(0.5f, 0.40f), Vector2.zero, Play);
+            startButton = CreateButton(canvasRect, "StartButton", "Start Stage", new Vector2(340f, 84f), new Vector2(0.5f, 0.30f), Vector2.zero, Play);
             startButtonLabel = startButton.GetComponentInChildren<Text>();
 
-            CreateButton(canvasRect, "SettingsButton", "Settings", new Vector2(340f, 70f), new Vector2(0.5f, 0.28f), Vector2.zero, () => ShowSettings(true));
+            CreateButton(canvasRect, "SettingsButton", "Settings", new Vector2(340f, 70f), new Vector2(0.5f, 0.20f), Vector2.zero, () => ShowSettings(true));
 
             if (!Application.isMobilePlatform)
             {
-                CreateButton(canvasRect, "QuitButton", "Quit", new Vector2(340f, 70f), new Vector2(0.5f, 0.17f), Vector2.zero, QuitGame);
+                CreateButton(canvasRect, "QuitButton", "Quit", new Vector2(340f, 70f), new Vector2(0.5f, 0.11f), Vector2.zero, QuitGame);
             }
 
             // Stats (top-left)
@@ -142,7 +167,7 @@ namespace Stonehold
 
             // Stage Selection Panel (center-top)
             Image stageBg = CreateImage(canvasRect, "StagePanel", new Color(0.12f, 0.16f, 0.24f, 0.6f));
-            Place(stageBg.rectTransform, new Vector2(0.5f, 0.54f), Vector2.zero, new Vector2(700f, 130f));
+            Place(stageBg.rectTransform, new Vector2(0.5f, 0.55f), Vector2.zero, new Vector2(700f, 130f));
 
             stageNameText = CreateText(stageBg.rectTransform, "StageName", "", 24, Color.white);
             Place(stageNameText.rectTransform, new Vector2(0.5f, 0.72f), Vector2.zero, new Vector2(600f, 32f));
@@ -155,6 +180,35 @@ namespace Stonehold
 
             nextStageBtn = CreateButton(stageBg.rectTransform, "NextStage", ">", new Vector2(46f, 46f),
                 new Vector2(1f, 0.5f), new Vector2(-30f, 0f), () => CycleStage(1));
+
+            // Starting Defender Selection Panel (center-lower)
+            Image defenderBg = CreateImage(canvasRect, "DefenderPanel", new Color(0.12f, 0.16f, 0.24f, 0.6f));
+            Place(defenderBg.rectTransform, new Vector2(0.5f, 0.42f), Vector2.zero, new Vector2(700f, 100f));
+
+            Text defenderTitleText = CreateText(defenderBg.rectTransform, "DefenderTitle", "STARTING DEFENDER", 16, new Color(1f, 0.85f, 0.35f));
+            Place(defenderTitleText.rectTransform, new Vector2(0.5f, 0.80f), Vector2.zero, new Vector2(600f, 24f));
+
+            defenderNameText = CreateText(defenderBg.rectTransform, "DefenderName", "", 24, Color.white);
+            Place(defenderNameText.rectTransform, new Vector2(0.5f, 0.35f), Vector2.zero, new Vector2(600f, 36f));
+
+            prevDefenderBtn = CreateButton(defenderBg.rectTransform, "PrevDefender", "<", new Vector2(46f, 46f),
+                new Vector2(0f, 0.5f), new Vector2(30f, 0f), () => CycleDefender(-1));
+
+            nextDefenderBtn = CreateButton(defenderBg.rectTransform, "NextDefender", ">", new Vector2(46f, 46f),
+                new Vector2(1f, 0.5f), new Vector2(-30f, 0f), () => CycleDefender(1));
+
+            // Initialize starting defender index from saved settings
+            string savedId = SaveManager.SelectedStartingDefenderId;
+            currentDefenderIndex = 0;
+            for (int i = 0; i < lobbyDefenders.Length; i++)
+            {
+                if (lobbyDefenders[i].id == savedId)
+                {
+                    currentDefenderIndex = i;
+                    break;
+                }
+            }
+            RefreshDefenderSelection();
 
             // Offers / Events Placeholder (right-side)
             Image offersBg = CreateImage(canvasRect, "OffersPanel", new Color(0.12f, 0.16f, 0.24f, 0.6f));
@@ -326,6 +380,10 @@ namespace Stonehold
             SaveManager.ResetProgress();
             RefreshStats();
             RefreshStageSelection();
+
+            // Reset starting defender index in UI
+            currentDefenderIndex = 0;
+            RefreshDefenderSelection();
         }
 
         private void RefreshStageSelection()
@@ -362,6 +420,24 @@ namespace Stonehold
             {
                 SaveManager.SetSelectedStage(newIndex);
                 RefreshStageSelection();
+            }
+        }
+
+        private void CycleDefender(int delta)
+        {
+            currentDefenderIndex += delta;
+            if (currentDefenderIndex < 0) currentDefenderIndex = lobbyDefenders.Length - 1;
+            if (currentDefenderIndex >= lobbyDefenders.Length) currentDefenderIndex = 0;
+
+            SaveManager.SetSelectedStartingDefender(lobbyDefenders[currentDefenderIndex].id);
+            RefreshDefenderSelection();
+        }
+
+        private void RefreshDefenderSelection()
+        {
+            if (defenderNameText != null)
+            {
+                defenderNameText.text = $"<b>{lobbyDefenders[currentDefenderIndex].displayName}</b>";
             }
         }
     }

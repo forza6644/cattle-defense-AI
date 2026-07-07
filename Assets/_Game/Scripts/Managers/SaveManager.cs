@@ -14,6 +14,7 @@ namespace Stonehold
         private const string KeySelectedStage = "lobby_selected_stage";
         private const string KeyHighestStageUnlocked = "stats_highest_stage_unlocked";
         private const string KeyStage1Completed = "stats_stage_1_completed";
+        private const string KeySelectedStartingDefender = "lobby_selected_starting_defender";
 
         public static int BestWave { get; private set; }
         public static int TotalWins { get; private set; }
@@ -22,6 +23,7 @@ namespace Stonehold
         public static int SelectedStageIndex { get; private set; }
         public static int HighestStageUnlocked { get; private set; }
         public static bool Stage1Completed { get; private set; }
+        public static string SelectedStartingDefenderId { get; private set; }
 
         static SaveManager()
         {
@@ -37,12 +39,20 @@ namespace Stonehold
             SelectedStageIndex = PlayerPrefs.GetInt(KeySelectedStage, 0);
             HighestStageUnlocked = PlayerPrefs.GetInt(KeyHighestStageUnlocked, 1);
             Stage1Completed = PlayerPrefs.GetInt(KeyStage1Completed, 0) == 1;
+            SelectedStartingDefenderId = PlayerPrefs.GetString(KeySelectedStartingDefender, "archer_defender");
         }
 
         public static void SetSelectedStage(int index)
         {
             SelectedStageIndex = index;
             PlayerPrefs.SetInt(KeySelectedStage, SelectedStageIndex);
+            PlayerPrefs.Save();
+        }
+
+        public static void SetSelectedStartingDefender(string defenderId)
+        {
+            SelectedStartingDefenderId = defenderId;
+            PlayerPrefs.SetString(KeySelectedStartingDefender, SelectedStartingDefenderId);
             PlayerPrefs.Save();
         }
 
@@ -101,6 +111,7 @@ namespace Stonehold
             SelectedStageIndex = 0;
             HighestStageUnlocked = 1;
             Stage1Completed = false;
+            SelectedStartingDefenderId = "archer_defender";
 
             PlayerPrefs.DeleteKey(KeyBestWave);
             PlayerPrefs.DeleteKey(KeyTotalWins);
@@ -109,6 +120,7 @@ namespace Stonehold
             PlayerPrefs.DeleteKey(KeySelectedStage);
             PlayerPrefs.DeleteKey(KeyHighestStageUnlocked);
             PlayerPrefs.DeleteKey(KeyStage1Completed);
+            PlayerPrefs.DeleteKey(KeySelectedStartingDefender);
             PlayerPrefs.Save();
         }
     }
