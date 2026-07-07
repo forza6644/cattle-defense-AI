@@ -3,9 +3,9 @@ using UnityEngine;
 namespace Stonehold
 {
     /// <summary>
-    /// Tower combat + upgrades. Every stat (damage, range, fire rate, splash, slow,
-    /// costs, max level) comes from the assigned TowerData asset. Target acquisition
-    /// goes through the EnemyManager registry (no scene scans, no allocations).
+        /// Tower combat + upgrades. Every stat (damage, range, fire rate, splash, slow,
+        /// costs, max level) comes from the assigned TowerData asset. Target acquisition
+        /// prioritizes enemies closest to the castle through the EnemyManager registry.
     /// </summary>
     public class Tower : MonoBehaviour
     {
@@ -71,7 +71,7 @@ namespace Stonehold
         {
             cooldownTimer -= Time.deltaTime;
 
-            Enemy target = EnemyManager.FindNearest(transform.position, Range);
+            Enemy target = EnemyManager.FindClosestToGoal(transform.position, Range);
             if (target != null && cooldownTimer <= 0f)
             {
                 Fire(target);

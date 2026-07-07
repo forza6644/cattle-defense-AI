@@ -5,7 +5,7 @@ namespace Stonehold
 {
     /// <summary>
     /// Central registry of alive enemies. Enemies register on spawn and unregister
-    /// on death/despawn, so lookups (nearest target, alive count, iteration for
+    /// on death/despawn, so lookups (priority target, alive count, iteration for
     /// splash and health bars) are allocation-free — no scene scans, no per-frame
     /// garbage. The static API is backed by one list; the component on _Systems
     /// clears it on scene (re)start so no stale entries survive reloads.
@@ -61,6 +61,38 @@ namespace Stonehold
             }
 
             return nearest;
+        }
+
+        /// <summary>Most advanced registered enemy within maxRange of position, or null.</summary>
+        public static Enemy FindClosestToGoal(Vector3 position, float maxRange)
+        {
+            Enemy closestToGoal = null;
+            float bestRemainingDistance = float.PositiveInfinity;
+            float maxRangeSqr = maxRange * maxRange;
+
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                Enemy enemy = enemies[i];
+                if (enemy == null)
+                {
+                    continue;
+                }
+
+                float rangeSqr = (enemy.transform.position - position).sqrMagnitude;
+                if (rangeSqr > maxRangeSqr)
+                {
+                    continue;
+                }
+
+                float remainingDistance = enemy.RemainingDistanceToTarget;
+                if (remainingDistance < bestRemainingDistance)
+                {
+                    bestRemainingDistance = remainingDistance;
+                    closestToGoal = enemy;
+                }
+            }
+
+            return closestToGoal;
         }
     }
 }

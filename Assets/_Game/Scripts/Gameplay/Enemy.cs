@@ -32,6 +32,9 @@ namespace Stonehold
         public float CurrentHealth => currentHealth;
         public float MaxHealth => data != null ? data.health : 0f;
         public bool IsSlowed => slowTimer > 0f;
+        public float RemainingDistanceToTarget => target != null
+            ? Vector3.Distance(transform.position, target.position)
+            : float.PositiveInfinity;
 
         private void Awake()
         {
