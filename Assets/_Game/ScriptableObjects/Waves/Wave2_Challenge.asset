@@ -15,5 +15,8 @@ MonoBehaviour:
   waveLabel: Pressure
   spawns:
   - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
-    count: 10
+    count: 6
     spawnInterval: 0.7
+  - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+    count: 3
+    spawnInterval: 1.5

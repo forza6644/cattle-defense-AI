@@ -16,6 +16,8 @@ namespace Stonehold
         [Header("Stats")]
         public float health;
         public float moveSpeed;
+        [Tooltip("Direct damage reduction (minimum 1 damage taken).")]
+        public float armor;
 
         [Header("Impact")]
         public int goldReward;

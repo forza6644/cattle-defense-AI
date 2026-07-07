@@ -101,8 +101,14 @@ namespace Stonehold
                 return;
             }
 
-            currentHealth -= amount;
-            AnyDamaged?.Invoke(this, amount);
+            float reducedAmount = amount;
+            if (data != null && data.armor > 0f)
+            {
+                reducedAmount = Mathf.Max(1f, amount - data.armor);
+            }
+
+            currentHealth -= reducedAmount;
+            AnyDamaged?.Invoke(this, reducedAmount);
 
             if (currentHealth <= 0f)
             {
