@@ -19,6 +19,10 @@ namespace Stonehold
         [Tooltip("Shots per second (e.g. 1 = one shot every second, 0.4 = one shot every 2.5s).")]
         public float fireRate;
 
+        [Header("Targeting")]
+        [Tooltip("Default enemy selection mode when this tower is placed.")]
+        public TargetingMode defaultTargetingMode = TargetingMode.ClosestToGoal;
+
         [Header("Projectile")]
         public GameObject projectilePrefab;
         [Tooltip("Colour of the projectile's trail (Arrow white, Cannon orange, Frost cyan).")]

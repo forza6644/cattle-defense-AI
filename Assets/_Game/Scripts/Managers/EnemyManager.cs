@@ -94,5 +94,109 @@ namespace Stonehold
 
             return closestToGoal;
         }
+
+        /// <summary>First registered enemy (oldest) within range.</summary>
+        public static Enemy FindFirstInRange(Vector3 position, float maxRange)
+        {
+            float maxRangeSqr = maxRange * maxRange;
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                Enemy enemy = enemies[i];
+                if (enemy == null) continue;
+
+                float rangeSqr = (enemy.transform.position - position).sqrMagnitude;
+                if (rangeSqr <= maxRangeSqr)
+                {
+                    return enemy;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>Last registered enemy (newest) within range.</summary>
+        public static Enemy FindLastInRange(Vector3 position, float maxRange)
+        {
+            float maxRangeSqr = maxRange * maxRange;
+            for (int i = enemies.Count - 1; i >= 0; i--)
+            {
+                Enemy enemy = enemies[i];
+                if (enemy == null) continue;
+
+                float rangeSqr = (enemy.transform.position - position).sqrMagnitude;
+                if (rangeSqr <= maxRangeSqr)
+                {
+                    return enemy;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>Enemy in range with highest current HP.</summary>
+        public static Enemy FindStrongest(Vector3 position, float maxRange)
+        {
+            Enemy strongest = null;
+            float bestHealth = -1f;
+            float maxRangeSqr = maxRange * maxRange;
+
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                Enemy enemy = enemies[i];
+                if (enemy == null) continue;
+
+                float rangeSqr = (enemy.transform.position - position).sqrMagnitude;
+                if (rangeSqr > maxRangeSqr) continue;
+
+                if (enemy.CurrentHealth > bestHealth)
+                {
+                    bestHealth = enemy.CurrentHealth;
+                    strongest = enemy;
+                }
+            }
+            return strongest;
+        }
+
+        /// <summary>Enemy in range with lowest current HP.</summary>
+        public static Enemy FindWeakest(Vector3 position, float maxRange)
+        {
+            Enemy weakest = null;
+            float bestHealth = float.PositiveInfinity;
+            float maxRangeSqr = maxRange * maxRange;
+
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                Enemy enemy = enemies[i];
+                if (enemy == null) continue;
+
+                float rangeSqr = (enemy.transform.position - position).sqrMagnitude;
+                if (rangeSqr > maxRangeSqr) continue;
+
+                if (enemy.CurrentHealth < bestHealth)
+                {
+                    bestHealth = enemy.CurrentHealth;
+                    weakest = enemy;
+                }
+            }
+            return weakest;
+        }
+
+        /// <summary>General query supporting all targeting modes.</summary>
+        public static Enemy FindTarget(Vector3 position, float maxRange, TargetingMode mode)
+        {
+            switch (mode)
+            {
+                case TargetingMode.ClosestToGoal:
+                    return FindClosestToGoal(position, maxRange);
+                case TargetingMode.FirstInRange:
+                    return FindFirstInRange(position, maxRange);
+                case TargetingMode.LastInRange:
+                    return FindLastInRange(position, maxRange);
+                case TargetingMode.Strongest:
+                    return FindStrongest(position, maxRange);
+                case TargetingMode.Weakest:
+                    return FindWeakest(position, maxRange);
+                default:
+                    return FindClosestToGoal(position, maxRange);
+            }
+        }
     }
 }

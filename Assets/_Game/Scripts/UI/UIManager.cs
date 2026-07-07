@@ -47,7 +47,9 @@ namespace Stonehold
         private Text towerPanelTitle;
         private Text upgradeButtonLabel;
         private Text sellButtonLabel;
+        private Text targetButtonLabel;
         private Button upgradeButton;
+        private Button targetButton;
         private readonly List<Text> buildButtonLabels = new List<Text>();
         private readonly List<Button> buildButtons = new List<Button>();
 
@@ -523,6 +525,12 @@ namespace Stonehold
             }
 
             sellButtonLabel.text = "Sell\n+" + towers.GetSellValue(selectedTower) + " g";
+
+            if (targetButtonLabel != null)
+            {
+                targetButtonLabel.text = "Target:\n" + selectedTower.CurrentTargetingMode.ToString() + " >";
+                targetButtonLabel.fontSize = 20;
+            }
         }
 
         private void OnUpgradeClicked()
@@ -559,6 +567,25 @@ namespace Stonehold
 
                 RefreshTowerPanel();
             }
+        }
+
+        private void OnTargetClicked()
+        {
+            if (selectedTower == null)
+            {
+                return;
+            }
+
+            TargetingMode current = selectedTower.CurrentTargetingMode;
+            int nextIndex = ((int)current + 1) % System.Enum.GetValues(typeof(TargetingMode)).Length;
+            selectedTower.CurrentTargetingMode = (TargetingMode)nextIndex;
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayButton();
+            }
+
+            RefreshTowerPanel();
         }
 
         private void OnSellClicked()
@@ -755,13 +782,18 @@ namespace Stonehold
             towerPanelTitle = CreateText(panel, "Title", "", 26, Color.white, TextAnchor.UpperCenter);
             towerPanelTitle.rectTransform.SetAnchored(new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(680f, 34f));
 
-            Button upgrade = CreateButton(panel, "Upgrade", "Upgrade", new Vector2(190f, 74f), new Vector2(0.5f, 0f),
-                new Vector2(-110f, 55f), OnUpgradeClicked);
+            Button upgrade = CreateButton(panel, "Upgrade", "Upgrade", new Vector2(170f, 74f), new Vector2(0.5f, 0f),
+                new Vector2(-190f, 55f), OnUpgradeClicked);
             upgradeButton = upgrade;
             upgradeButtonLabel = upgrade.GetComponentInChildren<Text>();
 
-            Button sell = CreateButton(panel, "Sell", "Sell", new Vector2(190f, 74f), new Vector2(0.5f, 0f),
-                new Vector2(110f, 55f), OnSellClicked);
+            Button targetBtn = CreateButton(panel, "Target", "Target: ClosestToGoal >", new Vector2(190f, 74f), new Vector2(0.5f, 0f),
+                new Vector2(0f, 55f), OnTargetClicked);
+            targetButton = targetBtn;
+            targetButtonLabel = targetBtn.GetComponentInChildren<Text>();
+
+            Button sell = CreateButton(panel, "Sell", "Sell", new Vector2(170f, 74f), new Vector2(0.5f, 0f),
+                new Vector2(190f, 55f), OnSellClicked);
             sellButtonLabel = sell.GetComponentInChildren<Text>();
 
             CreateButton(panel, "Close", "X", new Vector2(44f, 44f), new Vector2(1f, 1f),

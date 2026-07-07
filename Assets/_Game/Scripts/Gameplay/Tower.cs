@@ -14,10 +14,16 @@ namespace Stonehold
         private int level = 1;
         private float cooldownTimer;
         private ProceduralAnimator animator;
+        private TargetingMode currentTargetingMode;
 
         public TowerData Data => data;
         public int Level => level;
         public bool IsMaxLevel => data != null && level >= data.maxLevel;
+        public TargetingMode CurrentTargetingMode
+        {
+            get => currentTargetingMode;
+            set => currentTargetingMode = value;
+        }
 
         /// <summary>The slot this tower stands on (null for pre-placed towers).</summary>
         public TowerSlot Slot { get; set; }
@@ -45,6 +51,7 @@ namespace Stonehold
 
             TotalInvested = data.cost;
             animator = GetComponent<ProceduralAnimator>();
+            currentTargetingMode = data.defaultTargetingMode;
         }
 
         /// <summary>Spends gold and upgrades this tower one level.</summary>
@@ -71,7 +78,7 @@ namespace Stonehold
         {
             cooldownTimer -= Time.deltaTime;
 
-            Enemy target = EnemyManager.FindClosestToGoal(transform.position, Range);
+            Enemy target = EnemyManager.FindTarget(transform.position, Range, currentTargetingMode);
             if (target != null && cooldownTimer <= 0f)
             {
                 Fire(target);
