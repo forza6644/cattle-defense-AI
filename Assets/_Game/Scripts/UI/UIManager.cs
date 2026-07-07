@@ -44,6 +44,7 @@ namespace Stonehold
         private Text upgradeButtonLabel;
         private Text sellButtonLabel;
         private readonly List<Text> buildButtonLabels = new List<Text>();
+        private readonly List<Button> buildButtons = new List<Button>();
 
         // Floating text + enemy bars
         private RectTransform barsRoot;
@@ -59,7 +60,9 @@ namespace Stonehold
         private Castle castle;
         private GameManager game;
         private TowerManager towers;
+        private UnlockManager unlocks;
         private Camera cam;
+        private Coroutine bannerRoutine;
 
         // Selection
         private TowerSlot selectedSlot;
@@ -78,6 +81,7 @@ namespace Stonehold
             castle = FindFirstObjectByType<Castle>();
             game = GameManager.Instance;
             towers = FindFirstObjectByType<TowerManager>();
+            unlocks = UnlockManager.Instance != null ? UnlockManager.Instance : FindFirstObjectByType<UnlockManager>();
             cam = Camera.main;
 
             BuildUI();
@@ -86,6 +90,12 @@ namespace Stonehold
             if (waves != null) waves.WaveStarted += OnWaveStarted;
             if (castle != null) castle.HealthChanged += RefreshCastleHealth;
             if (game != null) game.StateChanged += OnStateChanged;
+            if (unlocks != null)
+            {
+                unlocks.UnlocksChanged += RefreshBuildMenu;
+                unlocks.TowerUnlocked += OnTowerUnlocked;
+            }
+
             Enemy.AnyDamaged += OnEnemyDamaged;
             Enemy.AnyKilled += OnEnemyKilled;
 
@@ -100,6 +110,12 @@ namespace Stonehold
             if (waves != null) waves.WaveStarted -= OnWaveStarted;
             if (castle != null) castle.HealthChanged -= RefreshCastleHealth;
             if (game != null) game.StateChanged -= OnStateChanged;
+            if (unlocks != null)
+            {
+                unlocks.UnlocksChanged -= RefreshBuildMenu;
+                unlocks.TowerUnlocked -= OnTowerUnlocked;
+            }
+
             Enemy.AnyDamaged -= OnEnemyDamaged;
             Enemy.AnyKilled -= OnEnemyKilled;
 
@@ -134,7 +150,23 @@ namespace Stonehold
         private void OnWaveStarted(int number, WaveData wave)
         {
             waveText.text = "Wave " + number + "/" + waves.TotalWaves;
-            StartCoroutine(PlayBanner("Wave " + number + " - " + wave.waveLabel));
+            ShowBanner("Wave " + number + " - " + wave.waveLabel);
+        }
+
+        private void OnTowerUnlocked(string message)
+        {
+            RefreshBuildMenu();
+            ShowBanner(message);
+        }
+
+        private void ShowBanner(string message)
+        {
+            if (bannerRoutine != null)
+            {
+                StopCoroutine(bannerRoutine);
+            }
+
+            bannerRoutine = StartCoroutine(PlayBanner(message));
         }
 
         private IEnumerator PlayBanner(string message)
@@ -355,9 +387,23 @@ namespace Stonehold
             for (int i = 0; i < towers.AvailableTowers.Length && i < buildButtonLabels.Count; i++)
             {
                 TowerData data = towers.AvailableTowers[i];
+                bool locked = unlocks != null && !unlocks.IsTowerUnlocked(data);
                 bool affordable = economy != null && economy.Gold >= data.cost;
-                buildButtonLabels[i].text = data.towerName + "\n" + data.cost + " g";
-                buildButtonLabels[i].color = affordable ? Color.white : new Color(1f, 0.45f, 0.45f);
+                string lockMessage = locked ? unlocks.GetLockMessage(data).Replace("Unlocks after ", "Locked: ") : string.Empty;
+                buildButtonLabels[i].text = locked
+                    ? data.towerName + "\n" + lockMessage
+                    : data.towerName + "\n" + data.cost + " g";
+                buildButtonLabels[i].fontSize = locked ? 20 : 24;
+                buildButtonLabels[i].color = locked
+                    ? new Color(0.65f, 0.65f, 0.7f)
+                    : affordable ? Color.white : new Color(1f, 0.45f, 0.45f);
+
+                if (i < buildButtons.Count && buildButtons[i].targetGraphic != null)
+                {
+                    buildButtons[i].targetGraphic.color = locked
+                        ? new Color(0.12f, 0.12f, 0.16f, 0.95f)
+                        : new Color(0.22f, 0.25f, 0.34f, 0.95f);
+                }
             }
         }
 
@@ -420,7 +466,14 @@ namespace Stonehold
                 return;
             }
 
-            if (towers.PlaceTower(selectedSlot, towers.AvailableTowers[index]))
+            TowerData tower = towers.AvailableTowers[index];
+            if (unlocks != null && !unlocks.IsTowerUnlocked(tower))
+            {
+                ShowBanner(tower.towerName + " locked - " + unlocks.GetLockMessage(tower));
+                return;
+            }
+
+            if (towers.PlaceTower(selectedSlot, tower))
             {
                 HideSelectionPanels();
             }
@@ -567,6 +620,7 @@ namespace Stonehold
                 int index = i;
                 Button button = CreateButton(panel, "Build_" + i, "", new Vector2(170f, 74f), new Vector2(0.5f, 0f),
                     new Vector2(startX + i * spacing, 55f), () => OnBuildClicked(index));
+                buildButtons.Add(button);
                 buildButtonLabels.Add(button.GetComponentInChildren<Text>());
             }
 

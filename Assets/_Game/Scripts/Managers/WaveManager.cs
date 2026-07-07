@@ -19,6 +19,9 @@ namespace Stonehold
         /// <summary>Raised at the start of each wave: (wave number, wave data).</summary>
         public event Action<int, WaveData> WaveStarted;
 
+        /// <summary>Raised after a wave has no enemies left: (wave number, wave data).</summary>
+        public event Action<int, WaveData> WaveCleared;
+
         /// <summary>Raised when the last scripted wave has been cleared.</summary>
         public event Action AllWavesCleared;
 
@@ -86,6 +89,7 @@ namespace Stonehold
                 }
 
                 Debug.Log("Wave " + CurrentWave + " cleared");
+                WaveCleared?.Invoke(CurrentWave, wave);
 
                 if (w < config.waves.Length - 1)
                 {

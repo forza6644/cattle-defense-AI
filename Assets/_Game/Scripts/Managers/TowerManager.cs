@@ -141,6 +141,12 @@ namespace Stonehold
                 return false;
             }
 
+            if (UnlockManager.Instance != null && !UnlockManager.Instance.IsTowerUnlocked(towerData))
+            {
+                Debug.Log(towerData.towerName + " is locked. " + UnlockManager.Instance.GetLockMessage(towerData));
+                return false;
+            }
+
             if (EconomyManager.Instance == null || !EconomyManager.Instance.TrySpend(towerData.cost))
             {
                 Debug.Log("Not enough gold to place " + towerData.towerName + " (need " + towerData.cost + ").");
