@@ -40,6 +40,7 @@ namespace Stonehold
         public float NextWaveCountdown { get; private set; }
 
         private Castle castleComponent;
+        private WaypointPath waypointPath;
         private bool startNextWaveRequested;
 
         private bool IsGameOver => castleComponent != null && castleComponent.IsGameOver;
@@ -53,6 +54,21 @@ namespace Stonehold
             }
 
             castleComponent = castle.GetComponent<Castle>();
+
+            GameObject pathObj = GameObject.Find("Path");
+            if (pathObj != null)
+            {
+                waypointPath = pathObj.GetComponent<WaypointPath>();
+                if (waypointPath == null)
+                {
+                    waypointPath = pathObj.AddComponent<WaypointPath>();
+                }
+            }
+            else
+            {
+                Debug.LogWarning("WaveManager: No GameObject named 'Path' found in the scene.");
+            }
+
             StartCoroutine(RunWaves());
         }
 
@@ -169,7 +185,15 @@ namespace Stonehold
             Enemy enemy = spawned.GetComponent<Enemy>();
             if (enemy != null)
             {
-                enemy.SetTarget(castle.transform);
+                if (waypointPath != null && waypointPath.Points != null && waypointPath.Points.Length > 0)
+                {
+                    enemy.SetPath(waypointPath.Points, castleComponent);
+                }
+                else
+                {
+                    Vector3[] fallbackPoints = new Vector3[] { spawnPoint.transform.position, castle.transform.position };
+                    enemy.SetPath(fallbackPoints, castleComponent);
+                }
             }
         }
     }

@@ -20,7 +20,8 @@ namespace Stonehold
         [SerializeField] private EnemyData data;
         [SerializeField] private float arriveDistance = 0.1f;
 
-        private Transform target;
+        private Vector3[] pathPoints;
+        private int currentWaypointIndex;
         private Castle targetCastle;
         private ProceduralAnimator animator;
         private float currentHealth;
@@ -32,9 +33,23 @@ namespace Stonehold
         public float CurrentHealth => currentHealth;
         public float MaxHealth => data != null ? data.health : 0f;
         public bool IsSlowed => slowTimer > 0f;
-        public float RemainingDistanceToTarget => target != null
-            ? Vector3.Distance(transform.position, target.position)
-            : float.PositiveInfinity;
+        public float RemainingDistanceToTarget
+        {
+            get
+            {
+                if (pathPoints == null || pathPoints.Length == 0 || currentWaypointIndex >= pathPoints.Length)
+                {
+                    return float.PositiveInfinity;
+                }
+
+                float distance = Vector3.Distance(transform.position, pathPoints[currentWaypointIndex]);
+                for (int i = currentWaypointIndex; i < pathPoints.Length - 1; i++)
+                {
+                    distance += Vector3.Distance(pathPoints[i], pathPoints[i + 1]);
+                }
+                return distance;
+            }
+        }
 
         private void Awake()
         {
@@ -66,11 +81,16 @@ namespace Stonehold
             EnemyManager.Unregister(this);
         }
 
-        /// <summary>Called by the spawner right after this enemy is created.</summary>
-        public void SetTarget(Transform castle)
+        /// <summary>Called by the spawner right after this enemy is created to set its path.</summary>
+        public void SetPath(Vector3[] points, Castle castle)
         {
-            target = castle;
-            targetCastle = castle != null ? castle.GetComponent<Castle>() : null;
+            pathPoints = points;
+            currentWaypointIndex = 0;
+            targetCastle = castle;
+            if (pathPoints != null && pathPoints.Length > 0)
+            {
+                transform.position = pathPoints[0];
+            }
         }
 
         /// <summary>Called by projectiles. Kills the enemy (awarding gold) at 0 HP.</summary>
@@ -131,7 +151,7 @@ namespace Stonehold
 
         private void Update()
         {
-            if (target == null || isDead)
+            if (pathPoints == null || pathPoints.Length == 0 || isDead)
             {
                 return;
             }
@@ -145,24 +165,52 @@ namespace Stonehold
                 }
             }
 
+            if (currentWaypointIndex >= pathPoints.Length)
+            {
+                ReachCastle();
+                return;
+            }
+
+            Vector3 targetPosition = pathPoints[currentWaypointIndex];
             float speed = data.moveSpeed * slowMultiplier;
+
+            Vector3 direction = (targetPosition - transform.position).normalized;
+            direction.y = 0f;
+            if (direction != Vector3.zero)
+            {
+                transform.rotation = Quaternion.Slerp(
+                    transform.rotation,
+                    Quaternion.LookRotation(direction),
+                    12f * Time.deltaTime);
+            }
+
             transform.position = Vector3.MoveTowards(
                 transform.position,
-                target.position,
+                targetPosition,
                 speed * Time.deltaTime);
 
-            if (Vector3.Distance(transform.position, target.position) <= arriveDistance)
+            if (Vector3.Distance(transform.position, targetPosition) <= arriveDistance)
             {
-                isDead = true;
-                EnemyManager.Unregister(this);
-
-                if (targetCastle != null)
+                currentWaypointIndex++;
+                if (currentWaypointIndex >= pathPoints.Length)
                 {
-                    targetCastle.TakeDamage(data.castleDamage);
+                    ReachCastle();
                 }
-
-                Destroy(gameObject); // Reached the castle: no gold reward.
             }
+        }
+
+        private void ReachCastle()
+        {
+            if (isDead) return;
+            isDead = true;
+            EnemyManager.Unregister(this);
+
+            if (targetCastle != null)
+            {
+                targetCastle.TakeDamage(data.castleDamage);
+            }
+
+            Destroy(gameObject); // Reached the castle: no gold reward.
         }
     }
 }
