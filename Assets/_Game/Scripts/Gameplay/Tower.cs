@@ -96,6 +96,18 @@ namespace Stonehold
             return true;
         }
 
+        /// <summary>Upgrades the tower one level for free (e.g. from draft rewards).</summary>
+        public void UpgradeFree()
+        {
+            if (IsMaxLevel)
+            {
+                return;
+            }
+
+            level++;
+            Debug.Log(data.towerName + " upgraded to level " + level + " for FREE.");
+        }
+
         private void Update()
         {
             cooldownTimer -= Time.deltaTime;

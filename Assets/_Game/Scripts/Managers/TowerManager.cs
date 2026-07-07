@@ -181,6 +181,42 @@ namespace Stonehold
             return true;
         }
 
+        /// <summary>Buys and places a tower on the given slot for free (e.g. from draft rewards).</summary>
+        public bool PlaceTowerFree(TowerSlot slot, TowerData towerData)
+        {
+            if (slot == null || slot.IsOccupied || towerData == null || towerData.prefab == null)
+            {
+                return false;
+            }
+
+            GameObject placed = Instantiate(towerData.prefab, slot.transform.position, Quaternion.identity);
+            slot.SetOccupied(true);
+
+            Tower tower = placed.GetComponent<Tower>();
+            if (tower == null)
+            {
+                tower = placed.GetComponentInChildren<Tower>();
+            }
+
+            if (tower != null)
+            {
+                tower.Slot = slot;
+            }
+
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayPlace(slot.transform.position);
+            }
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayPlace();
+            }
+
+            Debug.Log("Placed " + towerData.towerName + " for FREE.");
+            return true;
+        }
+
         /// <summary>Refund for selling the tower, from GameConfig's refund fraction.</summary>
         public int GetSellValue(Tower tower)
         {

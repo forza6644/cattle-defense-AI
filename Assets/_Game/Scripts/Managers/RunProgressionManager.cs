@@ -145,59 +145,42 @@ namespace Stonehold
 
         private CardChoice[] GenerateChoices()
         {
-            var pool = new System.Collections.Generic.List<CardChoice>();
-
-            // Always eligible: Damage Boost
-            pool.Add(new CardChoice(
-                "Sharp Training",
-                "Boosts all defenders' damage by 10% for the rest of this run.",
-                () => { runDamageMultiplier += 0.10f; }
-            ));
-
-            // Always eligible: Attack Speed Boost
-            pool.Add(new CardChoice(
-                "Rapid Reload",
-                "Boosts all defenders' fire rate by 10% for the rest of this run.",
-                () => { runFireRateMultiplier += 0.10f; }
-            ));
-
-            // Always eligible: Range Boost
-            pool.Add(new CardChoice(
-                "Extended Sights",
-                "Boosts all defenders' range by 10% for the rest of this run.",
-                () => { runRangeMultiplier += 0.10f; }
-            ));
-
-            // Always eligible: XP Gain Boost
-            pool.Add(new CardChoice(
-                "Scholar's Path",
-                "Boosts all run XP gained by 10% for the rest of this run.",
-                () => { runXpMultiplier += 0.10f; }
-            ));
-
-            // Conditional eligible: Repair Wall (only when castle is damaged)
-            var castle = FindFirstObjectByType<Castle>();
-            if (castle != null && castle.CurrentHealth < castle.MaxHealth)
-            {
-                pool.Add(new CardChoice(
-                    "Fortify Walls",
-                    "Repairs the Castle Wall by 20% of its max health.",
-                    () => {
-                        castle.Repair(Mathf.RoundToInt(castle.MaxHealth * 0.20f));
-                    }
-                ));
-            }
-
-            // We must pick exactly 3 unique cards randomly
-            var chosen = new CardChoice[3];
+            var chosenList = new System.Collections.Generic.List<CardChoice>();
             var rng = new System.Random();
+
+            // Compile candidate lists
+            var addCandidates = GetAddCandidates();
+            var upgradeCandidates = GetUpgradeCandidates();
+            var boostCandidates = GetBoostCandidates();
 
             for (int i = 0; i < 3; i++)
             {
-                if (pool.Count == 0)
+                // Determine weights
+                float addWeight = 0f;
+                float upgradeWeight = 0f;
+                float boostWeight = 0f;
+
+                bool hasAdd = addCandidates.Count > 0;
+                bool hasUpgrade = upgradeCandidates.Count > 0;
+                bool hasBoost = boostCandidates.Count > 0;
+
+                if (hasAdd)
                 {
-                    // Fallback choice if pool is depleted
-                    chosen[i] = new CardChoice(
+                    addWeight = 0.6f;
+                    upgradeWeight = hasUpgrade ? 0.2f : 0f;
+                    boostWeight = hasBoost ? 0.2f : 0f;
+                }
+                else
+                {
+                    upgradeWeight = hasUpgrade ? 0.5f : 0f;
+                    boostWeight = hasBoost ? 0.5f : 0f;
+                }
+
+                float totalWeight = addWeight + upgradeWeight + boostWeight;
+                if (totalWeight <= 0f)
+                {
+                    // Fallback choice if all pools are empty
+                    chosenList.Add(new CardChoice(
                         "Minor Blessing",
                         "Gives 15 gold instantly to the treasury.",
                         () => {
@@ -206,16 +189,185 @@ namespace Stonehold
                                 EconomyManager.Instance.AddGold(15);
                             }
                         }
-                    );
+                    ));
                     continue;
                 }
 
-                int idx = rng.Next(pool.Count);
-                chosen[i] = pool[idx];
-                pool.RemoveAt(idx); // prevent duplicate selections!
+                double randVal = rng.NextDouble() * totalWeight;
+                if (hasAdd && randVal < addWeight)
+                {
+                    int idx = rng.Next(addCandidates.Count);
+                    chosenList.Add(addCandidates[idx]);
+                    addCandidates.RemoveAt(idx);
+                }
+                else if (hasUpgrade && randVal < (addWeight + upgradeWeight))
+                {
+                    int idx = rng.Next(upgradeCandidates.Count);
+                    chosenList.Add(upgradeCandidates[idx]);
+                    upgradeCandidates.RemoveAt(idx);
+                }
+                else if (hasBoost)
+                {
+                    int idx = rng.Next(boostCandidates.Count);
+                    chosenList.Add(boostCandidates[idx]);
+                    boostCandidates.RemoveAt(idx);
+                }
+                else
+                {
+                    // Fallback
+                    chosenList.Add(new CardChoice(
+                        "Minor Blessing",
+                        "Gives 15 gold instantly to the treasury.",
+                        () => {
+                            if (EconomyManager.Instance != null)
+                            {
+                                EconomyManager.Instance.AddGold(15);
+                            }
+                        }
+                    ));
+                }
             }
 
-            return chosen;
+            return chosenList.ToArray();
+        }
+
+        private System.Collections.Generic.List<CardChoice> GetAddCandidates()
+        {
+            var candidates = new System.Collections.Generic.List<CardChoice>();
+
+            // Find all empty slots
+            var slots = UnityEngine.Object.FindObjectsByType<TowerSlot>(UnityEngine.FindObjectsSortMode.None);
+            int emptySlotsCount = 0;
+            foreach (var s in slots)
+            {
+                if (!s.IsOccupied) emptySlotsCount++;
+            }
+
+            if (emptySlotsCount == 0)
+            {
+                return candidates; // empty
+            }
+
+            // Find placed defender IDs (only those on wall slots)
+            var activeTowers = UnityEngine.Object.FindObjectsByType<Tower>(UnityEngine.FindObjectsSortMode.None);
+            var placedIds = new System.Collections.Generic.HashSet<string>();
+            foreach (var t in activeTowers)
+            {
+                if (t.Slot != null && t.Data != null && !string.IsNullOrEmpty(t.Data.defenderId))
+                {
+                    placedIds.Add(t.Data.defenderId);
+                }
+            }
+
+            // Find available towers from TowerManager
+            var tm = UnityEngine.Object.FindAnyObjectByType<TowerManager>();
+            if (tm != null && tm.AvailableTowers != null)
+            {
+                foreach (var towerData in tm.AvailableTowers)
+                {
+                    if (towerData != null && !string.IsNullOrEmpty(towerData.defenderId))
+                    {
+                        if (!placedIds.Contains(towerData.defenderId))
+                        {
+                            var dataRef = towerData; // local copy for closure
+                            string displayName = string.IsNullOrEmpty(dataRef.displayNameOverride) ? dataRef.towerName : dataRef.displayNameOverride;
+                            candidates.Add(new CardChoice(
+                                $"Add {displayName}",
+                                $"Places a new {displayName} onto the wall for free.",
+                                () => {
+                                    // Find first available slot
+                                    var sortedSlots = UnityEngine.Object.FindObjectsByType<TowerSlot>(UnityEngine.FindObjectsSortMode.None);
+                                    System.Array.Sort(sortedSlots, (a, b) => string.Compare(a.name, b.name));
+                                    foreach (var s in sortedSlots)
+                                    {
+                                        if (!s.IsOccupied)
+                                        {
+                                            var towerManager = UnityEngine.Object.FindAnyObjectByType<TowerManager>();
+                                            if (towerManager != null)
+                                            {
+                                                towerManager.PlaceTowerFree(s, dataRef);
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            ));
+                        }
+                    }
+                }
+            }
+
+            return candidates;
+        }
+
+        private System.Collections.Generic.List<CardChoice> GetUpgradeCandidates()
+        {
+            var candidates = new System.Collections.Generic.List<CardChoice>();
+
+            var activeTowers = UnityEngine.Object.FindObjectsByType<Tower>(UnityEngine.FindObjectsSortMode.None);
+            foreach (var t in activeTowers)
+            {
+                if (t != null && t.Slot != null && t.Data != null && !t.IsMaxLevel)
+                {
+                    var towerRef = t; // local copy for closure
+                    string displayName = string.IsNullOrEmpty(towerRef.Data.displayNameOverride) ? towerRef.Data.towerName : towerRef.Data.displayNameOverride;
+                    candidates.Add(new CardChoice(
+                        $"Upgrade {displayName}",
+                        $"Upgrades the placed {displayName} to Level {towerRef.Level + 1} for free.",
+                        () => {
+                            if (towerRef != null)
+                            {
+                                towerRef.UpgradeFree();
+                            }
+                        }
+                    ));
+                }
+            }
+
+            return candidates;
+        }
+
+        private System.Collections.Generic.List<CardChoice> GetBoostCandidates()
+        {
+            var candidates = new System.Collections.Generic.List<CardChoice>();
+
+            candidates.Add(new CardChoice(
+                "Sharp Training",
+                "Boosts all defenders' damage by 10% for the rest of this run.",
+                () => { runDamageMultiplier += 0.10f; }
+            ));
+
+            candidates.Add(new CardChoice(
+                "Rapid Reload",
+                "Boosts all defenders' fire rate by 10% for the rest of this run.",
+                () => { runFireRateMultiplier += 0.10f; }
+            ));
+
+            candidates.Add(new CardChoice(
+                "Extended Sights",
+                "Boosts all defenders' range by 10% for the rest of this run.",
+                () => { runRangeMultiplier += 0.10f; }
+            ));
+
+            candidates.Add(new CardChoice(
+                "Scholar's Path",
+                "Boosts all run XP gained by 10% for the rest of this run.",
+                () => { runXpMultiplier += 0.10f; }
+            ));
+
+            var castle = FindFirstObjectByType<Castle>();
+            if (castle != null && castle.CurrentHealth < castle.MaxHealth)
+            {
+                candidates.Add(new CardChoice(
+                    "Fortify Walls",
+                    "Repairs the Castle Wall by 20% of its max health.",
+                    () => {
+                        castle.Repair(Mathf.RoundToInt(castle.MaxHealth * 0.20f));
+                    }
+                ));
+            }
+
+            return candidates;
         }
 
         public void ApplyChoice(CardChoice choice)
