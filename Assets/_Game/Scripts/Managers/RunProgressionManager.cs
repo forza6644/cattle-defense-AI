@@ -16,12 +16,16 @@ namespace Stonehold
             public string title;
             public string description;
             public Action action;
+            public string cardType;
+            public string rarity;
 
-            public CardChoice(string title, string description, Action action)
+            public CardChoice(string title, string description, Action action, string cardType = "Boost", string rarity = "Common")
             {
                 this.title = title;
                 this.description = description;
                 this.action = action;
+                this.cardType = cardType;
+                this.rarity = rarity;
             }
         }
 
@@ -305,7 +309,7 @@ namespace Stonehold
                                     var sortedSlots = UnityEngine.Object.FindObjectsByType<TowerSlot>();
                                     System.Array.Sort(sortedSlots, (a, b) => string.Compare(a.name, b.name));
                                     foreach (var s in sortedSlots)
-                                    {
+                                     {
                                         if (!s.IsOccupied)
                                         {
                                             var towerManager = UnityEngine.Object.FindAnyObjectByType<TowerManager>();
@@ -316,7 +320,9 @@ namespace Stonehold
                                             break;
                                         }
                                     }
-                                }
+                                },
+                                "Add",
+                                dataRef.rarity.ToString()
                             ));
                         }
                     }
@@ -345,7 +351,9 @@ namespace Stonehold
                             {
                                 towerRef.UpgradeFree();
                             }
-                        }
+                        },
+                        "Upgrade",
+                        towerRef.Data.rarity.ToString()
                     ));
                 }
             }
@@ -360,25 +368,33 @@ namespace Stonehold
             candidates.Add(new CardChoice(
                 "Sharp Training",
                 "Boosts all defenders' damage by 10% for the rest of this run.",
-                () => { runDamageMultiplier += 0.10f; }
+                () => { runDamageMultiplier += 0.10f; },
+                "Boost",
+                "Rare"
             ));
 
             candidates.Add(new CardChoice(
                 "Rapid Reload",
                 "Boosts all defenders' fire rate by 10% for the rest of this run.",
-                () => { runFireRateMultiplier += 0.10f; }
+                () => { runFireRateMultiplier += 0.10f; },
+                "Boost",
+                "Rare"
             ));
 
             candidates.Add(new CardChoice(
                 "Extended Sights",
                 "Boosts all defenders' range by 10% for the rest of this run.",
-                () => { runRangeMultiplier += 0.10f; }
+                () => { runRangeMultiplier += 0.10f; },
+                "Boost",
+                "Rare"
             ));
 
             candidates.Add(new CardChoice(
                 "Scholar's Path",
                 "Boosts all run XP gained by 10% for the rest of this run.",
-                () => { runXpMultiplier += 0.10f; }
+                () => { runXpMultiplier += 0.10f; },
+                "Boost",
+                "Epic"
             ));
 
             var castle = FindFirstObjectByType<Castle>();
@@ -389,7 +405,9 @@ namespace Stonehold
                     "Repairs the Castle Wall by 20% of its max health.",
                     () => {
                         castle.Repair(Mathf.RoundToInt(castle.MaxHealth * 0.20f));
-                    }
+                    },
+                    "Boost",
+                    "Common"
                 ));
             }
 

@@ -61,6 +61,10 @@ namespace Stonehold
         private readonly Text[] cardTitleTexts = new Text[3];
         private readonly Text[] cardDescriptionTexts = new Text[3];
         private readonly Button[] cardButtons = new Button[3];
+        private readonly Image[] cardBorders = new Image[3];
+        private readonly Image[] cardInnerBgs = new Image[3];
+        private readonly Image[] cardTypeBadges = new Image[3];
+        private readonly Text[] cardTypeLabels = new Text[3];
         private RunProgressionManager progression;
 
         private Text hintText;
@@ -778,6 +782,74 @@ namespace Stonehold
                     cardDescriptionTexts[i].text = choices[i].description;
                 }
 
+                string cType = choices[i].cardType ?? "Boost";
+                string cRarity = choices[i].rarity ?? "Common";
+
+                // Setup Type Badge colors & texts
+                Color badgeColor = new Color(0.45f, 0.20f, 0.75f, 0.9f); // Default Boost Purple
+                string badgeLabel = "BOOST";
+
+                if (cType == "Add")
+                {
+                    badgeColor = new Color(0.08f, 0.50f, 0.24f, 0.9f); // Emerald Green
+                    badgeLabel = "ADD DEFENDER";
+                }
+                else if (cType == "Upgrade")
+                {
+                    badgeColor = new Color(0.80f, 0.45f, 0.00f, 0.9f); // Fiery Orange
+                    badgeLabel = "UPGRADE";
+                }
+
+                if (cardTypeBadges[i] != null)
+                {
+                    cardTypeBadges[i].color = badgeColor;
+                }
+                if (cardTypeLabels[i] != null)
+                {
+                    cardTypeLabels[i].text = badgeLabel;
+                }
+
+                // Setup Rarity colors
+                Color borderColor = new Color(0.35f, 0.40f, 0.50f, 0.8f); // Common Slate
+                Color innerBgColor = new Color(0.08f, 0.10f, 0.15f, 0.95f);
+                Color btnColor = new Color(0.20f, 0.25f, 0.35f, 1.0f);
+                Color titleColor = new Color(0.90f, 0.90f, 0.95f, 1.0f);
+
+                if (cRarity == "Rare")
+                {
+                    borderColor = new Color(0.12f, 0.55f, 0.95f, 1.0f); // Rare Blue
+                    innerBgColor = new Color(0.05f, 0.08f, 0.18f, 0.95f);
+                    btnColor = new Color(0.10f, 0.40f, 0.80f, 1.0f);
+                    titleColor = new Color(0.40f, 0.80f, 1.0f, 1.0f);
+                }
+                else if (cRarity == "Epic")
+                {
+                    borderColor = new Color(0.65f, 0.15f, 0.85f, 1.0f); // Epic Purple
+                    innerBgColor = new Color(0.08f, 0.05f, 0.18f, 0.95f);
+                    btnColor = new Color(0.50f, 0.10f, 0.70f, 1.0f);
+                    titleColor = new Color(0.85f, 0.50f, 1.0f, 1.0f);
+                }
+                else if (cRarity == "Legendary")
+                {
+                    borderColor = new Color(1.00f, 0.70f, 0.00f, 1.0f); // Legendary Gold
+                    innerBgColor = new Color(0.12f, 0.08f, 0.02f, 0.95f);
+                    btnColor = new Color(0.80f, 0.50f, 0.00f, 1.0f);
+                    titleColor = new Color(1.00f, 0.85f, 0.20f, 1.0f);
+                }
+
+                if (cardBorders[i] != null)
+                {
+                    cardBorders[i].color = borderColor;
+                }
+                if (cardInnerBgs[i] != null)
+                {
+                    cardInnerBgs[i].color = innerBgColor;
+                }
+                if (cardTitleTexts[i] != null)
+                {
+                    cardTitleTexts[i].color = titleColor;
+                }
+
                 if (cardButtons[i] != null)
                 {
                     cardButtons[i].onClick.RemoveAllListeners();
@@ -788,6 +860,13 @@ namespace Stonehold
                             progression.ApplyChoice(choices[index]);
                         }
                     });
+
+                    ColorBlock cb = cardButtons[i].colors;
+                    cb.normalColor = btnColor;
+                    cb.highlightedColor = btnColor * 1.2f;
+                    cb.pressedColor = btnColor * 0.7f;
+                    cb.selectedColor = btnColor;
+                    cardButtons[i].colors = cb;
                 }
             }
 
@@ -998,24 +1077,40 @@ namespace Stonehold
                 border.rectTransform.anchorMax = Vector2.one;
                 border.rectTransform.offsetMin = new Vector2(4f, 4f);
                 border.rectTransform.offsetMax = new Vector2(-4f, -4f);
+                cardBorders[i] = border;
 
                 Image innerBg = CreateImage(border.rectTransform, "InnerBg", new Color(0.08f, 0.1f, 0.15f, 0.95f));
                 innerBg.rectTransform.anchorMin = Vector2.zero;
                 innerBg.rectTransform.anchorMax = Vector2.one;
                 innerBg.rectTransform.offsetMin = new Vector2(4f, 4f);
                 innerBg.rectTransform.offsetMax = new Vector2(-4f, -4f);
+                cardInnerBgs[i] = innerBg;
 
                 RectTransform contentRoot = innerBg.rectTransform;
 
-                cardTitleTexts[i] = CreateText(contentRoot, "Title", "Card Title", 28, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperCenter);
+                // Card Type Badge
+                cardTypeBadges[i] = CreateImage(contentRoot, "TypeBadge", new Color(0.1f, 0.1f, 0.1f, 0.9f));
+                SetAnchored(cardTypeBadges[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(180f, 32f));
+
+                cardTypeLabels[i] = CreateText(cardTypeBadges[i].rectTransform, "Label", "TYPE", 14, Color.white, TextAnchor.MiddleCenter);
+                cardTypeLabels[i].fontStyle = FontStyle.Bold;
+                cardTypeLabels[i].rectTransform.anchorMin = Vector2.zero;
+                cardTypeLabels[i].rectTransform.anchorMax = Vector2.one;
+                cardTypeLabels[i].rectTransform.offsetMin = Vector2.zero;
+                cardTypeLabels[i].rectTransform.offsetMax = Vector2.zero;
+
+                // Title
+                cardTitleTexts[i] = CreateText(contentRoot, "Title", "Card Title", 26, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperCenter);
                 cardTitleTexts[i].fontStyle = FontStyle.Bold;
-                SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(320f, 60f));
+                SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -70f), new Vector2(320f, 60f));
 
-                cardDescriptionTexts[i] = CreateText(contentRoot, "Description", "Card description...", 20, new Color(0.85f, 0.85f, 0.9f), TextAnchor.MiddleCenter);
+                // Description
+                cardDescriptionTexts[i] = CreateText(contentRoot, "Description", "Card description...", 19, new Color(0.85f, 0.85f, 0.9f), TextAnchor.MiddleCenter);
                 cardDescriptionTexts[i].horizontalOverflow = HorizontalWrapMode.Wrap;
-                SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(300f, 220f));
+                SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -20f), new Vector2(300f, 180f));
 
-                cardButtons[i] = CreateButton(contentRoot, "SelectButton", "Select", new Vector2(240f, 60f), new Vector2(0.5f, 0f),
+                // Select Button
+                cardButtons[i] = CreateButton(contentRoot, "SelectButton", "SELECT", new Vector2(240f, 60f), new Vector2(0.5f, 0f),
                     new Vector2(0f, 40f), () => { });
             }
 
