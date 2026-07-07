@@ -16,8 +16,11 @@ namespace Stonehold
 
         /// <summary>Raised whenever the gold amount changes.</summary>
         public event Action GoldChanged;
+        public event Action<int, int> WaveClearBonusAwarded;
 
         public int Gold { get; private set; }
+
+        private WaveManager waves;
 
         private void Awake()
         {
@@ -31,10 +34,40 @@ namespace Stonehold
             Gold = config != null ? config.startingGold : 0;
         }
 
+        private void Start()
+        {
+            waves = FindFirstObjectByType<WaveManager>();
+            if (waves != null)
+            {
+                waves.WaveCleared += OnWaveCleared;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (waves != null)
+            {
+                waves.WaveCleared -= OnWaveCleared;
+            }
+        }
+
         public void AddGold(int amount)
         {
             Gold += amount;
             GoldChanged?.Invoke();
+        }
+
+        private void OnWaveCleared(int waveNumber, WaveData wave)
+        {
+            int bonus = config != null ? config.waveClearGoldBonus : 0;
+            if (bonus <= 0)
+            {
+                return;
+            }
+
+            AddGold(bonus);
+            WaveClearBonusAwarded?.Invoke(waveNumber, bonus);
+            Debug.Log("Wave " + waveNumber + " clear bonus: +" + bonus + " gold");
         }
 
         /// <summary>Spend gold if there is enough. Returns false (and spends nothing) otherwise.</summary>

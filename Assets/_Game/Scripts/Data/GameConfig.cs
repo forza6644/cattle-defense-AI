@@ -12,6 +12,8 @@ namespace Stonehold
     {
         [Header("Economy")]
         public int startingGold;
+        [Tooltip("Gold awarded whenever a wave is fully cleared.")]
+        public int waveClearGoldBonus;
         [Tooltip("Fraction of a tower's total invested gold refunded when sold.")]
         [Range(0f, 1f)]
         public float sellRefundPercent;

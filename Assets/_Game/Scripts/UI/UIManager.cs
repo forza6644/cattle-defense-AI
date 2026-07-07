@@ -93,7 +93,11 @@ namespace Stonehold
 
             BuildUI();
 
-            if (economy != null) economy.GoldChanged += RefreshGold;
+            if (economy != null)
+            {
+                economy.GoldChanged += RefreshGold;
+                economy.WaveClearBonusAwarded += OnWaveClearBonusAwarded;
+            }
             if (waves != null)
             {
                 waves.WaveCountdownStarted += OnWaveCountdownStarted;
@@ -120,7 +124,11 @@ namespace Stonehold
 
         private void OnDestroy()
         {
-            if (economy != null) economy.GoldChanged -= RefreshGold;
+            if (economy != null)
+            {
+                economy.GoldChanged -= RefreshGold;
+                economy.WaveClearBonusAwarded -= OnWaveClearBonusAwarded;
+            }
             if (waves != null)
             {
                 waves.WaveCountdownStarted -= OnWaveCountdownStarted;
@@ -207,6 +215,12 @@ namespace Stonehold
         private void OnWaveCleared(int number, WaveData wave)
         {
             waveText.text = "Wave " + number + "/" + waves.TotalWaves + " cleared";
+        }
+
+        private void OnWaveClearBonusAwarded(int waveNumber, int amount)
+        {
+            waveText.text = "Wave " + waveNumber + "/" + waves.TotalWaves + " cleared  +" + amount + "g";
+            ShowBanner("Wave Clear Bonus: +" + amount + " gold");
         }
 
         private void OnStartNextWaveClicked()
