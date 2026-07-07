@@ -64,6 +64,7 @@ namespace Stonehold
         private UnlockManager unlocks;
         private Camera cam;
         private Coroutine bannerRoutine;
+        private RangeIndicator rangeIndicator;
 
         // Selection
         private TowerSlot selectedSlot;
@@ -84,6 +85,7 @@ namespace Stonehold
             towers = FindFirstObjectByType<TowerManager>();
             unlocks = UnlockManager.Instance != null ? UnlockManager.Instance : FindFirstObjectByType<UnlockManager>();
             cam = Camera.main;
+            rangeIndicator = RangeIndicator.Create();
 
             BuildUI();
 
@@ -359,6 +361,7 @@ namespace Stonehold
             RefreshBuildMenu();
             ShowPanel(buildMenuGroup, true);
             ShowPanel(towerPanelGroup, false);
+            ShowBuildRangeForFirstAvailableTower();
         }
 
         public void ShowTowerPanel(Tower tower)
@@ -368,6 +371,7 @@ namespace Stonehold
             RefreshTowerPanel();
             ShowPanel(towerPanelGroup, true);
             ShowPanel(buildMenuGroup, false);
+            ShowTowerRange(tower);
         }
 
         public void HideSelectionPanels()
@@ -376,6 +380,7 @@ namespace Stonehold
             selectedTower = null;
             ShowPanel(buildMenuGroup, false);
             ShowPanel(towerPanelGroup, false);
+            HideRangeIndicator();
         }
 
         private void RefreshBuildMenu()
@@ -506,6 +511,7 @@ namespace Stonehold
 
             if (economy == null || economy.Gold < tower.cost)
             {
+                PreviewBuildRange(index);
                 ShowBanner("Need " + GetGoldShortfall(tower.cost) + " more gold for " + tower.towerName);
                 RefreshBuildMenu();
                 return;
@@ -658,6 +664,7 @@ namespace Stonehold
                 int index = i;
                 Button button = CreateButton(panel, "Build_" + i, "", new Vector2(170f, 74f), new Vector2(0.5f, 0f),
                     new Vector2(startX + i * spacing, 55f), () => OnBuildClicked(index));
+                AddBuildButtonPreview(button, index);
                 buildButtons.Add(button);
                 buildButtonLabels.Add(button.GetComponentInChildren<Text>());
             }
@@ -791,6 +798,21 @@ namespace Stonehold
             return button;
         }
 
+        private void AddBuildButtonPreview(Button button, int index)
+        {
+            EventTrigger trigger = button.gameObject.AddComponent<EventTrigger>();
+            AddEventTrigger(trigger, EventTriggerType.PointerEnter, () => PreviewBuildRange(index));
+            AddEventTrigger(trigger, EventTriggerType.Select, () => PreviewBuildRange(index));
+            AddEventTrigger(trigger, EventTriggerType.PointerDown, () => PreviewBuildRange(index));
+        }
+
+        private static void AddEventTrigger(EventTrigger trigger, EventTriggerType type, UnityEngine.Events.UnityAction action)
+        {
+            EventTrigger.Entry entry = new EventTrigger.Entry { eventID = type };
+            entry.callback.AddListener(_ => action());
+            trigger.triggers.Add(entry);
+        }
+
         private int GetGoldShortfall(int cost)
         {
             int currentGold = economy != null ? economy.Gold : 0;
@@ -805,6 +827,74 @@ namespace Stonehold
             }
         }
 
+        private void ShowBuildRangeForFirstAvailableTower()
+        {
+            if (towers == null || selectedSlot == null || towers.AvailableTowers == null)
+            {
+                HideRangeIndicator();
+                return;
+            }
+
+            for (int i = 0; i < towers.AvailableTowers.Length; i++)
+            {
+                TowerData tower = towers.AvailableTowers[i];
+                if (tower != null && (unlocks == null || unlocks.IsTowerUnlocked(tower)))
+                {
+                    ShowBuildRange(tower);
+                    return;
+                }
+            }
+
+            HideRangeIndicator();
+        }
+
+        private void PreviewBuildRange(int index)
+        {
+            if (towers == null || towers.AvailableTowers == null || index < 0 || index >= towers.AvailableTowers.Length)
+            {
+                return;
+            }
+
+            TowerData tower = towers.AvailableTowers[index];
+            if (tower == null || (unlocks != null && !unlocks.IsTowerUnlocked(tower)))
+            {
+                HideRangeIndicator();
+                return;
+            }
+
+            ShowBuildRange(tower);
+        }
+
+        private void ShowBuildRange(TowerData tower)
+        {
+            if (selectedSlot == null || tower == null || rangeIndicator == null)
+            {
+                return;
+            }
+
+            rangeIndicator.Show(selectedSlot.transform.position, tower.range, tower.projectileTrailColor);
+        }
+
+        private void ShowTowerRange(Tower tower)
+        {
+            if (tower == null || rangeIndicator == null)
+            {
+                HideRangeIndicator();
+                return;
+            }
+
+            Color color = tower.Data != null ? tower.Data.projectileTrailColor : Color.white;
+            rangeIndicator.Show(tower.transform.position, tower.Range, color);
+        }
+
+        private void HideRangeIndicator()
+        {
+            if (rangeIndicator != null)
+            {
+                rangeIndicator.Hide();
+            }
+        }
+
         private static void SetAnchored(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size)
         {
             rect.anchorMin = anchor;
@@ -812,6 +902,62 @@ namespace Stonehold
             rect.pivot = anchor;
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
+        }
+    }
+
+    internal sealed class RangeIndicator
+    {
+        private const int SegmentCount = 96;
+        private readonly LineRenderer line;
+
+        private RangeIndicator(LineRenderer line)
+        {
+            this.line = line;
+        }
+
+        public static RangeIndicator Create()
+        {
+            GameObject go = new GameObject("Tower Range Indicator");
+            LineRenderer renderer = go.AddComponent<LineRenderer>();
+            renderer.loop = true;
+            renderer.useWorldSpace = true;
+            renderer.positionCount = SegmentCount;
+            renderer.startWidth = 0.08f;
+            renderer.endWidth = 0.08f;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.material = new Material(Shader.Find("Sprites/Default"));
+            go.SetActive(false);
+            return new RangeIndicator(renderer);
+        }
+
+        public void Show(Vector3 center, float radius, Color color)
+        {
+            if (radius <= 0f)
+            {
+                Hide();
+                return;
+            }
+
+            center.y += 0.08f;
+            Color visibleColor = color;
+            visibleColor.a = 0.9f;
+            line.startColor = visibleColor;
+            line.endColor = visibleColor;
+
+            for (int i = 0; i < SegmentCount; i++)
+            {
+                float angle = i / (float)SegmentCount * Mathf.PI * 2f;
+                Vector3 point = center + new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+                line.SetPosition(i, point);
+            }
+
+            line.gameObject.SetActive(true);
+        }
+
+        public void Hide()
+        {
+            line.gameObject.SetActive(false);
         }
     }
 
