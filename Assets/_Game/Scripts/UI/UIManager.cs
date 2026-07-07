@@ -505,6 +505,10 @@ namespace Stonehold
 
         public void ShowBuildMenu(TowerSlot slot)
         {
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                return;
+            }
             selectedSlot = slot;
             selectedTower = null;
             RefreshBuildMenu();

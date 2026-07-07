@@ -18,8 +18,57 @@ namespace Stonehold
         [SerializeField] private TowerData[] availableTowers;
 
         public TowerData[] AvailableTowers => availableTowers;
+        public GameConfig Config => config;
 
         private Camera cam;
+
+        private void Start()
+        {
+            if (config != null && config.draftRunMode)
+            {
+                PlaceStartingDefender();
+            }
+        }
+
+        private void PlaceStartingDefender()
+        {
+            TowerData startingDefender = config != null ? config.defaultStartingDefender : null;
+            if (startingDefender == null && availableTowers != null)
+            {
+                foreach (var t in availableTowers)
+                {
+                    if (t != null && t.defenderId == "archer_defender")
+                    {
+                        startingDefender = t;
+                        break;
+                    }
+                }
+            }
+
+            if (startingDefender == null)
+            {
+                Debug.LogWarning("TowerManager: No starting defender configured or found!");
+                return;
+            }
+
+            TowerSlot[] slots = FindObjectsByType<TowerSlot>();
+            if (slots == null || slots.Length == 0)
+            {
+                Debug.LogWarning("TowerManager: No TowerSlots found in the scene.");
+                return;
+            }
+
+            System.Array.Sort(slots, (a, b) => string.Compare(a.name, b.name));
+
+            int centerIndex = slots.Length / 2;
+            TowerSlot centerSlot = slots[centerIndex];
+
+            if (centerSlot != null && !centerSlot.IsOccupied)
+            {
+                PlaceTowerFree(centerSlot, startingDefender);
+                Debug.Log($"TowerManager: Placed starting defender {startingDefender.towerName} on center slot {centerSlot.name}");
+            }
+        }
 
         private void Update()
         {
@@ -119,6 +168,11 @@ namespace Stonehold
             TowerSlot slot = hit.collider.GetComponentInParent<TowerSlot>();
             if (slot != null && !slot.IsOccupied)
             {
+                if (config != null && config.draftRunMode)
+                {
+                    return;
+                }
+
                 if (UIManager.Instance != null)
                 {
                     UIManager.Instance.ShowBuildMenu(slot);

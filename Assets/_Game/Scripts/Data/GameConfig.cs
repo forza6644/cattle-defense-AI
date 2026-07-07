@@ -28,5 +28,11 @@ namespace Stonehold
         public WaveData[] waves;
         [Tooltip("Pause in seconds between one wave being cleared and the next starting.")]
         public float timeBetweenWaves;
+
+        [Header("Draft Run Mode Settings")]
+        [Tooltip("If true, the game runs in draft mode (starts with 1 defender, other 4 are drafted).")]
+        public bool draftRunMode = true;
+        [Tooltip("The defender placed at the start of a draft run (default Archer).")]
+        public TowerData defaultStartingDefender;
     }
 }
