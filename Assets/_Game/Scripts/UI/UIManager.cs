@@ -747,16 +747,19 @@ namespace Stonehold
 
             BuildBuildMenu();
             BuildTowerPanel();
-            pauseGroup = BuildOverlay("PauseMenu", "PAUSED", Color.white,
+            pauseGroup = BuildOverlay("PauseMenu", "PAUSED", "", Color.white,
                 new (string, UnityEngine.Events.UnityAction)[] {
                     ("Resume", () => { if (game != null) game.TogglePause(); }),
-                    ("Restart", () => { if (game != null) game.Restart(); }) });
-            victoryGroup = BuildOverlay("VictoryScreen", "VICTORY!", new Color(1f, 0.85f, 0.2f),
+                    ("Restart", () => { if (game != null) game.Restart(); }),
+                    ("Main Menu", () => { if (game != null) game.LoadMainMenu(); }) });
+            victoryGroup = BuildOverlay("VictoryScreen", "VICTORY!", "You defeated the Warlord Boss and survived all 12 waves!", new Color(1f, 0.85f, 0.2f),
                 new (string, UnityEngine.Events.UnityAction)[] {
-                    ("Play Again", () => { if (game != null) game.Restart(); }) });
-            defeatGroup = BuildOverlay("DefeatScreen", "DEFEAT", new Color(0.95f, 0.3f, 0.25f),
+                    ("Play Again", () => { if (game != null) game.Restart(); }),
+                    ("Main Menu", () => { if (game != null) game.LoadMainMenu(); }) });
+            defeatGroup = BuildOverlay("DefeatScreen", "DEFEAT", "The castle has fallen. Hold the line next time!", new Color(0.95f, 0.3f, 0.25f),
                 new (string, UnityEngine.Events.UnityAction)[] {
-                    ("Retry", () => { if (game != null) game.Restart(); }) });
+                    ("Retry", () => { if (game != null) game.Restart(); }),
+                    ("Main Menu", () => { if (game != null) game.LoadMainMenu(); }) });
         }
 
         private void BuildBuildMenu()
@@ -843,7 +846,7 @@ namespace Stonehold
             return group;
         }
 
-        private CanvasGroup BuildOverlay(string name, string title, Color titleColor,
+        private CanvasGroup BuildOverlay(string name, string title, string subtitle, Color titleColor,
             (string label, UnityEngine.Events.UnityAction action)[] buttons)
         {
             Image dim = CreateImage(canvasRect, name, new Color(0f, 0f, 0f, 0.72f));
@@ -855,12 +858,20 @@ namespace Stonehold
 
             Text titleText = CreateText(rect, "Title", title, 96, titleColor, TextAnchor.MiddleCenter);
             titleText.fontStyle = FontStyle.Bold;
-            SetAnchored(titleText.rectTransform, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(1200f, 130f));
+            SetAnchored(titleText.rectTransform, new Vector2(0.5f, 0.68f), Vector2.zero, new Vector2(1200f, 130f));
+
+            if (!string.IsNullOrEmpty(subtitle))
+            {
+                Text subtitleText = CreateText(rect, "Subtitle", subtitle, 28, new Color(0.85f, 0.85f, 0.9f), TextAnchor.MiddleCenter);
+                SetAnchored(subtitleText.rectTransform, new Vector2(0.5f, 0.56f), Vector2.zero, new Vector2(1200f, 60f));
+            }
+
+            float buttonStartAnchorY = string.IsNullOrEmpty(subtitle) ? 0.42f : 0.38f;
 
             for (int i = 0; i < buttons.Length; i++)
             {
-                CreateButton(rect, buttons[i].label, buttons[i].label, new Vector2(260f, 70f), new Vector2(0.5f, 0.42f),
-                    new Vector2(0f, -i * 90f), buttons[i].action);
+                CreateButton(rect, buttons[i].label, buttons[i].label, new Vector2(260f, 70f), new Vector2(0.5f, buttonStartAnchorY),
+                    new Vector2(0f, -i * 85f), buttons[i].action);
             }
 
             CanvasGroup group = dim.gameObject.AddComponent<CanvasGroup>();

@@ -97,6 +97,20 @@ namespace Stonehold
             }
         }
 
+        /// <summary>Returns to the main menu scene.</summary>
+        public void LoadMainMenu()
+        {
+            Time.timeScale = 1f;
+            if (SceneFader.Instance != null)
+            {
+                SceneFader.Instance.FadeToScene("MainMenu");
+            }
+            else
+            {
+                SceneManager.LoadScene("MainMenu");
+            }
+        }
+
         private void OnCastleDefeated()
         {
             SetState(GameState.Defeat);
