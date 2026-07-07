@@ -21,6 +21,7 @@ namespace Stonehold
         private Text qualityLabel;
         private RectTransform titleRect;
         private float introTime;
+        private Text statsText;
 
         private void Awake()
         {
@@ -120,6 +121,16 @@ namespace Stonehold
             {
                 CreateButton(canvasRect, "QuitButton", "Quit", new Vector2(340f, 70f), new Vector2(0.5f, 0.22f), Vector2.zero, QuitGame);
             }
+
+            // Stats (top-left)
+            statsText = CreateText(canvasRect, "StatsText", "", 24, new Color(0.85f, 0.85f, 0.9f));
+            statsText.alignment = TextAnchor.UpperLeft;
+            Place(statsText.rectTransform, new Vector2(0f, 1f), new Vector2(220f, -120f), new Vector2(400f, 200f));
+            RefreshStats();
+
+            // Reset Button (top-right)
+            CreateButton(canvasRect, "ResetStatsButton", "Reset Stats", new Vector2(200f, 54f),
+                new Vector2(1f, 1f), new Vector2(-120f, -50f), ResetStats);
 
             BuildSettingsPanel();
         }
@@ -251,6 +262,24 @@ namespace Stonehold
             rect.anchorMax = Vector2.one;
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
+        }
+
+        private void RefreshStats()
+        {
+            if (statsText != null)
+            {
+                statsText.text = "<b>STATS</b>\n" +
+                                 "Best Wave: " + SaveManager.BestWave + "\n" +
+                                 "Wins: " + SaveManager.TotalWins + "\n" +
+                                 "Losses: " + SaveManager.TotalLosses + "\n" +
+                                 "Runs Played: " + SaveManager.TotalRuns;
+            }
+        }
+
+        private void ResetStats()
+        {
+            SaveManager.ResetProgress();
+            RefreshStats();
         }
     }
 }

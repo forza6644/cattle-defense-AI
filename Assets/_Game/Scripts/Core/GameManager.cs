@@ -42,6 +42,8 @@ namespace Stonehold
             if (waveManager != null)
             {
                 waveManager.AllWavesCleared += OnAllWavesCleared;
+                waveManager.WaveStarted += OnWaveStarted;
+                waveManager.WaveCleared += OnWaveCleared;
             }
         }
 
@@ -55,6 +57,8 @@ namespace Stonehold
             if (waveManager != null)
             {
                 waveManager.AllWavesCleared -= OnAllWavesCleared;
+                waveManager.WaveStarted -= OnWaveStarted;
+                waveManager.WaveCleared -= OnWaveCleared;
             }
 
             if (Instance == this)
@@ -113,12 +117,24 @@ namespace Stonehold
 
         private void OnCastleDefeated()
         {
+            SaveManager.RecordLoss();
             SetState(GameState.Defeat);
         }
 
         private void OnAllWavesCleared()
         {
+            SaveManager.RecordWin();
             SetState(GameState.Victory);
+        }
+
+        private void OnWaveStarted(int waveNumber, WaveData wave)
+        {
+            SaveManager.UpdateBestWave(waveNumber);
+        }
+
+        private void OnWaveCleared(int waveNumber, WaveData wave)
+        {
+            SaveManager.UpdateBestWave(waveNumber);
         }
 
         private void SetState(GameState newState)
