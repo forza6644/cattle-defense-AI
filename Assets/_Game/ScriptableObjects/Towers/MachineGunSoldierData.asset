@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6b0a908e4efb804b88ca332b61428d8, type: 3}
+  m_Name: MachineGunSoldierData
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerData
+  towerName: Machine Gun Soldier
+  prefab: {fileID: 1423488070482060831, guid: 2a3b4c5d6e708190a1b2c3d4e5f60718, type: 3}
+  defenderId: machine_gun_soldier
+  displayNameOverride: Machine Gun Soldier
+  defenderDescription: Very fast shots with lower damage per hit.
+  role: 1
+  rarity: 1
+  damage: 4
+  range: 7.5
+  fireRate: 3.5
+  defaultTargetingMode: 0
+  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  projectileTrailColor: {r: 1, g: 0.9, b: 0.35, a: 1}
+  attackSound: {fileID: 8300000, guid: 3e73059e59a301b4bac3f80eb5caaac4, type: 3}
+  splashRadius: 0
+  slowMultiplier: 1
+  slowDuration: 0
+  dotDamage: 0
+  dotDuration: 0
+  chainCount: 0
+  chainRange: 0
+  runLevelMultipliers:
+  - 1
+  metaLevelMultipliers:
+  - 1
+  cost: 70
+  maxLevel: 3
+  damageMultiplierPerLevel: 1.6
+  rangeMultiplierPerLevel: 1.08

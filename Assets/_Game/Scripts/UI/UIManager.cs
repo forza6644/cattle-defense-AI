@@ -521,15 +521,16 @@ namespace Stonehold
             for (int i = 0; i < towers.AvailableTowers.Length && i < buildButtonLabels.Count; i++)
             {
                 TowerData data = towers.AvailableTowers[i];
+                string displayName = GetTowerDisplayName(data);
                 bool locked = unlocks != null && !unlocks.IsTowerUnlocked(data);
                 bool affordable = economy != null && economy.Gold >= data.cost;
                 string lockMessage = locked ? unlocks.GetLockMessage(data).Replace("Unlocks after ", "Locked: ") : string.Empty;
                 buildButtonLabels[i].text = locked
-                    ? data.towerName + "\n" + lockMessage
+                    ? displayName + "\n" + lockMessage
                     : affordable
-                        ? data.towerName + "\n" + data.cost + " g"
-                        : data.towerName + "\nNeed " + GetGoldShortfall(data.cost) + " g";
-                buildButtonLabels[i].fontSize = locked || !affordable ? 20 : 24;
+                        ? displayName + "\n" + data.cost + " g"
+                        : displayName + "\nNeed " + GetGoldShortfall(data.cost) + " g";
+                buildButtonLabels[i].fontSize = locked || !affordable || displayName.Length > 14 ? 18 : 20;
                 buildButtonLabels[i].color = locked
                     ? new Color(0.65f, 0.65f, 0.7f)
                     : affordable ? Color.white : new Color(1f, 0.45f, 0.45f);
@@ -574,7 +575,7 @@ namespace Stonehold
                 return;
             }
 
-            towerPanelTitle.text = selectedTower.Data.towerName + "  -  Level " + selectedTower.Level
+            towerPanelTitle.text = GetTowerDisplayName(selectedTower.Data) + "  -  Level " + selectedTower.Level
                 + "  (damage " + selectedTower.Damage.ToString("0.#") + ")";
 
             if (selectedTower.IsMaxLevel)
@@ -615,7 +616,7 @@ namespace Stonehold
 
             if (selectedTower.IsMaxLevel)
             {
-                ShowBanner(selectedTower.Data.towerName + " is already max level");
+                ShowBanner(GetTowerDisplayName(selectedTower.Data) + " is already max level");
                 return;
             }
 
@@ -678,16 +679,17 @@ namespace Stonehold
             }
 
             TowerData tower = towers.AvailableTowers[index];
+            string displayName = GetTowerDisplayName(tower);
             if (unlocks != null && !unlocks.IsTowerUnlocked(tower))
             {
-                ShowBanner(tower.towerName + " locked - " + unlocks.GetLockMessage(tower));
+                ShowBanner(displayName + " locked - " + unlocks.GetLockMessage(tower));
                 return;
             }
 
             if (economy == null || economy.Gold < tower.cost)
             {
                 PreviewBuildRange(index);
-                ShowBanner("Need " + GetGoldShortfall(tower.cost) + " more gold for " + tower.towerName);
+                ShowBanner("Need " + GetGoldShortfall(tower.cost) + " more gold for " + displayName);
                 RefreshBuildMenu();
                 return;
             }
@@ -864,18 +866,31 @@ namespace Stonehold
         private void BuildBuildMenu()
         {
             buildMenuGroup = CreateBottomPanel("BuildMenu", out RectTransform panel);
+            int count = towers != null ? towers.AvailableTowers.Length : 0;
+            bool twoRows = count > 3;
+            if (twoRows)
+            {
+                SetAnchored(panel, new Vector2(0.5f, 0f), new Vector2(0f, 125f), new Vector2(760f, 230f));
+            }
+
             CreateText(panel, "Title", "Build Defender", 26, Color.white, TextAnchor.UpperCenter)
                 .rectTransform.SetAnchored(new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(400f, 34f));
 
-            int count = towers != null ? towers.AvailableTowers.Length : 0;
-            float spacing = 190f;
-            float startX = -(count - 1) * spacing / 2f;
+            int topRowCount = twoRows ? Mathf.CeilToInt(count * 0.5f) : count;
+            int bottomRowCount = count - topRowCount;
+            float spacing = twoRows ? 230f : 190f;
 
             for (int i = 0; i < count; i++)
             {
                 int index = i;
-                Button button = CreateButton(panel, "Build_" + i, "", new Vector2(170f, 74f), new Vector2(0.5f, 0f),
-                    new Vector2(startX + i * spacing, 55f), () => OnBuildClicked(index));
+                int row = twoRows && i >= topRowCount ? 1 : 0;
+                int rowIndex = row == 0 ? i : i - topRowCount;
+                int rowCount = row == 0 ? topRowCount : bottomRowCount;
+                float startX = -(rowCount - 1) * spacing / 2f;
+                float y = twoRows ? (row == 0 ? 118f : 48f) : 55f;
+                Vector2 buttonSize = twoRows ? new Vector2(210f, 58f) : new Vector2(170f, 74f);
+                Button button = CreateButton(panel, "Build_" + i, "", buttonSize, new Vector2(0.5f, 0f),
+                    new Vector2(startX + rowIndex * spacing, y), () => OnBuildClicked(index));
                 AddBuildButtonPreview(button, index);
                 buildButtons.Add(button);
                 buildButtonLabels.Add(button.GetComponentInChildren<Text>());
@@ -883,6 +898,16 @@ namespace Stonehold
 
             CreateButton(panel, "Cancel", "X", new Vector2(44f, 44f), new Vector2(1f, 1f),
                 new Vector2(-30f, -28f), HideSelectionPanels);
+        }
+
+        private static string GetTowerDisplayName(TowerData data)
+        {
+            if (data == null)
+            {
+                return string.Empty;
+            }
+
+            return string.IsNullOrEmpty(data.displayNameOverride) ? data.towerName : data.displayNameOverride;
         }
 
         private void BuildTowerPanel()

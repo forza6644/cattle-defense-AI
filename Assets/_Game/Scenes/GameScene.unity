@@ -3950,9 +3950,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerManager
   config: {fileID: 11400000, guid: 3f5b0f12658ec5f4facaf976d2a6431c, type: 2}
   availableTowers:
-  - {fileID: 11400000, guid: 913ec32bacf11ea4fa33ef148ee83271, type: 2}
-  - {fileID: 11400000, guid: fa9334c9b83cfb249b4ec8fc10b27620, type: 2}
-  - {fileID: 11400000, guid: 924a652a880951e49870402480d94dd0, type: 2}
+  - {fileID: 11400000, guid: a71b0f13c2de4f10a3ab5c6d7e8f9012, type: 2}
+  - {fileID: 11400000, guid: b82c1d24d3ef5011b4bc6d7e8f9023a4, type: 2}
+  - {fileID: 11400000, guid: c93d2e35e4f06122c5cd7e8f9034b5c6, type: 2}
+  - {fileID: 11400000, guid: d04e3f46f5017233d6de8f9045c6d7e8, type: 2}
+  - {fileID: 11400000, guid: e15f405706128344e7ef9056d7e8f901, type: 2}
 --- !u!114 &271979490
 MonoBehaviour:
   m_ObjectHideFlags: 0
