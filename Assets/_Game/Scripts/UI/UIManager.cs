@@ -53,6 +53,10 @@ namespace Stonehold
         private readonly List<Text> buildButtonLabels = new List<Text>();
         private readonly List<Button> buildButtons = new List<Button>();
 
+        private Text hintText;
+        private float hintTimer;
+        private bool hasShownTargetingHint;
+
         // Floating text + enemy bars
         private RectTransform barsRoot;
         private RectTransform floatingRoot;
@@ -122,6 +126,8 @@ namespace Stonehold
             RefreshGold();
             RefreshCastleHealth();
             waveText.text = "Wave -/" + (waves != null ? waves.TotalWaves.ToString() : "-");
+
+            ShowHint("Build Arrow Towers to stop the first Grunts.");
         }
 
         private void OnDestroy()
@@ -190,6 +196,15 @@ namespace Stonehold
             {
                 ShowBanner("Wave " + number + " - " + wave.waveLabel);
             }
+
+            if (number == 2)
+            {
+                ShowHint("Armored enemies reduce damage. Cannon hits them harder.");
+            }
+            else if (number == 3)
+            {
+                ShowHint("Runners are fast. Frost and Cannon help stop them.");
+            }
         }
 
         private void OnWaveCountdownStarted(int number, WaveData wave, float secondsRemaining)
@@ -204,6 +219,11 @@ namespace Stonehold
 
             ShowPanel(waveControlGroup, true);
             ShowBanner("Prepare: Wave " + number);
+
+            if (number == 12)
+            {
+                ShowHint("Final Boss incoming! Upgrade towers and use targeting modes.");
+            }
         }
 
         private void OnWaveCountdownChanged(float secondsRemaining)
@@ -244,6 +264,15 @@ namespace Stonehold
         {
             RefreshBuildMenu();
             ShowBanner(message);
+
+            if (message.ToLowerInvariant().Contains("cannon"))
+            {
+                ShowHint("Cannon unlocked! Use splash damage against groups and Armored enemies.");
+            }
+            else if (message.ToLowerInvariant().Contains("frost"))
+            {
+                ShowHint("Frost unlocked! Slow fast Runners and tough Brutes.");
+            }
         }
 
         private void ShowBanner(string message)
@@ -456,6 +485,12 @@ namespace Stonehold
             ShowPanel(towerPanelGroup, true);
             ShowPanel(buildMenuGroup, false);
             ShowTowerRange(tower);
+
+            if (!hasShownTargetingHint)
+            {
+                hasShownTargetingHint = true;
+                ShowHint("Use Target mode to choose how this tower picks enemies.");
+            }
         }
 
         public void HideSelectionPanels()
@@ -642,6 +677,28 @@ namespace Stonehold
             ShowPanel(defeatGroup, state == GameState.Defeat);
         }
 
+        public void ShowHint(string message)
+        {
+            if (hintText != null)
+            {
+                hintText.text = message;
+                hintText.gameObject.SetActive(true);
+                hintTimer = 7.5f;
+            }
+        }
+
+        private void Update()
+        {
+            if (hintText != null && hintText.gameObject.activeSelf)
+            {
+                hintTimer -= Time.deltaTime;
+                if (hintTimer <= 0f)
+                {
+                    hintText.gameObject.SetActive(false);
+                }
+            }
+        }
+
         private void ShowPanel(CanvasGroup group, bool visible)
         {
             if (group == null)
@@ -715,6 +772,12 @@ namespace Stonehold
             // Wave counter (top-center)
             waveText = CreateText(canvasRect, "WaveText", "Wave -", 40, Color.white, TextAnchor.UpperCenter);
             SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(400f, 60f));
+
+            // Hint Text (top-center, below wave counter)
+            hintText = CreateText(canvasRect, "HintText", "", 24, new Color(0.9f, 0.9f, 1f), TextAnchor.UpperCenter);
+            SetAnchored(hintText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -80f), new Vector2(1000f, 60f));
+            hintText.gameObject.SetActive(false);
+
             BuildWaveControl();
 
             // Castle HP bar (top-right)
