@@ -29,6 +29,10 @@ namespace Stonehold
         private Text castleHpText;
         private RectTransform castleHpFill;
         private Image castleHpFillImage;
+        private CanvasGroup waveControlGroup;
+        private Text waveStatusText;
+        private Text waveCountdownText;
+        private Button startWaveButton;
 
         // Banner
         private CanvasGroup bannerGroup;
@@ -90,7 +94,14 @@ namespace Stonehold
             BuildUI();
 
             if (economy != null) economy.GoldChanged += RefreshGold;
-            if (waves != null) waves.WaveStarted += OnWaveStarted;
+            if (waves != null)
+            {
+                waves.WaveCountdownStarted += OnWaveCountdownStarted;
+                waves.WaveCountdownChanged += OnWaveCountdownChanged;
+                waves.WaveCountdownFinished += OnWaveCountdownFinished;
+                waves.WaveStarted += OnWaveStarted;
+                waves.WaveCleared += OnWaveCleared;
+            }
             if (castle != null) castle.HealthChanged += RefreshCastleHealth;
             if (game != null) game.StateChanged += OnStateChanged;
             if (unlocks != null)
@@ -110,7 +121,14 @@ namespace Stonehold
         private void OnDestroy()
         {
             if (economy != null) economy.GoldChanged -= RefreshGold;
-            if (waves != null) waves.WaveStarted -= OnWaveStarted;
+            if (waves != null)
+            {
+                waves.WaveCountdownStarted -= OnWaveCountdownStarted;
+                waves.WaveCountdownChanged -= OnWaveCountdownChanged;
+                waves.WaveCountdownFinished -= OnWaveCountdownFinished;
+                waves.WaveStarted -= OnWaveStarted;
+                waves.WaveCleared -= OnWaveCleared;
+            }
             if (castle != null) castle.HealthChanged -= RefreshCastleHealth;
             if (game != null) game.StateChanged -= OnStateChanged;
             if (unlocks != null)
@@ -152,8 +170,51 @@ namespace Stonehold
 
         private void OnWaveStarted(int number, WaveData wave)
         {
+            ShowPanel(waveControlGroup, false);
             waveText.text = "Wave " + number + "/" + waves.TotalWaves;
             ShowBanner("Wave " + number + " - " + wave.waveLabel);
+        }
+
+        private void OnWaveCountdownStarted(int number, WaveData wave, float secondsRemaining)
+        {
+            waveText.text = "Next: Wave " + number + "/" + waves.TotalWaves;
+            waveStatusText.text = "Next: " + wave.waveLabel;
+            OnWaveCountdownChanged(secondsRemaining);
+            if (startWaveButton != null)
+            {
+                startWaveButton.interactable = true;
+            }
+
+            ShowPanel(waveControlGroup, true);
+            ShowBanner("Prepare: Wave " + number);
+        }
+
+        private void OnWaveCountdownChanged(float secondsRemaining)
+        {
+            waveCountdownText.text = "Auto starts in " + Mathf.CeilToInt(secondsRemaining) + "s";
+        }
+
+        private void OnWaveCountdownFinished()
+        {
+            if (startWaveButton != null)
+            {
+                startWaveButton.interactable = false;
+            }
+
+            ShowPanel(waveControlGroup, false);
+        }
+
+        private void OnWaveCleared(int number, WaveData wave)
+        {
+            waveText.text = "Wave " + number + "/" + waves.TotalWaves + " cleared";
+        }
+
+        private void OnStartNextWaveClicked()
+        {
+            if (waves != null)
+            {
+                waves.StartNextWaveNow();
+            }
         }
 
         private void OnTowerUnlocked(string message)
@@ -606,6 +667,7 @@ namespace Stonehold
             // Wave counter (top-center)
             waveText = CreateText(canvasRect, "WaveText", "Wave -", 40, Color.white, TextAnchor.UpperCenter);
             SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(400f, 60f));
+            BuildWaveControl();
 
             // Castle HP bar (top-right)
             Image hpBg = CreateImage(canvasRect, "CastleHpBar", new Color(0f, 0f, 0f, 0.6f));
@@ -690,6 +752,29 @@ namespace Stonehold
 
             CreateButton(panel, "Close", "X", new Vector2(44f, 44f), new Vector2(1f, 1f),
                 new Vector2(-30f, -28f), HideSelectionPanels);
+        }
+
+        private void BuildWaveControl()
+        {
+            Image bg = CreateImage(canvasRect, "WaveControl", new Color(0.08f, 0.08f, 0.12f, 0.9f));
+            RectTransform panel = bg.rectTransform;
+            SetAnchored(panel, new Vector2(0.5f, 1f), new Vector2(0f, -108f), new Vector2(560f, 96f));
+
+            waveStatusText = CreateText(panel, "Status", "Next Wave", 24, Color.white, TextAnchor.UpperLeft);
+            waveStatusText.fontStyle = FontStyle.Bold;
+            SetAnchored(waveStatusText.rectTransform, new Vector2(0f, 1f), new Vector2(22f, -14f), new Vector2(350f, 34f));
+
+            waveCountdownText = CreateText(panel, "Countdown", "Auto starts in 5s", 22, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
+            SetAnchored(waveCountdownText.rectTransform, new Vector2(0f, 1f), new Vector2(22f, -48f), new Vector2(350f, 30f));
+
+            startWaveButton = CreateButton(panel, "StartNextWaveButton", "Start", new Vector2(150f, 48f), new Vector2(1f, 0.5f),
+                new Vector2(-94f, 0f), OnStartNextWaveClicked);
+
+            waveControlGroup = bg.gameObject.AddComponent<CanvasGroup>();
+            waveControlGroup.alpha = 0f;
+            waveControlGroup.interactable = false;
+            waveControlGroup.blocksRaycasts = false;
+            startWaveButton.interactable = false;
         }
 
         private CanvasGroup CreateBottomPanel(string name, out RectTransform panel)

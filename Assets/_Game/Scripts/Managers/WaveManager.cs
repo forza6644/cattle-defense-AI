@@ -19,6 +19,15 @@ namespace Stonehold
         /// <summary>Raised at the start of each wave: (wave number, wave data).</summary>
         public event Action<int, WaveData> WaveStarted;
 
+        /// <summary>Raised while waiting to start a wave: (wave number, wave data, seconds remaining).</summary>
+        public event Action<int, WaveData, float> WaveCountdownStarted;
+
+        /// <summary>Raised each frame while waiting to start the next wave.</summary>
+        public event Action<float> WaveCountdownChanged;
+
+        /// <summary>Raised when countdown ends or the player starts the wave early.</summary>
+        public event Action WaveCountdownFinished;
+
         /// <summary>Raised after a wave has no enemies left: (wave number, wave data).</summary>
         public event Action<int, WaveData> WaveCleared;
 
@@ -27,8 +36,11 @@ namespace Stonehold
 
         public int CurrentWave { get; private set; }
         public int TotalWaves => config != null && config.waves != null ? config.waves.Length : 0;
+        public bool IsWaitingForWave { get; private set; }
+        public float NextWaveCountdown { get; private set; }
 
         private Castle castleComponent;
+        private bool startNextWaveRequested;
 
         private bool IsGameOver => castleComponent != null && castleComponent.IsGameOver;
 
@@ -53,8 +65,15 @@ namespace Stonehold
                     yield break;
                 }
 
-                CurrentWave = w + 1;
                 WaveData wave = config.waves[w];
+                yield return WaitForWaveStart(w + 1, wave);
+
+                if (IsGameOver)
+                {
+                    yield break;
+                }
+
+                CurrentWave = w + 1;
                 WaveStarted?.Invoke(CurrentWave, wave);
                 Debug.Log("Wave " + CurrentWave + "/" + TotalWaves + " (" + wave.waveLabel + ") starting");
 
@@ -91,14 +110,50 @@ namespace Stonehold
                 Debug.Log("Wave " + CurrentWave + " cleared");
                 WaveCleared?.Invoke(CurrentWave, wave);
 
-                if (w < config.waves.Length - 1)
-                {
-                    yield return new WaitForSeconds(config.timeBetweenWaves);
-                }
             }
 
             Debug.Log("All " + TotalWaves + " waves cleared - VICTORY");
             AllWavesCleared?.Invoke();
+        }
+
+        public void StartNextWaveNow()
+        {
+            if (IsWaitingForWave)
+            {
+                startNextWaveRequested = true;
+            }
+        }
+
+        private IEnumerator WaitForWaveStart(int waveNumber, WaveData wave)
+        {
+            float waitTime = Mathf.Max(0f, config.timeBetweenWaves);
+            if (waitTime <= 0f)
+            {
+                yield break;
+            }
+
+            IsWaitingForWave = true;
+            startNextWaveRequested = false;
+            NextWaveCountdown = waitTime;
+            WaveCountdownStarted?.Invoke(waveNumber, wave, NextWaveCountdown);
+            WaveCountdownChanged?.Invoke(NextWaveCountdown);
+
+            while (NextWaveCountdown > 0f && !startNextWaveRequested)
+            {
+                if (IsGameOver)
+                {
+                    break;
+                }
+
+                yield return null;
+                NextWaveCountdown = Mathf.Max(0f, NextWaveCountdown - Time.deltaTime);
+                WaveCountdownChanged?.Invoke(NextWaveCountdown);
+            }
+
+            IsWaitingForWave = false;
+            startNextWaveRequested = false;
+            NextWaveCountdown = 0f;
+            WaveCountdownFinished?.Invoke();
         }
 
         private void SpawnEnemy(EnemyData enemyData)
