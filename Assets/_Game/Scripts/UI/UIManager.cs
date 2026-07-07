@@ -182,7 +182,14 @@ namespace Stonehold
         {
             ShowPanel(waveControlGroup, false);
             waveText.text = "Wave " + number + "/" + waves.TotalWaves;
-            ShowBanner("Wave " + number + " - " + wave.waveLabel);
+            if (waves != null && number == waves.TotalWaves)
+            {
+                ShowBanner("!!! WARNING: FINAL BOSS WAVE !!!");
+            }
+            else
+            {
+                ShowBanner("Wave " + number + " - " + wave.waveLabel);
+            }
         }
 
         private void OnWaveCountdownStarted(int number, WaveData wave, float secondsRemaining)

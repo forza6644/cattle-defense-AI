@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 023039d46d0c89b45a888656b243966f, type: 3}
+  m_Name: BossData
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
+  enemyName: Warlord Boss
+  prefab: {fileID: 5555025361673445348, guid: 7126104e8d4a4133b1465b247095a77a, type: 3}
+  health: 500
+  moveSpeed: 1.2
+  armor: 8
+  goldReward: 200
+  castleDamage: 10
