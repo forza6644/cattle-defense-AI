@@ -124,6 +124,10 @@ namespace Stonehold
         private void OnAllWavesCleared()
         {
             SaveManager.RecordWin();
+            if (SaveManager.SelectedStageIndex == 0)
+            {
+                SaveManager.CompleteStage1();
+            }
             SetState(GameState.Victory);
         }
 

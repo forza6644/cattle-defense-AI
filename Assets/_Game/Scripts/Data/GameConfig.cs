@@ -21,7 +21,10 @@ namespace Stonehold
         [Header("Castle")]
         public int castleMaxHealth;
 
-        [Header("Waves (in order)")]
+        [Header("Stages")]
+        public StageData[] stages;
+
+        [Header("Waves (in order - Legacy fallback)")]
         public WaveData[] waves;
         [Tooltip("Pause in seconds between one wave being cleared and the next starting.")]
         public float timeBetweenWaves;

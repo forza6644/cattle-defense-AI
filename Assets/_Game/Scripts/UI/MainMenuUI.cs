@@ -22,6 +22,12 @@ namespace Stonehold
         private RectTransform titleRect;
         private float introTime;
         private Text statsText;
+        private Text stageNameText;
+        private Text stageDescText;
+        private Button prevStageBtn;
+        private Button nextStageBtn;
+        private Button startButton;
+        private Text startButtonLabel;
 
         private void Awake()
         {
@@ -114,12 +120,14 @@ namespace Stonehold
             Place(subtitle.rectTransform, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(900f, 50f));
 
             // Main buttons
-            CreateButton(canvasRect, "PlayButton", "Play", new Vector2(340f, 84f), new Vector2(0.5f, 0.45f), Vector2.zero, Play);
-            CreateButton(canvasRect, "SettingsButton", "Settings", new Vector2(340f, 70f), new Vector2(0.5f, 0.33f), Vector2.zero, () => ShowSettings(true));
+            startButton = CreateButton(canvasRect, "StartButton", "Start Stage", new Vector2(340f, 84f), new Vector2(0.5f, 0.40f), Vector2.zero, Play);
+            startButtonLabel = startButton.GetComponentInChildren<Text>();
+
+            CreateButton(canvasRect, "SettingsButton", "Settings", new Vector2(340f, 70f), new Vector2(0.5f, 0.28f), Vector2.zero, () => ShowSettings(true));
 
             if (!Application.isMobilePlatform)
             {
-                CreateButton(canvasRect, "QuitButton", "Quit", new Vector2(340f, 70f), new Vector2(0.5f, 0.22f), Vector2.zero, QuitGame);
+                CreateButton(canvasRect, "QuitButton", "Quit", new Vector2(340f, 70f), new Vector2(0.5f, 0.17f), Vector2.zero, QuitGame);
             }
 
             // Stats (top-left)
@@ -132,6 +140,33 @@ namespace Stonehold
             CreateButton(canvasRect, "ResetStatsButton", "Reset Stats", new Vector2(200f, 54f),
                 new Vector2(1f, 1f), new Vector2(-120f, -50f), ResetStats);
 
+            // Stage Selection Panel (center-top)
+            Image stageBg = CreateImage(canvasRect, "StagePanel", new Color(0.12f, 0.16f, 0.24f, 0.6f));
+            Place(stageBg.rectTransform, new Vector2(0.5f, 0.54f), Vector2.zero, new Vector2(700f, 130f));
+
+            stageNameText = CreateText(stageBg.rectTransform, "StageName", "", 24, Color.white);
+            Place(stageNameText.rectTransform, new Vector2(0.5f, 0.72f), Vector2.zero, new Vector2(600f, 32f));
+
+            stageDescText = CreateText(stageBg.rectTransform, "StageDesc", "", 18, new Color(0.8f, 0.8f, 0.85f));
+            Place(stageDescText.rectTransform, new Vector2(0.5f, 0.32f), Vector2.zero, new Vector2(600f, 60f));
+
+            prevStageBtn = CreateButton(stageBg.rectTransform, "PrevStage", "<", new Vector2(46f, 46f),
+                new Vector2(0f, 0.5f), new Vector2(30f, 0f), () => CycleStage(-1));
+
+            nextStageBtn = CreateButton(stageBg.rectTransform, "NextStage", ">", new Vector2(46f, 46f),
+                new Vector2(1f, 0.5f), new Vector2(-30f, 0f), () => CycleStage(1));
+
+            // Offers / Events Placeholder (right-side)
+            Image offersBg = CreateImage(canvasRect, "OffersPanel", new Color(0.12f, 0.16f, 0.24f, 0.6f));
+            Place(offersBg.rectTransform, new Vector2(1f, 0.5f), new Vector2(-220f, -50f), new Vector2(320f, 400f));
+
+            Text offersTitle = CreateText(offersBg.rectTransform, "Title", "OFFERS & EVENTS", 24, new Color(1f, 0.85f, 0.35f));
+            Place(offersTitle.rectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(280f, 40f));
+
+            Text offersBody = CreateText(offersBg.rectTransform, "Body", "Offers / Events\ncoming soon", 20, new Color(0.7f, 0.7f, 0.75f));
+            Place(offersBody.rectTransform, new Vector2(0.5f, 0.45f), Vector2.zero, new Vector2(280f, 200f));
+
+            RefreshStageSelection();
             BuildSettingsPanel();
         }
 
@@ -290,6 +325,44 @@ namespace Stonehold
         {
             SaveManager.ResetProgress();
             RefreshStats();
+            RefreshStageSelection();
+        }
+
+        private void RefreshStageSelection()
+        {
+            int selected = SaveManager.SelectedStageIndex;
+            if (stageNameText != null && stageDescText != null)
+            {
+                if (selected == 0)
+                {
+                    stageNameText.text = "<b>Stage 1: Castle Road</b>";
+                    stageDescText.text = "Defend the road to the keep against grunts, armored troops, runners, and the final boss.\n" +
+                                         "<color=#ffd759>Progress: " + (SaveManager.Stage1Completed ? "Completed" : "Not Cleared") + "</color>";
+                    if (startButtonLabel != null) startButtonLabel.text = "Start Stage";
+                    if (startButton != null) startButton.interactable = true;
+                }
+                else
+                {
+                    stageNameText.text = "<b>Stage 2: Highlands</b>";
+                    bool isUnlocked = SaveManager.HighestStageUnlocked >= 2;
+                    stageDescText.text = isUnlocked
+                        ? "Defend the highland pass. Expected enemy types: Giants, Wyverns.\n<color=#ffd759>Progress: Not Cleared</color>"
+                        : "Defend the highland pass. Expected enemy types: Giants, Wyverns.\n<color=#ff5959>LOCKED: Complete Stage 1 to unlock</color>";
+
+                    if (startButtonLabel != null) startButtonLabel.text = isUnlocked ? "Start Stage" : "LOCKED";
+                    if (startButton != null) startButton.interactable = isUnlocked;
+                }
+            }
+        }
+
+        private void CycleStage(int delta)
+        {
+            int newIndex = SaveManager.SelectedStageIndex + delta;
+            if (newIndex >= 0 && newIndex < 2)
+            {
+                SaveManager.SetSelectedStage(newIndex);
+                RefreshStageSelection();
+            }
         }
     }
 }

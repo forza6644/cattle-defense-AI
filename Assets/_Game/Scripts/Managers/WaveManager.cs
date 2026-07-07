@@ -35,10 +35,11 @@ namespace Stonehold
         public event Action AllWavesCleared;
 
         public int CurrentWave { get; private set; }
-        public int TotalWaves => config != null && config.waves != null ? config.waves.Length : 0;
+        public int TotalWaves => activeWaves != null ? activeWaves.Length : 0;
         public bool IsWaitingForWave { get; private set; }
         public float NextWaveCountdown { get; private set; }
 
+        private WaveData[] activeWaves;
         private Castle castleComponent;
         private WaypointPath waypointPath;
         private bool startNextWaveRequested;
@@ -47,9 +48,23 @@ namespace Stonehold
 
         private void Start()
         {
-            if (config == null || config.waves == null || config.waves.Length == 0 || spawnPoint == null || castle == null)
+            if (config != null && config.stages != null && config.stages.Length > SaveManager.SelectedStageIndex)
             {
-                Debug.LogWarning("WaveManager: assign config (with waves), spawnPoint and castle in the Inspector.");
+                var stage = config.stages[SaveManager.SelectedStageIndex];
+                if (stage != null && stage.waves != null && stage.waves.Length > 0)
+                {
+                    activeWaves = stage.waves;
+                }
+            }
+
+            if (activeWaves == null || activeWaves.Length == 0)
+            {
+                activeWaves = config != null ? config.waves : null;
+            }
+
+            if (config == null || activeWaves == null || activeWaves.Length == 0 || spawnPoint == null || castle == null)
+            {
+                Debug.LogWarning("WaveManager: assign config (with waves/stages), spawnPoint and castle in the Inspector.");
                 return;
             }
 
@@ -74,14 +89,19 @@ namespace Stonehold
 
         private IEnumerator RunWaves()
         {
-            for (int w = 0; w < config.waves.Length; w++)
+            if (activeWaves == null || activeWaves.Length == 0)
+            {
+                yield break;
+            }
+
+            for (int w = 0; w < activeWaves.Length; w++)
             {
                 if (IsGameOver)
                 {
                     yield break;
                 }
 
-                WaveData wave = config.waves[w];
+                WaveData wave = activeWaves[w];
                 yield return WaitForWaveStart(w + 1, wave);
 
                 if (IsGameOver)

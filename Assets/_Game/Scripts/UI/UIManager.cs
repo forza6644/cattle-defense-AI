@@ -851,10 +851,10 @@ namespace Stonehold
                     ("Resume", () => { if (game != null) game.TogglePause(); }),
                     ("Restart", () => { if (game != null) game.Restart(); }),
                     ("Main Menu", () => { if (game != null) game.LoadMainMenu(); }) });
-            victoryGroup = BuildOverlay("VictoryScreen", "VICTORY!", "You defeated the Warlord Boss and survived all 12 waves!", new Color(1f, 0.85f, 0.2f),
+            victoryGroup = BuildOverlay("VictoryScreen", "STAGE COMPLETE!", "You defeated the Warlord Boss and cleared Stage 1: Castle Road!", new Color(1f, 0.85f, 0.2f),
                 new (string, UnityEngine.Events.UnityAction)[] {
                     ("Play Again", () => { if (game != null) game.Restart(); }),
-                    ("Main Menu", () => { if (game != null) game.LoadMainMenu(); }) });
+                    ("Lobby Menu", () => { if (game != null) game.LoadMainMenu(); }) });
             defeatGroup = BuildOverlay("DefeatScreen", "DEFEAT", "The castle has fallen. Hold the line next time!", new Color(0.95f, 0.3f, 0.25f),
                 new (string, UnityEngine.Events.UnityAction)[] {
                     ("Retry", () => { if (game != null) game.Restart(); }),
