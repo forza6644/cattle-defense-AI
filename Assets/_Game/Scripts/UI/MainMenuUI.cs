@@ -226,12 +226,22 @@ namespace Stonehold
         private Button CreateButton(RectTransform parent, string name, string label, Vector2 size,
             Vector2 anchor, Vector2 position, UnityEngine.Events.UnityAction onClick)
         {
-            Image bg = CreateImage(parent, name, new Color(0.22f, 0.28f, 0.4f, 0.95f));
+            Image bg = CreateImage(parent, name, Color.white);
             bg.raycastTarget = true;
             Place(bg.rectTransform, anchor, position, size);
 
             Button button = bg.gameObject.AddComponent<Button>();
             button.targetGraphic = bg;
+            button.transition = Selectable.Transition.ColorTint;
+
+            ColorBlock cb = button.colors;
+            cb.normalColor = new Color(0.20f, 0.24f, 0.32f, 0.95f);
+            cb.highlightedColor = new Color(0.28f, 0.34f, 0.45f, 1f);
+            cb.pressedColor = new Color(0.14f, 0.18f, 0.24f, 1f);
+            cb.selectedColor = new Color(0.24f, 0.28f, 0.38f, 1f);
+            cb.disabledColor = new Color(0.12f, 0.14f, 0.18f, 0.6f);
+            button.colors = cb;
+
             button.onClick.AddListener(() =>
             {
                 if (AudioManager.Instance != null)
@@ -268,11 +278,11 @@ namespace Stonehold
         {
             if (statsText != null)
             {
-                statsText.text = "<b>STATS</b>\n" +
-                                 "Best Wave: " + SaveManager.BestWave + "\n" +
-                                 "Wins: " + SaveManager.TotalWins + "\n" +
-                                 "Losses: " + SaveManager.TotalLosses + "\n" +
-                                 "Runs Played: " + SaveManager.TotalRuns;
+                statsText.text = "<color=#ffd759><b>KEEP STATISTICS</b></color>\n\n" +
+                                 "Best Wave Reached:  " + SaveManager.BestWave + "\n" +
+                                 "Total Victories:            " + SaveManager.TotalWins + "\n" +
+                                 "Total Defeats:              " + SaveManager.TotalLosses + "\n" +
+                                 "Total Runs Played:     " + SaveManager.TotalRuns;
             }
         }
 

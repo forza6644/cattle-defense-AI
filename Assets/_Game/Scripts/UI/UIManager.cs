@@ -54,6 +54,7 @@ namespace Stonehold
         private readonly List<Button> buildButtons = new List<Button>();
 
         private Text hintText;
+        private Image hintBg;
         private float hintTimer;
         private bool hasShownTargetingHint;
 
@@ -190,10 +191,12 @@ namespace Stonehold
             waveText.text = "Wave " + number + "/" + waves.TotalWaves;
             if (waves != null && number == waves.TotalWaves)
             {
-                ShowBanner("!!! WARNING: FINAL BOSS WAVE !!!");
+                bannerText.color = new Color(1f, 0.25f, 0.2f); // High-contrast Red for Boss
+                ShowBanner("!!! FINAL BOSS WAVE !!!");
             }
             else
             {
+                bannerText.color = Color.white;
                 ShowBanner("Wave " + number + " - " + wave.waveLabel);
             }
 
@@ -218,11 +221,17 @@ namespace Stonehold
             }
 
             ShowPanel(waveControlGroup, true);
-            ShowBanner("Prepare: Wave " + number);
 
             if (number == 12)
             {
+                bannerText.color = new Color(1f, 0.5f, 0.2f); // Orange warning for Boss Countdown
+                ShowBanner("Boss Preparing...");
                 ShowHint("Final Boss incoming! Upgrade towers and use targeting modes.");
+            }
+            else
+            {
+                bannerText.color = Color.white;
+                ShowBanner("Prepare: Wave " + number);
             }
         }
 
@@ -525,13 +534,35 @@ namespace Stonehold
                     ? new Color(0.65f, 0.65f, 0.7f)
                     : affordable ? Color.white : new Color(1f, 0.45f, 0.45f);
 
-                if (i < buildButtons.Count && buildButtons[i].targetGraphic != null)
+                if (i < buildButtons.Count)
                 {
-                    buildButtons[i].targetGraphic.color = locked
-                        ? new Color(0.12f, 0.12f, 0.16f, 0.95f)
-                        : affordable
-                            ? new Color(0.22f, 0.25f, 0.34f, 0.95f)
-                            : new Color(0.17f, 0.11f, 0.12f, 0.95f);
+                    var btn = buildButtons[i];
+                    ColorBlock cb = btn.colors;
+                    if (locked)
+                    {
+                        cb.normalColor = new Color(0.10f, 0.11f, 0.14f, 0.95f);
+                        cb.highlightedColor = new Color(0.14f, 0.15f, 0.19f, 1f);
+                        cb.pressedColor = new Color(0.08f, 0.09f, 0.11f, 1f);
+                    }
+                    else if (!affordable)
+                    {
+                        cb.normalColor = new Color(0.22f, 0.14f, 0.16f, 0.95f);
+                        cb.highlightedColor = new Color(0.28f, 0.18f, 0.20f, 1f);
+                        cb.pressedColor = new Color(0.16f, 0.10f, 0.11f, 1f);
+                    }
+                    else
+                    {
+                        cb.normalColor = new Color(0.20f, 0.24f, 0.32f, 0.95f);
+                        cb.highlightedColor = new Color(0.28f, 0.34f, 0.45f, 1f);
+                        cb.pressedColor = new Color(0.14f, 0.18f, 0.24f, 1f);
+                    }
+                    cb.selectedColor = cb.normalColor;
+                    btn.colors = cb;
+
+                    if (btn.targetGraphic != null)
+                    {
+                        btn.targetGraphic.color = Color.white;
+                    }
                 }
             }
         }
@@ -679,22 +710,22 @@ namespace Stonehold
 
         public void ShowHint(string message)
         {
-            if (hintText != null)
+            if (hintBg != null && hintText != null)
             {
                 hintText.text = message;
-                hintText.gameObject.SetActive(true);
+                hintBg.gameObject.SetActive(true);
                 hintTimer = 7.5f;
             }
         }
 
         private void Update()
         {
-            if (hintText != null && hintText.gameObject.activeSelf)
+            if (hintBg != null && hintBg.gameObject.activeSelf)
             {
                 hintTimer -= Time.deltaTime;
                 if (hintTimer <= 0f)
                 {
-                    hintText.gameObject.SetActive(false);
+                    hintBg.gameObject.SetActive(false);
                 }
             }
         }
@@ -773,10 +804,15 @@ namespace Stonehold
             waveText = CreateText(canvasRect, "WaveText", "Wave -", 40, Color.white, TextAnchor.UpperCenter);
             SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(400f, 60f));
 
-            // Hint Text (top-center, below wave counter)
-            hintText = CreateText(canvasRect, "HintText", "", 24, new Color(0.9f, 0.9f, 1f), TextAnchor.UpperCenter);
-            SetAnchored(hintText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -80f), new Vector2(1000f, 60f));
-            hintText.gameObject.SetActive(false);
+            // Hint panel background (top-center, below wave counter)
+            hintBg = CreateImage(canvasRect, "HintPanel", new Color(0.08f, 0.1f, 0.15f, 0.85f));
+            SetAnchored(hintBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(900f, 48f));
+            hintText = CreateText(hintBg.rectTransform, "Label", "", 22, new Color(0.95f, 0.95f, 1f), TextAnchor.MiddleCenter);
+            hintText.rectTransform.anchorMin = Vector2.zero;
+            hintText.rectTransform.anchorMax = Vector2.one;
+            hintText.rectTransform.offsetMin = Vector2.zero;
+            hintText.rectTransform.offsetMax = Vector2.zero;
+            hintBg.gameObject.SetActive(false);
 
             BuildWaveControl();
 
@@ -855,18 +891,18 @@ namespace Stonehold
             towerPanelTitle = CreateText(panel, "Title", "", 26, Color.white, TextAnchor.UpperCenter);
             towerPanelTitle.rectTransform.SetAnchored(new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(680f, 34f));
 
-            Button upgrade = CreateButton(panel, "Upgrade", "Upgrade", new Vector2(170f, 74f), new Vector2(0.5f, 0f),
-                new Vector2(-190f, 55f), OnUpgradeClicked);
+            Button upgrade = CreateButton(panel, "Upgrade", "Upgrade", new Vector2(180f, 70f), new Vector2(0.5f, 0f),
+                new Vector2(-210f, 55f), OnUpgradeClicked);
             upgradeButton = upgrade;
             upgradeButtonLabel = upgrade.GetComponentInChildren<Text>();
 
-            Button targetBtn = CreateButton(panel, "Target", "Target: ClosestToGoal >", new Vector2(190f, 74f), new Vector2(0.5f, 0f),
+            Button targetBtn = CreateButton(panel, "Target", "Target: ClosestToGoal >", new Vector2(200f, 70f), new Vector2(0.5f, 0f),
                 new Vector2(0f, 55f), OnTargetClicked);
             targetButton = targetBtn;
             targetButtonLabel = targetBtn.GetComponentInChildren<Text>();
 
-            Button sell = CreateButton(panel, "Sell", "Sell", new Vector2(170f, 74f), new Vector2(0.5f, 0f),
-                new Vector2(190f, 55f), OnSellClicked);
+            Button sell = CreateButton(panel, "Sell", "Sell", new Vector2(180f, 70f), new Vector2(0.5f, 0f),
+                new Vector2(210f, 55f), OnSellClicked);
             sellButtonLabel = sell.GetComponentInChildren<Text>();
 
             CreateButton(panel, "Close", "X", new Vector2(44f, 44f), new Vector2(1f, 1f),
@@ -986,12 +1022,22 @@ namespace Stonehold
         private Button CreateButton(RectTransform parent, string name, string label, Vector2 size,
             Vector2 anchor, Vector2 position, UnityEngine.Events.UnityAction onClick)
         {
-            Image bg = CreateImage(parent, name, new Color(0.22f, 0.25f, 0.34f, 0.95f));
+            Image bg = CreateImage(parent, name, Color.white);
             bg.raycastTarget = true;
             SetAnchored(bg.rectTransform, anchor, position, size);
 
             Button button = bg.gameObject.AddComponent<Button>();
             button.targetGraphic = bg;
+            button.transition = Selectable.Transition.ColorTint;
+
+            ColorBlock cb = button.colors;
+            cb.normalColor = new Color(0.20f, 0.24f, 0.32f, 0.95f);
+            cb.highlightedColor = new Color(0.28f, 0.34f, 0.45f, 1f);
+            cb.pressedColor = new Color(0.14f, 0.18f, 0.24f, 1f);
+            cb.selectedColor = new Color(0.24f, 0.28f, 0.38f, 1f);
+            cb.disabledColor = new Color(0.12f, 0.14f, 0.18f, 0.6f);
+            button.colors = cb;
+
             button.onClick.AddListener(() =>
             {
                 if (AudioManager.Instance != null)
