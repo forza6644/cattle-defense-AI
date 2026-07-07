@@ -48,6 +48,7 @@ namespace Stonehold
         // Floating text + enemy bars
         private RectTransform barsRoot;
         private RectTransform floatingRoot;
+        private readonly Queue<Text> floatingPool = new Queue<Text>();
         private readonly List<RectTransform> barBackgrounds = new List<RectTransform>();
         private readonly List<RectTransform> barFills = new List<RectTransform>();
         private readonly List<Image> barFillImages = new List<Image>();
@@ -183,13 +184,27 @@ namespace Stonehold
                 return;
             }
 
-            Text text = CreateText(floatingRoot, "Floating", message, size, color, TextAnchor.MiddleCenter);
-            text.fontStyle = FontStyle.Bold;
-            text.raycastTarget = false;
+            Text text;
+            if (floatingPool.Count > 0)
+            {
+                text = floatingPool.Dequeue();
+                text.gameObject.SetActive(true);
+            }
+            else
+            {
+                text = CreateText(floatingRoot, "Floating", "", 30, color, TextAnchor.MiddleCenter);
+                text.fontStyle = FontStyle.Bold;
+                text.raycastTarget = false;
+            }
+
+            text.text = message;
+            text.fontSize = size;
+            text.color = color;
             RectTransform rect = text.rectTransform;
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.sizeDelta = new Vector2(200f, 50f);
             rect.anchoredPosition = local;
+            rect.localScale = Vector3.one;
             StartCoroutine(AnimateFloatingText(text));
         }
 
@@ -218,7 +233,8 @@ namespace Stonehold
                 yield return null;
             }
 
-            Destroy(text.gameObject);
+            text.gameObject.SetActive(false);
+            floatingPool.Enqueue(text);
         }
 
         // ---------------------------------------------------------- Enemy bars

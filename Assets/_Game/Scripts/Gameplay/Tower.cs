@@ -91,14 +91,12 @@ namespace Stonehold
                 animator.PlayAttack();
             }
 
-            GameObject shot = Instantiate(data.projectilePrefab, transform.position, Quaternion.identity);
-
             if (data.attackSound != null && AudioManager.Instance != null)
             {
                 AudioManager.Instance.PlaySfx(data.attackSound, 0.7f);
             }
 
-            Projectile projectile = shot.GetComponent<Projectile>();
+            Projectile projectile = Projectile.Spawn(data.projectilePrefab, transform.position);
             if (projectile != null)
             {
                 projectile.Init(target, Damage, data.splashRadius, data.slowMultiplier, data.slowDuration, data.projectileTrailColor);
