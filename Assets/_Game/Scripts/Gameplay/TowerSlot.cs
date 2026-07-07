@@ -14,10 +14,13 @@ namespace Stonehold
         {
             IsOccupied = occupied;
 
-            Collider slotCollider = GetComponent<Collider>();
-            if (slotCollider != null)
+            Collider[] colliders = GetComponentsInChildren<Collider>();
+            for (int i = 0; i < colliders.Length; i++)
             {
-                slotCollider.enabled = !occupied;
+                if (colliders[i] != null)
+                {
+                    colliders[i].enabled = !occupied;
+                }
             }
         }
     }

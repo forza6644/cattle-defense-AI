@@ -157,9 +157,19 @@ namespace Stonehold
             slot.SetOccupied(true);
 
             Tower tower = placed.GetComponent<Tower>();
+            if (tower == null)
+            {
+                tower = placed.GetComponentInChildren<Tower>();
+            }
+
             if (tower != null)
             {
                 tower.Slot = slot;
+                Debug.Log($"[TowerManager] Placed {tower.Data.towerName} on slot {slot.name}. tower.Slot assigned: {tower.Slot != null}");
+            }
+            else
+            {
+                Debug.LogError($"[TowerManager] Failed to find Tower component on placed prefab: {placed.name}");
             }
 
             if (VfxManager.Instance != null)
@@ -196,6 +206,8 @@ namespace Stonehold
             {
                 EconomyManager.Instance.AddGold(refund);
             }
+
+            Debug.Log($"[TowerManager] Selling {tower.Data.towerName}. Slot: {(tower.Slot != null ? tower.Slot.name : "null")}");
 
             if (tower.Slot != null)
             {
