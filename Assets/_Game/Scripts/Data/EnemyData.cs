@@ -21,6 +21,7 @@ namespace Stonehold
 
         [Header("Impact")]
         public int goldReward;
+        public int xpValue;
         public int castleDamage;
     }
 }

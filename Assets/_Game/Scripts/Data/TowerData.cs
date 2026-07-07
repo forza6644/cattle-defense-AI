@@ -13,6 +13,14 @@ namespace Stonehold
         public string towerName;
         public GameObject prefab;
 
+        [Header("Defender Identity")]
+        public string defenderId;
+        public string displayNameOverride;
+        [TextArea(3, 5)]
+        public string defenderDescription;
+        public DefenderRole role;
+        public DefenderRarity rarity;
+
         [Header("Combat Stats")]
         public float damage;
         public float range;
@@ -39,6 +47,16 @@ namespace Stonehold
         public float slowMultiplier = 1f;
         [Tooltip("Seconds the slow lasts. Re-applying refreshes the timer (no stacking).")]
         public float slowDuration;
+
+        [Header("Defender Effects (Future Use)")]
+        public float dotDamage;
+        public float dotDuration;
+        public int chainCount;
+        public float chainRange;
+
+        [Header("Defender Scaling (Future Use)")]
+        public float[] runLevelMultipliers = { 1f };
+        public float[] metaLevelMultipliers = { 1f };
 
         [Header("Economy")]
         public int cost;
