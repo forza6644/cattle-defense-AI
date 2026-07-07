@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68488f49cd6e52642a055dc873c13365, type: 3}
   m_Name: GameConfig
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.GameConfig
-  startingGold: 100
-  waveClearGoldBonus: 50
+  startingGold: 150
+  waveClearGoldBonus: 75
   sellRefundPercent: 0.6
-  castleMaxHealth: 10
+  castleMaxHealth: 15
   waves:
   - {fileID: 11400000, guid: ca2339b7cda3a0e47976d9750e641abf, type: 2}
   - {fileID: 11400000, guid: a203b083d7c5ee04185017e607525b7e, type: 2}

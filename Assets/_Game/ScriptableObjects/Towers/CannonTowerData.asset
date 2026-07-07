@@ -22,7 +22,7 @@ MonoBehaviour:
   splashRadius: 2.8
   slowMultiplier: 1
   slowDuration: 0
-  cost: 120
+  cost: 100
   maxLevel: 3
   damageMultiplierPerLevel: 1.5
   rangeMultiplierPerLevel: 1.1
