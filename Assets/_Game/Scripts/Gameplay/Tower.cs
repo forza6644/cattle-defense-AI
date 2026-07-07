@@ -31,8 +31,19 @@ namespace Stonehold
         /// <summary>Gold spent on this tower so far (placement + upgrades).</summary>
         public int TotalInvested { get; private set; }
 
-        /// <summary>Current damage: base scaled by the per-level multiplier.</summary>
-        public float Damage => data.damage * Mathf.Pow(data.damageMultiplierPerLevel, level - 1);
+        /// <summary>Current damage: base scaled by the per-level multiplier and run-wide progression multiplier.</summary>
+        public float Damage
+        {
+            get
+            {
+                float dmg = data.damage * Mathf.Pow(data.damageMultiplierPerLevel, level - 1);
+                if (RunProgressionManager.Instance != null)
+                {
+                    dmg *= RunProgressionManager.Instance.RunDamageMultiplier;
+                }
+                return dmg;
+            }
+        }
 
         /// <summary>Current range: base scaled by the per-level multiplier.</summary>
         public float Range => data.range * Mathf.Pow(data.rangeMultiplierPerLevel, level - 1);
@@ -82,7 +93,12 @@ namespace Stonehold
             if (target != null && cooldownTimer <= 0f)
             {
                 Fire(target);
-                cooldownTimer = data.fireRate > 0f ? 1f / data.fireRate : 1f;
+                float rate = data.fireRate;
+                if (RunProgressionManager.Instance != null)
+                {
+                    rate *= RunProgressionManager.Instance.RunFireRateMultiplier;
+                }
+                cooldownTimer = rate > 0f ? 1f / rate : 1f;
             }
         }
 

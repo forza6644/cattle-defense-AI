@@ -51,5 +51,18 @@ namespace Stonehold
                 Defeated?.Invoke();
             }
         }
+
+        /// <summary>Repairs the castle by a specified amount, capped at max health.</summary>
+        public void Repair(int amount)
+        {
+            if (IsGameOver || CurrentHealth <= 0)
+            {
+                return;
+            }
+
+            CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
+            Debug.Log("Castle repaired! HP = " + CurrentHealth + " / " + MaxHealth);
+            HealthChanged?.Invoke();
+        }
     }
 }

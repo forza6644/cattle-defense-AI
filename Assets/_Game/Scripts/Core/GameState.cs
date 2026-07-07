@@ -9,6 +9,7 @@ namespace Stonehold
         Playing,
         Paused,
         Victory,
-        Defeat
+        Defeat,
+        LevelUp
     }
 }

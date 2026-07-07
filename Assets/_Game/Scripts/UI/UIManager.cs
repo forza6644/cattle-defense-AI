@@ -53,6 +53,16 @@ namespace Stonehold
         private readonly List<Text> buildButtonLabels = new List<Text>();
         private readonly List<Button> buildButtons = new List<Button>();
 
+        // Level Up & XP
+        private CanvasGroup levelUpPanelGroup;
+        private Text xpText;
+        private RectTransform xpFill;
+        private Image xpFillImage;
+        private readonly Text[] cardTitleTexts = new Text[3];
+        private readonly Text[] cardDescriptionTexts = new Text[3];
+        private readonly Button[] cardButtons = new Button[3];
+        private RunProgressionManager progression;
+
         private Text hintText;
         private Image hintBg;
         private float hintTimer;
@@ -100,6 +110,13 @@ namespace Stonehold
 
             BuildUI();
 
+            progression = RunProgressionManager.Instance != null ? RunProgressionManager.Instance : FindFirstObjectByType<RunProgressionManager>();
+            if (progression != null)
+            {
+                progression.XpChanged += OnXpChanged;
+                progression.ShowLevelUpDraft += OnShowLevelUpDraft;
+            }
+
             if (economy != null)
             {
                 economy.GoldChanged += RefreshGold;
@@ -126,6 +143,10 @@ namespace Stonehold
 
             RefreshGold();
             RefreshCastleHealth();
+            if (progression != null)
+            {
+                OnXpChanged(progression.CurrentXp, progression.GetXpNeededForNextLevel(), progression.CurrentLevel);
+            }
             waveText.text = "Wave -/" + (waves != null ? waves.TotalWaves.ToString() : "-");
 
             ShowHint("Build Arrow Defenders to stop the first Grunts.");
@@ -133,6 +154,12 @@ namespace Stonehold
 
         private void OnDestroy()
         {
+            if (progression != null)
+            {
+                progression.XpChanged -= OnXpChanged;
+                progression.ShowLevelUpDraft -= OnShowLevelUpDraft;
+            }
+
             if (economy != null)
             {
                 economy.GoldChanged -= RefreshGold;
@@ -708,6 +735,59 @@ namespace Stonehold
             ShowPanel(pauseGroup, state == GameState.Paused);
             ShowPanel(victoryGroup, state == GameState.Victory);
             ShowPanel(defeatGroup, state == GameState.Defeat);
+            if (state != GameState.LevelUp)
+            {
+                ShowPanel(levelUpPanelGroup, false);
+            }
+        }
+
+        private void OnXpChanged(int currentXp, int xpNeeded, int level)
+        {
+            if (xpText != null)
+            {
+                xpText.text = "Lv." + level + "  XP: " + currentXp + " / " + xpNeeded;
+            }
+
+            if (xpFill != null)
+            {
+                float pct = xpNeeded > 0 ? (float)currentXp / xpNeeded : 0f;
+                xpFill.localScale = new Vector3(pct, 1f, 1f);
+            }
+        }
+
+        private void OnShowLevelUpDraft(RunProgressionManager.CardChoice[] choices)
+        {
+            if (choices == null || choices.Length < 3)
+            {
+                return;
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                int index = i;
+                if (cardTitleTexts[i] != null)
+                {
+                    cardTitleTexts[i].text = choices[i].title;
+                }
+                if (cardDescriptionTexts[i] != null)
+                {
+                    cardDescriptionTexts[i].text = choices[i].description;
+                }
+
+                if (cardButtons[i] != null)
+                {
+                    cardButtons[i].onClick.RemoveAllListeners();
+                    cardButtons[i].onClick.AddListener(() =>
+                    {
+                        if (progression != null)
+                        {
+                            progression.ApplyChoice(choices[index]);
+                        }
+                    });
+                }
+            }
+
+            ShowPanel(levelUpPanelGroup, true);
         }
 
         public void ShowHint(string message)
@@ -802,6 +882,22 @@ namespace Stonehold
             goldText = CreateText(canvasRect, "GoldText", "Gold: 0", 40, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
             SetAnchored(goldText.rectTransform, new Vector2(0f, 1f), new Vector2(25f, -20f), new Vector2(400f, 60f));
 
+            // XP Bar (top-left, below GoldText)
+            Image xpBg = CreateImage(canvasRect, "XpBarBg", new Color(0f, 0f, 0f, 0.6f));
+            SetAnchored(xpBg.rectTransform, new Vector2(0f, 1f), new Vector2(175f, -95f), new Vector2(300f, 26f));
+            xpFillImage = CreateImage(xpBg.rectTransform, "XpFill", new Color(0.6f, 0.25f, 0.85f));
+            xpFill = xpFillImage.rectTransform;
+            xpFill.anchorMin = Vector2.zero;
+            xpFill.anchorMax = Vector2.one;
+            xpFill.pivot = new Vector2(0f, 0.5f);
+            xpFill.offsetMin = new Vector2(2f, 2f);
+            xpFill.offsetMax = new Vector2(-2f, -2f);
+            xpText = CreateText(xpBg.rectTransform, "XpText", "Lv.1  XP: 0 / 100", 18, Color.white, TextAnchor.MiddleCenter);
+            xpText.rectTransform.anchorMin = Vector2.zero;
+            xpText.rectTransform.anchorMax = Vector2.one;
+            xpText.rectTransform.offsetMin = Vector2.zero;
+            xpText.rectTransform.offsetMax = Vector2.zero;
+
             // Wave counter (top-center)
             waveText = CreateText(canvasRect, "WaveText", "Wave -", 40, Color.white, TextAnchor.UpperCenter);
             SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(400f, 60f));
@@ -861,6 +957,68 @@ namespace Stonehold
                 new (string, UnityEngine.Events.UnityAction)[] {
                     ("Retry", () => { if (game != null) game.Restart(); }),
                     ("Main Menu", () => { if (game != null) game.LoadMainMenu(); }) });
+
+            BuildLevelUpPanel();
+        }
+
+        private void BuildLevelUpPanel()
+        {
+            Image dim = CreateImage(canvasRect, "LevelUpPanel", new Color(0.04f, 0.05f, 0.08f, 0.88f));
+            RectTransform rect = dim.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            Text titleText = CreateText(rect, "Title", "LEVEL UP!", 64, new Color(1f, 0.85f, 0.2f), TextAnchor.MiddleCenter);
+            titleText.fontStyle = FontStyle.Bold;
+            SetAnchored(titleText.rectTransform, new Vector2(0.5f, 0.85f), Vector2.zero, new Vector2(1200f, 80f));
+
+            Text subtitleText = CreateText(rect, "Subtitle", "Choose a blessing for your defenders", 26, new Color(0.85f, 0.85f, 0.9f), TextAnchor.MiddleCenter);
+            SetAnchored(subtitleText.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(1200f, 40f));
+
+            float startX = -450f;
+            float spacing = 450f;
+            float cardY = -40f;
+            Vector2 cardSize = new Vector2(380f, 540f);
+
+            for (int i = 0; i < 3; i++)
+            {
+                int index = i;
+                Image cardBg = CreateImage(rect, "Card_" + i, new Color(0.12f, 0.16f, 0.24f, 0.95f));
+                RectTransform cardRt = cardBg.rectTransform;
+                SetAnchored(cardRt, new Vector2(0.5f, 0.5f), new Vector2(startX + i * spacing, cardY), cardSize);
+
+                Image border = CreateImage(cardRt, "Border", new Color(0.24f, 0.32f, 0.48f, 0.8f));
+                border.rectTransform.anchorMin = Vector2.zero;
+                border.rectTransform.anchorMax = Vector2.one;
+                border.rectTransform.offsetMin = new Vector2(4f, 4f);
+                border.rectTransform.offsetMax = new Vector2(-4f, -4f);
+
+                Image innerBg = CreateImage(border.rectTransform, "InnerBg", new Color(0.08f, 0.1f, 0.15f, 0.95f));
+                innerBg.rectTransform.anchorMin = Vector2.zero;
+                innerBg.rectTransform.anchorMax = Vector2.one;
+                innerBg.rectTransform.offsetMin = new Vector2(4f, 4f);
+                innerBg.rectTransform.offsetMax = new Vector2(-4f, -4f);
+
+                RectTransform contentRoot = innerBg.rectTransform;
+
+                cardTitleTexts[i] = CreateText(contentRoot, "Title", "Card Title", 28, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperCenter);
+                cardTitleTexts[i].fontStyle = FontStyle.Bold;
+                SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(320f, 60f));
+
+                cardDescriptionTexts[i] = CreateText(contentRoot, "Description", "Card description...", 20, new Color(0.85f, 0.85f, 0.9f), TextAnchor.MiddleCenter);
+                cardDescriptionTexts[i].horizontalOverflow = HorizontalWrapMode.Wrap;
+                SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(300f, 220f));
+
+                cardButtons[i] = CreateButton(contentRoot, "SelectButton", "Select", new Vector2(240f, 60f), new Vector2(0.5f, 0f),
+                    new Vector2(0f, 40f), () => { });
+            }
+
+            levelUpPanelGroup = dim.gameObject.AddComponent<CanvasGroup>();
+            levelUpPanelGroup.alpha = 0f;
+            levelUpPanelGroup.interactable = false;
+            levelUpPanelGroup.blocksRaycasts = false;
         }
 
         private void BuildBuildMenu()

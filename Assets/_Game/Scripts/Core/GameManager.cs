@@ -27,6 +27,10 @@ namespace Stonehold
             Instance = this;
             Time.timeScale = 1f;
             Application.targetFrameRate = 60;
+            if (GetComponent<RunProgressionManager>() == null)
+            {
+                gameObject.AddComponent<RunProgressionManager>();
+            }
         }
 
         private void Start()
@@ -141,7 +145,7 @@ namespace Stonehold
             SaveManager.UpdateBestWave(waveNumber);
         }
 
-        private void SetState(GameState newState)
+        public void SetState(GameState newState)
         {
             if (State == newState)
             {
