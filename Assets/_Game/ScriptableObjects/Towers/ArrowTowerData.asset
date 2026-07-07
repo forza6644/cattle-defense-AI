@@ -16,14 +16,14 @@ MonoBehaviour:
   prefab: {fileID: 1423488070482060831, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
   damage: 10
   range: 8
-  fireRate: 1
+  fireRate: 1.1
   projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
   projectileTrailColor: {r: 1, g: 0.95, b: 0.55, a: 1}
   attackSound: {fileID: 8300000, guid: 3e73059e59a301b4bac3f80eb5caaac4, type: 3}
   splashRadius: 0
   slowMultiplier: 1
   slowDuration: 0
-  cost: 50
+  cost: 60
   maxLevel: 3
-  damageMultiplierPerLevel: 2
+  damageMultiplierPerLevel: 1.8
   rangeMultiplierPerLevel: 1.1

@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerData
   towerName: Frost Tower
   prefab: {fileID: 6746232236379199591, guid: 8635300014eb584499a2a20547bde947, type: 3}
-  damage: 3
+  damage: 4
   range: 7
-  fireRate: 0.8
+  fireRate: 0.9
   projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
   projectileTrailColor: {r: 0.5, g: 0.85, b: 1, a: 1}
   splashRadius: 0
-  slowMultiplier: 0.6
-  slowDuration: 2
+  slowMultiplier: 0.5
+  slowDuration: 2.5
   cost: 80
   maxLevel: 3
   damageMultiplierPerLevel: 1.5

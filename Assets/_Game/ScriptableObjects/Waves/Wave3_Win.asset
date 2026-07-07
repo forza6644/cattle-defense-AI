@@ -15,8 +15,8 @@ MonoBehaviour:
   waveLabel: Swarm
   spawns:
   - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
-    count: 16
-    spawnInterval: 0.35
+    count: 14
+    spawnInterval: 0.5
   - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
     count: 2
     spawnInterval: 2
