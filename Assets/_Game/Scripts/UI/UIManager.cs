@@ -128,7 +128,7 @@ namespace Stonehold
             RefreshCastleHealth();
             waveText.text = "Wave -/" + (waves != null ? waves.TotalWaves.ToString() : "-");
 
-            ShowHint("Build Arrow Towers to stop the first Grunts.");
+            ShowHint("Build Arrow Defenders to stop the first Grunts.");
         }
 
         private void OnDestroy()
@@ -226,7 +226,7 @@ namespace Stonehold
             {
                 bannerText.color = new Color(1f, 0.5f, 0.2f); // Orange warning for Boss Countdown
                 ShowBanner("Boss Preparing...");
-                ShowHint("Final Boss incoming! Upgrade towers and use targeting modes.");
+                ShowHint("Final Boss incoming! Upgrade defenders and use targeting modes.");
             }
             else
             {
@@ -498,7 +498,7 @@ namespace Stonehold
             if (!hasShownTargetingHint)
             {
                 hasShownTargetingHint = true;
-                ShowHint("Use Target mode to choose how this tower picks enemies.");
+                ShowHint("Use Target mode to choose how this defender picks enemies.");
             }
         }
 
@@ -864,7 +864,7 @@ namespace Stonehold
         private void BuildBuildMenu()
         {
             buildMenuGroup = CreateBottomPanel("BuildMenu", out RectTransform panel);
-            CreateText(panel, "Title", "Build Tower", 26, Color.white, TextAnchor.UpperCenter)
+            CreateText(panel, "Title", "Build Defender", 26, Color.white, TextAnchor.UpperCenter)
                 .rectTransform.SetAnchored(new Vector2(0.5f, 1f), new Vector2(0f, -8f), new Vector2(400f, 34f));
 
             int count = towers != null ? towers.AvailableTowers.Length : 0;

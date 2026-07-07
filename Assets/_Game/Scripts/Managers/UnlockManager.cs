@@ -69,12 +69,12 @@ namespace Stonehold
 
             if (previousCompletedWaves < 1 && completedWaves >= 1)
             {
-                TowerUnlocked?.Invoke("Cannon Tower unlocked");
+                TowerUnlocked?.Invoke("Cannon Defender unlocked");
             }
 
             if (previousCompletedWaves < 2 && completedWaves >= 2)
             {
-                TowerUnlocked?.Invoke("Frost Tower unlocked");
+                TowerUnlocked?.Invoke("Frost Defender unlocked");
             }
         }
 
