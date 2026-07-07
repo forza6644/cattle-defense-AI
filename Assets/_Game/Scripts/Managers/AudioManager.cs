@@ -32,6 +32,7 @@ namespace Stonehold
 
         private Castle hookedCastle;
         private GameManager hookedGame;
+        private WaveManager hookedWaves;
 
         public float MasterVolume => masterVolume;
         public float MusicVolume => musicVolume;
@@ -175,6 +176,16 @@ namespace Stonehold
             {
                 PlaySfx(library.frostHit);
             }
+            else
+            {
+                AudioClip clip = library.arrowHit != null ? library.arrowHit : library.button;
+                if (clip != null)
+                {
+                    float targetPitch = library.arrowHit != null ? Random.Range(0.9f, 1.15f) : Random.Range(1.3f, 1.6f);
+                    float targetVol = library.arrowHit != null ? 0.6f : 0.4f;
+                    PlaySfx(clip, targetVol, targetPitch);
+                }
+            }
         }
 
         public void PlayPlace() { if (library != null) PlaySfx(library.place); }
@@ -223,6 +234,13 @@ namespace Stonehold
             {
                 hookedGame.StateChanged += OnStateChanged;
             }
+
+            hookedWaves = FindFirstObjectByType<WaveManager>();
+            if (hookedWaves != null)
+            {
+                hookedWaves.WaveStarted += OnWaveStarted;
+                hookedWaves.WaveCleared += OnWaveCleared;
+            }
         }
 
         private void Unhook()
@@ -237,6 +255,31 @@ namespace Stonehold
             {
                 hookedGame.StateChanged -= OnStateChanged;
                 hookedGame = null;
+            }
+
+            if (hookedWaves != null)
+            {
+                hookedWaves.WaveStarted -= OnWaveStarted;
+                hookedWaves.WaveCleared -= OnWaveCleared;
+                hookedWaves = null;
+            }
+        }
+
+        private void OnWaveStarted(int waveNumber, WaveData wave)
+        {
+            if (library != null)
+            {
+                AudioClip clip = library.waveStart != null ? library.waveStart : library.upgrade;
+                PlaySfx(clip, 1.0f);
+            }
+        }
+
+        private void OnWaveCleared(int waveNumber, WaveData wave)
+        {
+            if (library != null)
+            {
+                AudioClip clip = library.waveClear != null ? library.waveClear : library.gold;
+                PlaySfx(clip, 1.0f);
             }
         }
 

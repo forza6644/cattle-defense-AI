@@ -21,6 +21,7 @@ namespace Stonehold
         [Header("Combat")]
         public AudioClip cannonExplosion;
         public AudioClip frostHit;
+        public AudioClip arrowHit;
         public AudioClip enemyDeath;
         public AudioClip gold;
 
@@ -28,5 +29,9 @@ namespace Stonehold
         public AudioClip place;
         public AudioClip upgrade;
         public AudioClip castleDamage;
+
+        [Header("Wave Transitions")]
+        public AudioClip waveStart;
+        public AudioClip waveClear;
     }
 }

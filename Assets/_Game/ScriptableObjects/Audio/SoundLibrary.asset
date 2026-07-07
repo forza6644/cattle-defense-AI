@@ -18,8 +18,11 @@ MonoBehaviour:
   button: {fileID: 8300000, guid: d08500b6cd1317b4486f0e821688ad13, type: 3}
   cannonExplosion: {fileID: 8300000, guid: 09733809ee443c54e81b12a0feceb238, type: 3}
   frostHit: {fileID: 8300000, guid: 19b70fac0b5f4314f88056cc1020c26a, type: 3}
+  arrowHit: {fileID: 8300000, guid: d08500b6cd1317b4486f0e821688ad13, type: 3}
   enemyDeath: {fileID: 8300000, guid: 5f081b9732ee6d643b508b9d7c4c9932, type: 3}
   gold: {fileID: 8300000, guid: 2ac19c3d91a0f0048ab8f4f99f124811, type: 3}
   place: {fileID: 8300000, guid: d08500b6cd1317b4486f0e821688ad13, type: 3}
   upgrade: {fileID: 8300000, guid: 35f2054d2a6dc9746a2f911c8fc39c68, type: 3}
   castleDamage: {fileID: 8300000, guid: a152827886e4abb42bcdf4c819bc9756, type: 3}
+  waveStart: {fileID: 8300000, guid: 35f2054d2a6dc9746a2f911c8fc39c68, type: 3}
+  waveClear: {fileID: 8300000, guid: 2ac19c3d91a0f0048ab8f4f99f124811, type: 3}
