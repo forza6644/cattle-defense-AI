@@ -45,8 +45,19 @@ namespace Stonehold
             }
         }
 
-        /// <summary>Current range: base scaled by the per-level multiplier.</summary>
-        public float Range => data.range * Mathf.Pow(data.rangeMultiplierPerLevel, level - 1);
+        /// <summary>Current range: base scaled by the per-level multiplier and run-wide progression multiplier.</summary>
+        public float Range
+        {
+            get
+            {
+                float baseRange = data.range * Mathf.Pow(data.rangeMultiplierPerLevel, level - 1);
+                if (RunProgressionManager.Instance != null)
+                {
+                    baseRange *= RunProgressionManager.Instance.RunRangeMultiplier;
+                }
+                return baseRange;
+            }
+        }
 
         /// <summary>Cost to upgrade from the current level: base cost x current level.</summary>
         public int UpgradeCost => data.cost * level;

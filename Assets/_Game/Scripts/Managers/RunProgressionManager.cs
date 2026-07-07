@@ -32,11 +32,15 @@ namespace Stonehold
         [Header("Active Multipliers")]
         [SerializeField] private float runDamageMultiplier = 1.0f;
         [SerializeField] private float runFireRateMultiplier = 1.0f;
+        [SerializeField] private float runRangeMultiplier = 1.0f;
+        [SerializeField] private float runXpMultiplier = 1.0f;
 
         public int CurrentXp => currentXp;
         public int CurrentLevel => currentLevel;
         public float RunDamageMultiplier => runDamageMultiplier;
         public float RunFireRateMultiplier => runFireRateMultiplier;
+        public float RunRangeMultiplier => runRangeMultiplier;
+        public float RunXpMultiplier => runXpMultiplier;
 
         /// <summary>Fired when XP or level changes: (currentXp, xpNeeded, currentLevel).</summary>
         public event Action<int, int, int> XpChanged;
@@ -103,7 +107,8 @@ namespace Stonehold
                 return;
             }
 
-            currentXp += amount;
+            int finalAmount = Mathf.RoundToInt(amount * runXpMultiplier);
+            currentXp += finalAmount;
             int needed = GetXpNeededForNextLevel();
             bool levelUpTriggered = false;
 
@@ -140,36 +145,77 @@ namespace Stonehold
 
         private CardChoice[] GenerateChoices()
         {
-            CardChoice[] choices = new CardChoice[3];
+            var pool = new System.Collections.Generic.List<CardChoice>();
 
-            // Card 1: Damage Boost
-            choices[0] = new CardChoice(
+            // Always eligible: Damage Boost
+            pool.Add(new CardChoice(
                 "Sharp Training",
                 "Boosts all defenders' damage by 10% for the rest of this run.",
                 () => { runDamageMultiplier += 0.10f; }
-            );
+            ));
 
-            // Card 2: Attack Speed Boost
-            choices[1] = new CardChoice(
+            // Always eligible: Attack Speed Boost
+            pool.Add(new CardChoice(
                 "Rapid Reload",
                 "Boosts all defenders' fire rate by 10% for the rest of this run.",
                 () => { runFireRateMultiplier += 0.10f; }
-            );
+            ));
 
-            // Card 3: Repair Wall
-            choices[2] = new CardChoice(
-                "Fortify Walls",
-                "Repairs the Castle Wall by 20% of its max health.",
-                () => {
-                    var castle = FindFirstObjectByType<Castle>();
-                    if (castle != null)
-                    {
+            // Always eligible: Range Boost
+            pool.Add(new CardChoice(
+                "Extended Sights",
+                "Boosts all defenders' range by 10% for the rest of this run.",
+                () => { runRangeMultiplier += 0.10f; }
+            ));
+
+            // Always eligible: XP Gain Boost
+            pool.Add(new CardChoice(
+                "Scholar's Path",
+                "Boosts all run XP gained by 10% for the rest of this run.",
+                () => { runXpMultiplier += 0.10f; }
+            ));
+
+            // Conditional eligible: Repair Wall (only when castle is damaged)
+            var castle = FindFirstObjectByType<Castle>();
+            if (castle != null && castle.CurrentHealth < castle.MaxHealth)
+            {
+                pool.Add(new CardChoice(
+                    "Fortify Walls",
+                    "Repairs the Castle Wall by 20% of its max health.",
+                    () => {
                         castle.Repair(Mathf.RoundToInt(castle.MaxHealth * 0.20f));
                     }
-                }
-            );
+                ));
+            }
 
-            return choices;
+            // We must pick exactly 3 unique cards randomly
+            var chosen = new CardChoice[3];
+            var rng = new System.Random();
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (pool.Count == 0)
+                {
+                    // Fallback choice if pool is depleted
+                    chosen[i] = new CardChoice(
+                        "Minor Blessing",
+                        "Gives 15 gold instantly to the treasury.",
+                        () => {
+                            if (EconomyManager.Instance != null)
+                            {
+                                EconomyManager.Instance.AddGold(15);
+                            }
+                        }
+                    );
+                    continue;
+                }
+
+                int idx = rng.Next(pool.Count);
+                chosen[i] = pool[idx];
+                pool.RemoveAt(idx); // prevent duplicate selections!
+            }
+
+            return chosen;
         }
 
         public void ApplyChoice(CardChoice choice)
