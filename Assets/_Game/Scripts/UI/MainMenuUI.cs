@@ -467,10 +467,6 @@ namespace Stonehold
             SaveManager.ResetProgress();
             RefreshStats();
             RefreshStageSelection();
-
-            // Reset starting defender index in UI
-            currentDefenderIndex = 0;
-            RefreshDefenderSelection();
         }
 
         private void RefreshStageSelection()

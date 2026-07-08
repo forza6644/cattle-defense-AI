@@ -111,7 +111,6 @@ namespace Stonehold
             SelectedStageIndex = 0;
             HighestStageUnlocked = 1;
             Stage1Completed = false;
-            SelectedStartingDefenderId = "archer_defender";
 
             PlayerPrefs.DeleteKey(KeyBestWave);
             PlayerPrefs.DeleteKey(KeyTotalWins);
@@ -120,7 +119,6 @@ namespace Stonehold
             PlayerPrefs.DeleteKey(KeySelectedStage);
             PlayerPrefs.DeleteKey(KeyHighestStageUnlocked);
             PlayerPrefs.DeleteKey(KeyStage1Completed);
-            PlayerPrefs.DeleteKey(KeySelectedStartingDefender);
             PlayerPrefs.Save();
         }
     }
