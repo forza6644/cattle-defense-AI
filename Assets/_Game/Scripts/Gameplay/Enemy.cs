@@ -33,6 +33,19 @@ namespace Stonehold
         public float CurrentHealth => currentHealth;
         public float MaxHealth => data != null ? data.health : 0f;
         public bool IsSlowed => slowTimer > 0f;
+        public bool IsDead => isDead;
+
+        public float SlowMultiplier
+        {
+            get => slowMultiplier;
+            set => slowMultiplier = value;
+        }
+
+        public float SlowTimer
+        {
+            get => slowTimer;
+            set => slowTimer = value;
+        }
         public float RemainingDistanceToTarget
         {
             get
@@ -122,11 +135,23 @@ namespace Stonehold
             return reducedAmount;
         }
 
+        /// <summary>Applies a status effect to the enemy.</summary>
+        public void ApplyStatusEffect(StatusEffect effect)
+        {
+            if (isDead) return;
+
+            StatusEffectController controller = GetComponent<StatusEffectController>();
+            if (controller == null)
+            {
+                controller = gameObject.AddComponent<StatusEffectController>();
+            }
+            controller.ApplyEffect(effect);
+        }
+
         /// <summary>Non-stacking slow: the newest slow replaces the current one.</summary>
         public void ApplySlow(float multiplier, float duration)
         {
-            slowMultiplier = Mathf.Clamp01(multiplier);
-            slowTimer = duration;
+            ApplyStatusEffect(new StatusEffect(StatusEffectType.Slow, multiplier, duration));
         }
 
         /// <summary>Death by tower: awards gold, then removes the enemy.</summary>
@@ -164,12 +189,15 @@ namespace Stonehold
                 return;
             }
 
-            if (slowTimer > 0f)
+            if (GetComponent<StatusEffectController>() == null)
             {
-                slowTimer -= Time.deltaTime;
-                if (slowTimer <= 0f)
+                if (slowTimer > 0f)
                 {
-                    slowMultiplier = 1f;
+                    slowTimer -= Time.deltaTime;
+                    if (slowTimer <= 0f)
+                    {
+                        slowMultiplier = 1f;
+                    }
                 }
             }
 

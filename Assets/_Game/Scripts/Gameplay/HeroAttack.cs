@@ -70,17 +70,29 @@ namespace Stonehold
             }
 
             float splashRadius = weapon.attackType == AttackType.Splash ? weapon.splashRadius : 0f;
-            float slowMultiplier = weapon.statusEffectType == StatusEffectType.Slow ? Mathf.Clamp01(weapon.statusEffectValue) : 1f;
-            float slowDuration = weapon.statusEffectType == StatusEffectType.Slow ? weapon.statusEffectDuration : 0f;
 
             if (weapon.projectilePrefab != null)
             {
                 Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, transform.position + projectileLaunchOffset);
                 if (projectile != null)
                 {
-                    projectile.Init(target, definition.baseDamage, splashRadius, slowMultiplier, slowDuration, GetTrailColor(weapon), definition.id);
+                    projectile.InitWithStatusEffect(
+                        target,
+                        definition.baseDamage,
+                        splashRadius,
+                        GetTrailColor(weapon),
+                        definition.id,
+                        weapon.statusEffectType,
+                        weapon.statusEffectValue,
+                        weapon.statusEffectDuration
+                    );
                 }
                 return;
+            }
+
+            if (weapon.statusEffectType != StatusEffectType.None && weapon.statusEffectDuration > 0f)
+            {
+                target.ApplyStatusEffect(new StatusEffect(weapon.statusEffectType, weapon.statusEffectValue, weapon.statusEffectDuration, definition.id));
             }
 
             float appliedDamage = target.TakeDamage(definition.baseDamage);
@@ -94,12 +106,17 @@ namespace Stonehold
                 return new Color(1f, 0.55f, 0.2f, 1f);
             }
 
-            if (weapon.statusEffectType == StatusEffectType.Slow)
+            switch (weapon.statusEffectType)
             {
-                return new Color(0.5f, 0.85f, 1f, 1f);
+                case StatusEffectType.Slow:
+                    return new Color(0.5f, 0.85f, 1f, 1f);
+                case StatusEffectType.Burn:
+                    return new Color(1f, 0.3f, 0.1f, 1f);
+                case StatusEffectType.Shock:
+                    return new Color(0.9f, 0.9f, 0.2f, 1f);
+                default:
+                    return new Color(1f, 0.95f, 0.55f, 1f);
             }
-
-            return new Color(1f, 0.95f, 0.55f, 1f);
         }
     }
 }

@@ -24,6 +24,10 @@ namespace Stonehold
         private TrailRenderer trail;
         private GameObject sourcePrefab;
 
+        private StatusEffectType statusEffectType = StatusEffectType.None;
+        private float statusEffectValue;
+        private float statusEffectDuration;
+
         private static readonly Dictionary<GameObject, Queue<Projectile>> pools = new Dictionary<GameObject, Queue<Projectile>>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -70,6 +74,64 @@ namespace Stonehold
             slowMultiplier = slowMult;
             slowDuration = slowDur;
             sourceHeroId = damageSourceHeroId;
+
+            if (slowMult < 1f)
+            {
+                statusEffectType = StatusEffectType.Slow;
+                statusEffectValue = slowMult;
+                statusEffectDuration = slowDur;
+            }
+            else
+            {
+                statusEffectType = StatusEffectType.None;
+                statusEffectValue = 0f;
+                statusEffectDuration = 0f;
+            }
+
+            if (trail == null)
+            {
+                trail = GetComponent<TrailRenderer>();
+            }
+
+            if (trail != null)
+            {
+                trail.Clear();
+                trail.emitting = true;
+                trail.startColor = trailColor;
+                Color end = trailColor;
+                end.a = 0f;
+                trail.endColor = end;
+            }
+        }
+
+        public void InitWithStatusEffect(
+            Enemy targetEnemy,
+            float damageAmount,
+            float splash,
+            Color trailColor,
+            string damageSourceHeroId,
+            StatusEffectType effectType,
+            float effectValue,
+            float effectDuration)
+        {
+            target = targetEnemy;
+            damage = damageAmount;
+            splashRadius = splash;
+            sourceHeroId = damageSourceHeroId;
+            statusEffectType = effectType;
+            statusEffectValue = effectValue;
+            statusEffectDuration = effectDuration;
+
+            if (effectType == StatusEffectType.Slow)
+            {
+                slowMultiplier = effectValue;
+                slowDuration = effectDuration;
+            }
+            else
+            {
+                slowMultiplier = 1f;
+                slowDuration = 0f;
+            }
 
             if (trail == null)
             {
@@ -157,9 +219,9 @@ namespace Stonehold
 
         private void HitEnemy(Enemy enemy)
         {
-            if (slowMultiplier < 1f)
+            if (statusEffectType != StatusEffectType.None && statusEffectDuration > 0f)
             {
-                enemy.ApplySlow(slowMultiplier, slowDuration);
+                enemy.ApplyStatusEffect(new StatusEffect(statusEffectType, statusEffectValue, statusEffectDuration, sourceHeroId));
             }
 
             float appliedDamage = enemy.TakeDamage(damage);
