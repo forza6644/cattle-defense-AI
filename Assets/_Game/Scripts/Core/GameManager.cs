@@ -17,7 +17,19 @@ namespace Stonehold
         /// <summary>Raised whenever the game state changes.</summary>
         public event Action<GameState> StateChanged;
 
+        /// <summary>Raised whenever the gameplay speed multiplier changes.</summary>
+        public event Action<float> GameSpeedChanged;
+
         public GameState State { get; private set; } = GameState.Playing;
+
+        /// <summary>
+        /// Player-selectable gameplay speed multiplier applied while Playing.
+        /// Only ever 1x / 1.5x / 2x - 0x is never a selectable speed; freezing is a
+        /// side effect of the Paused/LevelUp/Victory/Defeat states, not a speed mode.
+        /// </summary>
+        public float GameSpeed { get; private set; } = 1f;
+
+        private static readonly float[] SpeedSteps = { 1f, 1.5f, 2f };
 
         private Castle castle;
         private WaveManager waveManager;
@@ -137,6 +149,39 @@ namespace Stonehold
             }
         }
 
+        /// <summary>
+        /// Sets the gameplay speed multiplier. The live clock is only touched while
+        /// Playing; Paused/LevelUp/Victory/Defeat stay frozen at timeScale 0 so the
+        /// selected speed is remembered but never un-freezes a paused game.
+        /// </summary>
+        public void SetGameSpeed(float speed)
+        {
+            GameSpeed = speed;
+            if (State == GameState.Playing)
+            {
+                Time.timeScale = GameSpeed;
+            }
+            GameSpeedChanged?.Invoke(GameSpeed);
+        }
+
+        /// <summary>Cycles 1x -> 1.5x -> 2x -> 1x and returns the new multiplier.</summary>
+        public float CycleGameSpeed()
+        {
+            int index = 0;
+            for (int i = 0; i < SpeedSteps.Length; i++)
+            {
+                if (Mathf.Approximately(SpeedSteps[i], GameSpeed))
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            int next = (index + 1) % SpeedSteps.Length;
+            SetGameSpeed(SpeedSteps[next]);
+            return GameSpeed;
+        }
+
         /// <summary>Reloads the current scene for a fresh run.</summary>
         public void Restart()
         {
@@ -217,7 +262,8 @@ namespace Stonehold
             }
 
             State = newState;
-            Time.timeScale = newState == GameState.Playing ? 1f : 0f;
+            // Restore the player's selected speed on resume; any non-Playing state freezes.
+            Time.timeScale = newState == GameState.Playing ? GameSpeed : 0f;
             StateChanged?.Invoke(newState);
         }
     }

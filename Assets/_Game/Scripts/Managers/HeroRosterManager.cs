@@ -158,6 +158,51 @@ namespace Stonehold
 
             slots.Sort(CompareSlots);
             KeepOneSlotPerName();
+            ApplyCenterOutOrder();
+        }
+
+        /// <summary>
+        /// Reorders the (left-to-right) slot list so recruitment fills from the centre of
+        /// the wall outward: nearest-to-centre first, left before right on ties. For the
+        /// six slots at x = -4.5,-2.7,-0.9,0.9,2.7,4.5 the visit order becomes
+        /// -0.9, 0.9, -2.7, 2.7, -4.5, 4.5, so the starting Archer lands near the centre
+        /// and later recruits fill outward to the edges.
+        /// Assumes slot name order (HeroSlot_01..NN) matches left-to-right placement,
+        /// which the scene setup guarantees.
+        /// </summary>
+        private void ApplyCenterOutOrder()
+        {
+            int count = slots.Count;
+            if (count <= 1)
+            {
+                return;
+            }
+
+            HeroSlot[] leftToRight = slots.ToArray();
+            float center = (count - 1) / 2f;
+
+            List<int> order = new List<int>(count);
+            for (int i = 0; i < count; i++)
+            {
+                order.Add(i);
+            }
+
+            order.Sort((a, b) =>
+            {
+                float distanceCompare = Mathf.Abs(a - center).CompareTo(Mathf.Abs(b - center));
+                if (distanceCompare != 0f)
+                {
+                    return distanceCompare < 0f ? -1 : 1;
+                }
+
+                return a.CompareTo(b);
+            });
+
+            slots.Clear();
+            for (int i = 0; i < order.Count; i++)
+            {
+                slots.Add(leftToRight[order[i]]);
+            }
         }
 
         private static int CompareSlots(HeroSlot a, HeroSlot b)

@@ -44,6 +44,7 @@ namespace Stonehold
         private CanvasGroup pauseGroup;
         private CanvasGroup victoryGroup;
         private CanvasGroup defeatGroup;
+        private Text speedButtonLabel;
         private Text towerPanelTitle;
         private Text upgradeButtonLabel;
         private Text sellButtonLabel;
@@ -159,7 +160,11 @@ namespace Stonehold
                 waves.WaveCleared += OnWaveCleared;
             }
             if (castle != null) castle.HealthChanged += RefreshCastleHealth;
-            if (game != null) game.StateChanged += OnStateChanged;
+            if (game != null)
+            {
+                game.StateChanged += OnStateChanged;
+                game.GameSpeedChanged += OnGameSpeedChanged;
+            }
             if (unlocks != null)
             {
                 unlocks.UnlocksChanged += RefreshBuildMenu;
@@ -202,7 +207,11 @@ namespace Stonehold
                 waves.WaveCleared -= OnWaveCleared;
             }
             if (castle != null) castle.HealthChanged -= RefreshCastleHealth;
-            if (game != null) game.StateChanged -= OnStateChanged;
+            if (game != null)
+            {
+                game.StateChanged -= OnStateChanged;
+                game.GameSpeedChanged -= OnGameSpeedChanged;
+            }
             if (unlocks != null)
             {
                 unlocks.UnlocksChanged -= RefreshBuildMenu;
@@ -800,6 +809,19 @@ namespace Stonehold
 
         // -------------------------------------------------------- State screens
 
+        private void OnGameSpeedChanged(float speed)
+        {
+            if (speedButtonLabel != null)
+            {
+                speedButtonLabel.text = FormatSpeed(speed);
+            }
+        }
+
+        private static string FormatSpeed(float speed)
+        {
+            return speed.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "x";
+        }
+
         private void OnStateChanged(GameState state)
         {
             HideSelectionPanels();
@@ -1128,6 +1150,19 @@ namespace Stonehold
             // Pause button (under the HP bar)
             CreateButton(canvasRect, "PauseButton", "Pause", new Vector2(120f, 44f), new Vector2(1f, 1f),
                 new Vector2(-90f, -90f), () => { if (game != null) game.TogglePause(); });
+
+            // Speed button (under the Pause button): cycles 1x -> 1.5x -> 2x -> 1x.
+            Button speedButton = CreateButton(canvasRect, "SpeedButton",
+                game != null ? FormatSpeed(game.GameSpeed) : "1x",
+                new Vector2(120f, 44f), new Vector2(1f, 1f), new Vector2(-90f, -138f),
+                () =>
+                {
+                    if (game != null)
+                    {
+                        game.CycleGameSpeed();
+                    }
+                });
+            speedButtonLabel = speedButton.GetComponentInChildren<Text>();
 
             // Wave banner (center)
             bannerText = CreateText(canvasRect, "WaveBanner", "", 72, Color.white, TextAnchor.MiddleCenter);
