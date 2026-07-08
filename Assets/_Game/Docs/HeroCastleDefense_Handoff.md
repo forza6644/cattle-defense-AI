@@ -14,8 +14,8 @@ Stonehold TD has pivoted from a traditional Tower Defense prototype toward a Her
 ## Current Working Branch And Commit
 
 - Branch: `feature/hero-castle-defense-pivot`
-- Latest commit: `6363fb87f08318df61aa98e89737696259a88875`
-- Commit message: `Add battle result and damage report screen`
+- Latest commit: `ba5dd3f3246b3c6f61117e7608749f93c6b2fca4`
+- Commit message: `Add meta upgrades and player profile save`
 - Remote branch URL: `https://github.com/forza6644/cattle-defense-AI/tree/feature/hero-castle-defense-pivot`
 
 ## Correct Unity Project And Scene
@@ -57,6 +57,16 @@ Important: `TD_Asset_Lab` is only an asset/map lab. It is not the current gamepl
 - Hooked screens to Castle HP (defeat) and wave-cleared (victory) events, with debug triggers `G` (GameOver) and `V` (Victory).
 - OK button returns to MainMenu scene safely, and 2X Rewards serves as an ad placeholder.
 
+### Task 5: Meta Upgrade + Save System
+- Meta Upgrade + Save System completed
+- PlayerPrefs-based profile saving for coins, XP, core materials
+- MetaUpgradeManager added
+- MainMenu meta upgrade panel added
+- Battle rewards are claimed from result screen OK button
+- Duplicate reward claiming is prevented
+- Meta bonuses affect Castle HP, global damage, fire rate, and range
+- Card draft and result screen still work after Task 5
+
 ---
 
 ## Important Files Created Or Modified
@@ -76,15 +86,20 @@ Important: `TD_Asset_Lab` is only an asset/map lab. It is not the current gamepl
 - `Assets/_Game/Scripts/Gameplay/Projectile.cs`
 - `Assets/_Game/Scripts/Gameplay/StatusEffect.cs`
 - `Assets/_Game/Scripts/Gameplay/StatusEffectController.cs`
+- `Assets/_Game/Scripts/Gameplay/Castle.cs`
 
 ### Manager Scripts
 - `Assets/_Game/Scripts/Managers/DamageTracker.cs`
 - `Assets/_Game/Scripts/Managers/RunModifierManager.cs`
 - `Assets/_Game/Scripts/Managers/CardDraftManager.cs`
 - `Assets/_Game/Scripts/Managers/WaveManager.cs`
+- `Assets/_Game/Scripts/Managers/MetaUpgradeManager.cs`
+- `Assets/_Game/Scripts/Managers/SaveManager.cs`
+- `Assets/_Game/Scripts/Core/GameManager.cs`
 
 ### UI Scripts
 - `Assets/_Game/Scripts/UI/UIManager.cs`
+- `Assets/_Game/Scripts/UI/MainMenuUI.cs`
 
 ---
 
@@ -100,26 +115,23 @@ Manual Unity verification passed.
 - Map is still the old gameplay prototype.
 - New assets/maps from `TD_Asset_Lab` are not integrated yet.
 - Only 3 active heroes exist.
-- Save system does not permanently write rewards or meta upgrades yet.
 
 ---
 
 ## Recommended Next Task For Antigravity
 
-### Task 5: Meta Upgrade + Save System
-Extend the `SaveManager` and add a Meta Progression layer.
-- Save run rewards (Gold, XP, Materials) permanently across runs using PlayerPrefs.
-- Add a Meta Upgrades UI in the Lobby/MainMenu to purchase permanent stats upgrades for heroes (e.g. +5% Archer damage).
-- Ensure the permanent upgrades are loaded and applied to hero slots on run start.
+### Task 6: Add Remaining Heroes + Expand Card Pool
+Implement the remaining heroes and expand the card pool.
+- Add more playable/assignable heroes with configuration, weapon definition, and specialized behaviors.
+- Expand the card pool (e.g., to 30+ cards) with more varied modifiers and status effect triggers.
 
 ---
 
 ## Future Roadmap
-1. **Task 5**: Meta Upgrade + Save System
-2. **Task 6**: Add remaining heroes and 30 cards
-3. **Task 7**: Integrate improved map/assets from `TD_Asset_Lab`
-4. **Task 8**: VFX, audio, camera, UI polish
-5. **Task 9**: Build/testing
+1. **Task 6**: Add remaining heroes and 30 cards
+2. **Task 7**: Integrate improved map/assets from `TD_Asset_Lab`
+3. **Task 8**: VFX, audio, camera, UI polish
+4. **Task 9**: Build/testing
 
 ---
 
