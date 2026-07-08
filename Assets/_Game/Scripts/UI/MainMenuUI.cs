@@ -24,6 +24,8 @@ namespace Stonehold
         private Text statsText;
         private Text stageNameText;
         private Text stageDescText;
+        private Text stageNumText;
+        private Text stageRewardText;
         private Button prevStageBtn;
         private Button nextStageBtn;
         private Button startButton;
@@ -38,20 +40,22 @@ namespace Stonehold
         {
             public string id;
             public string displayName;
-            public DefenderInfo(string id, string displayName)
+            public string rarity;
+            public DefenderInfo(string id, string displayName, string rarity)
             {
                 this.id = id;
                 this.displayName = displayName;
+                this.rarity = rarity;
             }
         }
 
         private readonly DefenderInfo[] lobbyDefenders = new DefenderInfo[]
         {
-            new DefenderInfo("archer_defender", "Archer Defender"),
-            new DefenderInfo("machine_gun_soldier", "Machine Gun Soldier"),
-            new DefenderInfo("catapult_defender", "Catapult Defender"),
-            new DefenderInfo("ice_mage", "Ice Mage"),
-            new DefenderInfo("sniper", "Sniper")
+            new DefenderInfo("archer_defender", "Archer Defender", "Common"),
+            new DefenderInfo("machine_gun_soldier", "Machine Gun Soldier", "Rare"),
+            new DefenderInfo("catapult_defender", "Catapult Defender", "Rare"),
+            new DefenderInfo("ice_mage", "Ice Mage", "Rare"),
+            new DefenderInfo("sniper", "Sniper", "Epic")
         };
 
         private void Awake()
@@ -135,45 +139,74 @@ namespace Stonehold
             Image background = CreateImage(canvasRect, "Background", new Color(0.07f, 0.09f, 0.14f));
             Stretch(background.rectTransform);
 
-            // Title
-            Text title = CreateText(canvasRect, "Title", "STONEHOLD", 110, new Color(1f, 0.85f, 0.35f));
-            title.fontStyle = FontStyle.Bold;
-            Place(title.rectTransform, new Vector2(0.5f, 0.74f), Vector2.zero, new Vector2(1200f, 140f));
-            titleRect = title.rectTransform;
+            // 1. Top Header Bar
+            Image headerBar = CreateImage(canvasRect, "HeaderBar", new Color(0.05f, 0.06f, 0.08f, 0.95f));
+            Place(headerBar.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(1920f, 100f));
 
-            Text subtitle = CreateText(canvasRect, "Subtitle", "Defend the keep. Hold the line.", 30, new Color(0.8f, 0.8f, 0.85f));
-            Place(subtitle.rectTransform, new Vector2(0.5f, 0.65f), Vector2.zero, new Vector2(900f, 50f));
+            // Player Profile (Top-Left)
+            Image profileAvatar = CreateImage(headerBar.rectTransform, "ProfileAvatar", new Color(0.2f, 0.28f, 0.4f, 1.0f));
+            Place(profileAvatar.rectTransform, new Vector2(0f, 0.5f), new Vector2(80f, 0f), new Vector2(64f, 64f));
 
-            // Main buttons
-            startButton = CreateButton(canvasRect, "StartButton", "Start Stage", new Vector2(340f, 84f), new Vector2(0.5f, 0.30f), Vector2.zero, Play);
-            startButtonLabel = startButton.GetComponentInChildren<Text>();
+            Text profileName = CreateText(headerBar.rectTransform, "ProfileName", "Commander_01", 24, new Color(1f, 0.85f, 0.35f));
+            profileName.alignment = TextAnchor.MiddleLeft;
+            Place(profileName.rectTransform, new Vector2(0f, 0.5f), new Vector2(250f, 12f), new Vector2(240f, 32f));
 
-            CreateButton(canvasRect, "SettingsButton", "Settings", new Vector2(340f, 70f), new Vector2(0.5f, 0.20f), Vector2.zero, () => ShowSettings(true));
+            Text profileLevel = CreateText(headerBar.rectTransform, "ProfileLevel", "Lv.15", 18, Color.white);
+            profileLevel.alignment = TextAnchor.MiddleLeft;
+            Place(profileLevel.rectTransform, new Vector2(0f, 0.5f), new Vector2(250f, -14f), new Vector2(240f, 24f));
+
+            // Currencies (Top-Right Area)
+            Text currencyText = CreateText(headerBar.rectTransform, "Currencies", "🪙 1,250    💎 350    ⚡ 50/50", 22, new Color(0.9f, 0.9f, 0.95f));
+            currencyText.alignment = TextAnchor.MiddleRight;
+            Place(currencyText.rectTransform, new Vector2(1f, 0.5f), new Vector2(-480f, 0f), new Vector2(500f, 40f));
+
+            // Settings & Quit Buttons in Top Bar
+            CreateButton(headerBar.rectTransform, "SettingsButton", "Settings", new Vector2(160f, 54f),
+                new Vector2(1f, 0.5f), new Vector2(-110f, 0f), () => ShowSettings(true));
 
             if (!Application.isMobilePlatform)
             {
-                CreateButton(canvasRect, "QuitButton", "Quit", new Vector2(340f, 70f), new Vector2(0.5f, 0.11f), Vector2.zero, QuitGame);
+                CreateButton(headerBar.rectTransform, "QuitButton", "Quit", new Vector2(120f, 54f),
+                    new Vector2(1f, 0.5f), new Vector2(-260f, 0f), QuitGame);
             }
 
-            // Stats (top-left)
-            statsText = CreateText(canvasRect, "StatsText", "", 24, new Color(0.85f, 0.85f, 0.9f));
+            // 2. Title
+            Text title = CreateText(canvasRect, "Title", "STONEHOLD", 110, new Color(1f, 0.85f, 0.35f));
+            title.fontStyle = FontStyle.Bold;
+            Place(title.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(1200f, 130f));
+            titleRect = title.rectTransform;
+
+            Text subtitle = CreateText(canvasRect, "Subtitle", "Defend the keep. Hold the line.", 24, new Color(0.8f, 0.8f, 0.85f));
+            Place(subtitle.rectTransform, new Vector2(0.5f, 0.70f), Vector2.zero, new Vector2(900f, 40f));
+
+            // 3. Stats & Progress Panel (Left Side Container)
+            Image statsBg = CreateImage(canvasRect, "StatsPanel", new Color(0.12f, 0.16f, 0.24f, 0.5f));
+            Place(statsBg.rectTransform, new Vector2(0f, 0.5f), new Vector2(260f, 50f), new Vector2(400f, 400f));
+
+            statsText = CreateText(statsBg.rectTransform, "StatsText", "", 22, new Color(0.85f, 0.85f, 0.9f));
             statsText.alignment = TextAnchor.UpperLeft;
-            Place(statsText.rectTransform, new Vector2(0f, 1f), new Vector2(220f, -120f), new Vector2(400f, 200f));
+            Place(statsText.rectTransform, new Vector2(0.5f, 0.6f), Vector2.zero, new Vector2(340f, 260f));
             RefreshStats();
 
-            // Reset Button (top-right)
-            CreateButton(canvasRect, "ResetStatsButton", "Reset Stats", new Vector2(200f, 54f),
-                new Vector2(1f, 1f), new Vector2(-120f, -50f), ResetStats);
+            CreateButton(statsBg.rectTransform, "ResetStatsButton", "Reset Stats", new Vector2(180f, 48f),
+                new Vector2(0.5f, 0.12f), Vector2.zero, ResetStats);
 
-            // Stage Selection Panel (center-top)
-            Image stageBg = CreateImage(canvasRect, "StagePanel", new Color(0.12f, 0.16f, 0.24f, 0.6f));
-            Place(stageBg.rectTransform, new Vector2(0.5f, 0.55f), Vector2.zero, new Vector2(700f, 130f));
+            // 4. Central Stage Select Panel
+            Image stageBg = CreateImage(canvasRect, "StagePanel", new Color(0.12f, 0.16f, 0.24f, 0.8f));
+            Place(stageBg.rectTransform, new Vector2(0.5f, 0.53f), Vector2.zero, new Vector2(800f, 220f));
 
-            stageNameText = CreateText(stageBg.rectTransform, "StageName", "", 24, Color.white);
-            Place(stageNameText.rectTransform, new Vector2(0.5f, 0.72f), Vector2.zero, new Vector2(600f, 32f));
+            stageNumText = CreateText(stageBg.rectTransform, "StageNumText", "STAGE 1", 20, new Color(1f, 0.85f, 0.35f));
+            Place(stageNumText.rectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(700f, 30f));
 
-            stageDescText = CreateText(stageBg.rectTransform, "StageDesc", "", 18, new Color(0.8f, 0.8f, 0.85f));
-            Place(stageDescText.rectTransform, new Vector2(0.5f, 0.32f), Vector2.zero, new Vector2(600f, 60f));
+            stageNameText = CreateText(stageBg.rectTransform, "StageName", "", 32, Color.white);
+            stageNameText.fontStyle = FontStyle.Bold;
+            Place(stageNameText.rectTransform, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(700f, 44f));
+
+            stageDescText = CreateText(stageBg.rectTransform, "StageDesc", "", 18, new Color(0.85f, 0.85f, 0.9f));
+            Place(stageDescText.rectTransform, new Vector2(0.5f, 0.34f), Vector2.zero, new Vector2(700f, 60f));
+
+            stageRewardText = CreateText(stageBg.rectTransform, "StageRewardText", "Rewards: 🪙 Gold  💎 Gems  📦 Loot Box", 16, new Color(0.7f, 0.7f, 0.75f));
+            Place(stageRewardText.rectTransform, new Vector2(0.5f, 0.12f), Vector2.zero, new Vector2(700f, 24f));
 
             prevStageBtn = CreateButton(stageBg.rectTransform, "PrevStage", "<", new Vector2(46f, 46f),
                 new Vector2(0f, 0.5f), new Vector2(30f, 0f), () => CycleStage(-1));
@@ -181,15 +214,15 @@ namespace Stonehold
             nextStageBtn = CreateButton(stageBg.rectTransform, "NextStage", ">", new Vector2(46f, 46f),
                 new Vector2(1f, 0.5f), new Vector2(-30f, 0f), () => CycleStage(1));
 
-            // Starting Defender Selection Panel (center-lower)
-            Image defenderBg = CreateImage(canvasRect, "DefenderPanel", new Color(0.12f, 0.16f, 0.24f, 0.6f));
-            Place(defenderBg.rectTransform, new Vector2(0.5f, 0.42f), Vector2.zero, new Vector2(700f, 100f));
+            // 5. Starting Defender Panel
+            Image defenderBg = CreateImage(canvasRect, "DefenderPanel", new Color(0.12f, 0.16f, 0.24f, 0.7f));
+            Place(defenderBg.rectTransform, new Vector2(0.5f, 0.38f), Vector2.zero, new Vector2(800f, 100f));
 
             Text defenderTitleText = CreateText(defenderBg.rectTransform, "DefenderTitle", "STARTING DEFENDER", 16, new Color(1f, 0.85f, 0.35f));
-            Place(defenderTitleText.rectTransform, new Vector2(0.5f, 0.80f), Vector2.zero, new Vector2(600f, 24f));
+            Place(defenderTitleText.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(700f, 24f));
 
-            defenderNameText = CreateText(defenderBg.rectTransform, "DefenderName", "", 24, Color.white);
-            Place(defenderNameText.rectTransform, new Vector2(0.5f, 0.35f), Vector2.zero, new Vector2(600f, 36f));
+            defenderNameText = CreateText(defenderBg.rectTransform, "DefenderName", "", 26, Color.white);
+            Place(defenderNameText.rectTransform, new Vector2(0.5f, 0.35f), Vector2.zero, new Vector2(700f, 36f));
 
             prevDefenderBtn = CreateButton(defenderBg.rectTransform, "PrevDefender", "<", new Vector2(46f, 46f),
                 new Vector2(0f, 0.5f), new Vector2(30f, 0f), () => CycleDefender(-1));
@@ -210,15 +243,69 @@ namespace Stonehold
             }
             RefreshDefenderSelection();
 
-            // Offers / Events Placeholder (right-side)
-            Image offersBg = CreateImage(canvasRect, "OffersPanel", new Color(0.12f, 0.16f, 0.24f, 0.6f));
-            Place(offersBg.rectTransform, new Vector2(1f, 0.5f), new Vector2(-220f, -50f), new Vector2(320f, 400f));
+            // 6. Large Premium Battle Button
+            startButton = CreateButton(canvasRect, "StartButton", "BATTLE", new Vector2(400f, 96f), new Vector2(0.5f, 0.23f), Vector2.zero, Play);
+            startButtonLabel = startButton.GetComponentInChildren<Text>();
+            startButtonLabel.fontStyle = FontStyle.Bold;
+            startButtonLabel.fontSize = 36;
+            startButtonLabel.color = new Color(1f, 0.9f, 0.3f);
 
-            Text offersTitle = CreateText(offersBg.rectTransform, "Title", "OFFERS & EVENTS", 24, new Color(1f, 0.85f, 0.35f));
-            Place(offersTitle.rectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(280f, 40f));
+            ColorBlock cb = startButton.colors;
+            cb.normalColor = new Color(0.8f, 0.2f, 0.15f, 1.0f);
+            cb.highlightedColor = new Color(0.95f, 0.3f, 0.25f, 1.0f);
+            cb.pressedColor = new Color(0.6f, 0.15f, 0.1f, 1.0f);
+            cb.selectedColor = new Color(0.8f, 0.2f, 0.15f, 1.0f);
+            startButton.colors = cb;
 
-            Text offersBody = CreateText(offersBg.rectTransform, "Body", "Offers / Events\ncoming soon", 20, new Color(0.7f, 0.7f, 0.75f));
-            Place(offersBody.rectTransform, new Vector2(0.5f, 0.45f), Vector2.zero, new Vector2(280f, 200f));
+            // 7. Right Events/Offers Container
+            Image offersBg = CreateImage(canvasRect, "OffersPanel", new Color(0.12f, 0.16f, 0.24f, 0.5f));
+            Place(offersBg.rectTransform, new Vector2(1f, 0.5f), new Vector2(-260f, 50f), new Vector2(400f, 400f));
+
+            Text offersTitle = CreateText(offersBg.rectTransform, "Title", "EVENTS & OFFERS", 22, new Color(1f, 0.85f, 0.35f));
+            Place(offersTitle.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(340f, 40f));
+
+            string offersContent = "🏆 <b>Daily Challenge</b>\nReach Wave 15 on Castle Road!\n\n" +
+                                   "🎁 <b>Free Daily Chest</b>\nAvailable in Shop!\n\n" +
+                                   "<color=#888a90>Offers / Events coming soon</color>";
+            Text offersBody = CreateText(offersBg.rectTransform, "Body", offersContent, 20, new Color(0.8f, 0.8f, 0.85f));
+            offersBody.alignment = TextAnchor.UpperLeft;
+            Place(offersBody.rectTransform, new Vector2(0.5f, 0.44f), Vector2.zero, new Vector2(340f, 260f));
+
+            // 8. Bottom Navigation Bar Placeholder
+            Image bottomBar = CreateImage(canvasRect, "BottomBar", new Color(0.05f, 0.06f, 0.08f, 1.0f));
+            Place(bottomBar.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(1920f, 100f));
+
+            string[] tabLabels = { "SHOP", "CHARACTERS", "BATTLES", "LIBRARY", "MAP" };
+            float tabWidth = 240f;
+            float tabSpacing = 280f;
+            float tabStartX = -(tabLabels.Length - 1) * tabSpacing / 2f;
+
+            for (int i = 0; i < tabLabels.Length; i++)
+            {
+                string labelText = tabLabels[i];
+                Button tabBtn = CreateButton(bottomBar.rectTransform, "Tab_" + labelText, labelText, new Vector2(tabWidth, 60f),
+                    new Vector2(0.5f, 0.5f), new Vector2(tabStartX + i * tabSpacing, 0f), () => {
+                        Debug.Log($"Tab clicked: {labelText}. Section coming soon!");
+                    });
+
+                Text tabBtnLabel = tabBtn.GetComponentInChildren<Text>();
+                tabBtnLabel.fontSize = 22;
+                tabBtnLabel.fontStyle = FontStyle.Bold;
+
+                ColorBlock tcb = tabBtn.colors;
+                if (labelText == "BATTLES")
+                {
+                    tcb.normalColor = new Color(0.8f, 0.2f, 0.15f, 1.0f);
+                    tcb.highlightedColor = new Color(0.95f, 0.3f, 0.25f, 1.0f);
+                    tabBtnLabel.color = new Color(1f, 0.9f, 0.3f);
+                }
+                else
+                {
+                    tcb.normalColor = new Color(0.12f, 0.16f, 0.24f, 0.95f);
+                    tcb.highlightedColor = new Color(0.20f, 0.26f, 0.38f, 1.0f);
+                }
+                tabBtn.colors = tcb;
+            }
 
             RefreshStageSelection();
             BuildSettingsPanel();
@@ -393,21 +480,25 @@ namespace Stonehold
             {
                 if (selected == 0)
                 {
-                    stageNameText.text = "<b>Stage 1: Castle Road</b>";
+                    if (stageNumText != null) stageNumText.text = "STAGE 1";
+                    stageNameText.text = "<b>Castle Road</b>";
                     stageDescText.text = "Defend the road to the keep against grunts, armored troops, runners, and the final boss.\n" +
-                                         "<color=#ffd759>Progress: " + (SaveManager.Stage1Completed ? "Completed" : "Not Cleared") + "</color>";
-                    if (startButtonLabel != null) startButtonLabel.text = "Start Stage";
+                                         "<color=#ffd759>Progress: " + (SaveManager.Stage1Completed ? "Completed (3/3 Stars)" : "Not Cleared (0/3 Stars)") + "</color>";
+                    if (stageRewardText != null) stageRewardText.text = "Rewards: 🪙 Gold  💎 Gems  📦 Common Chest";
+                    if (startButtonLabel != null) startButtonLabel.text = "BATTLE";
                     if (startButton != null) startButton.interactable = true;
                 }
                 else
                 {
-                    stageNameText.text = "<b>Stage 2: Highlands</b>";
+                    if (stageNumText != null) stageNumText.text = "STAGE 2";
+                    stageNameText.text = "<b>Highlands</b>";
                     bool isUnlocked = SaveManager.HighestStageUnlocked >= 2;
                     stageDescText.text = isUnlocked
                         ? "Defend the highland pass. Expected enemy types: Giants, Wyverns.\n<color=#ffd759>Progress: Not Cleared</color>"
                         : "Defend the highland pass. Expected enemy types: Giants, Wyverns.\n<color=#ff5959>LOCKED: Complete Stage 1 to unlock</color>";
+                    if (stageRewardText != null) stageRewardText.text = isUnlocked ? "Rewards: 🪙 Gold  💎 Gems  📦 Rare Chest" : "Rewards: LOCKED";
 
-                    if (startButtonLabel != null) startButtonLabel.text = isUnlocked ? "Start Stage" : "LOCKED";
+                    if (startButtonLabel != null) startButtonLabel.text = isUnlocked ? "BATTLE" : "LOCKED";
                     if (startButton != null) startButton.interactable = isUnlocked;
                 }
             }
@@ -437,7 +528,18 @@ namespace Stonehold
         {
             if (defenderNameText != null)
             {
-                defenderNameText.text = $"<b>{lobbyDefenders[currentDefenderIndex].displayName}</b>";
+                string colorHex = "#d9d9f2"; // Common
+                string rarity = lobbyDefenders[currentDefenderIndex].rarity;
+                if (rarity == "Rare")
+                {
+                    colorHex = "#66ccff";
+                }
+                else if (rarity == "Epic")
+                {
+                    colorHex = "#d980ff";
+                }
+
+                defenderNameText.text = $"<color={colorHex}><b>{lobbyDefenders[currentDefenderIndex].displayName}</b></color> <size=16>({rarity})</size>";
             }
         }
     }
