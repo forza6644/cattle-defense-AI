@@ -89,6 +89,21 @@ namespace Stonehold
             {
                 TogglePause();
             }
+
+            // Debug triggers: V for Victory screen, G for Defeat screen
+            if (Keyboard.current != null)
+            {
+                if (Keyboard.current.vKey.wasPressedThisFrame)
+                {
+                    Debug.Log("[GameManager] Debug Victory triggered via V key.");
+                    SetState(GameState.Victory);
+                }
+                else if (Keyboard.current.gKey.wasPressedThisFrame)
+                {
+                    Debug.Log("[GameManager] Debug Defeat triggered via G key.");
+                    SetState(GameState.Defeat);
+                }
+            }
         }
 
         public void TogglePause()

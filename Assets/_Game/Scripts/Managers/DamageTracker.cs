@@ -31,17 +31,50 @@ namespace Stonehold
 
         public static void RecordDamage(string heroId, float damageAmount)
         {
-            if (string.IsNullOrEmpty(heroId) || damageAmount <= 0f || Instance == null)
+            if (string.IsNullOrEmpty(heroId) || damageAmount <= 0f)
             {
                 return;
             }
 
-            if (!Instance.damageByHeroId.ContainsKey(heroId))
+            var inst = Instance != null ? Instance : FindFirstObjectByType<DamageTracker>();
+            if (inst == null)
             {
-                Instance.damageByHeroId[heroId] = 0f;
+                return;
             }
 
-            Instance.damageByHeroId[heroId] += damageAmount;
+            if (!inst.damageByHeroId.ContainsKey(heroId))
+            {
+                inst.damageByHeroId[heroId] = 0f;
+            }
+
+            inst.damageByHeroId[heroId] += damageAmount;
+        }
+
+        public float GetTotalDamage()
+        {
+            float total = 0f;
+            foreach (var val in damageByHeroId.Values)
+            {
+                total += val;
+            }
+            return total;
+        }
+
+        public float GetDamagePercentage(string heroId)
+        {
+            float total = GetTotalDamage();
+            if (total <= 0f) return 0f;
+            if (damageByHeroId.TryGetValue(heroId, out float dmg))
+            {
+                return (dmg / total) * 100f;
+            }
+            return 0f;
+        }
+
+        public void ClearTracker()
+        {
+            damageByHeroId.Clear();
+            Debug.Log("[DamageTracker] Cleared damage records.");
         }
     }
 }

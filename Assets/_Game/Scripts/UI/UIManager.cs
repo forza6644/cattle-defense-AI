@@ -69,6 +69,15 @@ namespace Stonehold
         private readonly Text[] cardTypeLabels = new Text[3];
         private RunProgressionManager progression;
 
+        // Battle Result Panel
+        private CanvasGroup resultPanelGroup;
+        private Text resultTitleText;
+        private Text resultSubtitleText;
+        private Text resultRewardsText;
+        private Text resultDamageReportText;
+        private Button resultOkButton;
+        private Button resultDoubleButton;
+
         private Text hintText;
         private Image hintBg;
         private float hintTimer;
@@ -794,36 +803,23 @@ namespace Stonehold
         {
             HideSelectionPanels();
             ShowPanel(pauseGroup, state == GameState.Paused);
-            ShowPanel(victoryGroup, state == GameState.Victory);
-            ShowPanel(defeatGroup, state == GameState.Defeat);
+
+            if (state == GameState.Victory || state == GameState.Defeat)
+            {
+                ShowPanel(victoryGroup, false);
+                ShowPanel(defeatGroup, false);
+                ShowBattleResult(state == GameState.Victory);
+            }
+            else
+            {
+                ShowPanel(resultPanelGroup, false);
+                ShowPanel(victoryGroup, false);
+                ShowPanel(defeatGroup, false);
+            }
+
             if (state != GameState.LevelUp)
             {
                 ShowPanel(levelUpPanelGroup, false);
-            }
-
-            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
-            {
-                if (state == GameState.Victory)
-                {
-                    var subtitle = victoryGroup.transform.Find("Subtitle")?.GetComponent<Text>();
-                    if (subtitle != null)
-                    {
-                        subtitle.text = "You cleared all waves! Excellent defense!\n" +
-                                        "<color=#ffd759>Meta Gold Earned: +300 🪙</color>";
-                    }
-                }
-                else if (state == GameState.Defeat)
-                {
-                    var subtitle = defeatGroup.transform.Find("Subtitle")?.GetComponent<Text>();
-                    if (subtitle != null)
-                    {
-                        int waveReached = SaveManager.BestWave;
-                        if (waveReached < 1) waveReached = 1;
-                        int metaGoldEarned = waveReached * 15;
-                        subtitle.text = $"The castle has fallen at wave {waveReached}.\n" +
-                                        $"<color=#ffd759>Meta Gold Earned: +{metaGoldEarned} 🪙</color>";
-                    }
-                }
             }
         }
 
@@ -1012,6 +1008,10 @@ namespace Stonehold
 
         private IEnumerator FadePanel(CanvasGroup group, float targetAlpha)
         {
+            if (group == null)
+            {
+                yield break;
+            }
             RectTransform rt = group.transform as RectTransform;
             bool overlay = rt != null && rt.anchorMin == Vector2.zero && rt.anchorMax == Vector2.one;
             float startAlpha = group.alpha;
@@ -1024,6 +1024,10 @@ namespace Stonehold
 
             for (float t = 0f; t < PanelFadeSeconds; t += Time.unscaledDeltaTime)
             {
+                if (group == null)
+                {
+                    yield break;
+                }
                 float k = t / PanelFadeSeconds;
                 group.alpha = Mathf.Lerp(startAlpha, targetAlpha, k);
                 if (!overlay)
@@ -1034,6 +1038,10 @@ namespace Stonehold
                 yield return null;
             }
 
+            if (group == null)
+            {
+                yield break;
+            }
             group.alpha = targetAlpha;
             if (!overlay)
             {
@@ -1145,6 +1153,7 @@ namespace Stonehold
                     ("Main Menu", () => { if (game != null) game.LoadMainMenu(); }) });
 
             BuildLevelUpPanel();
+            BuildBattleResultPanel();
         }
 
         private void BuildLevelUpPanel()
@@ -1364,7 +1373,155 @@ namespace Stonehold
             group.blocksRaycasts = false;
             return group;
         }
+        private void BuildBattleResultPanel()
+        {
+            // Dim background
+            Image dim = CreateImage(canvasRect, "BattleResultPanel", new Color(0.04f, 0.05f, 0.08f, 0.96f));
+            RectTransform rect = dim.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
 
+            // Title (Victory/Defeat)
+            resultTitleText = CreateText(rect, "Title", "BATTLE RESULT", 72, Color.white, TextAnchor.MiddleCenter);
+            resultTitleText.fontStyle = FontStyle.Bold;
+            SetAnchored(resultTitleText.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(1000f, 100f));
+
+            // Subtitle (Wave reached, Battle number)
+            resultSubtitleText = CreateText(rect, "Subtitle", "Wave Reached: - | Run: #1", 24, new Color(0.8f, 0.8f, 0.85f), TextAnchor.MiddleCenter);
+            SetAnchored(resultSubtitleText.rectTransform, new Vector2(0.5f, 0.80f), Vector2.zero, new Vector2(1000f, 40f));
+
+            // Content Panel (center)
+            Image contentBg = CreateImage(rect, "ContentBg", new Color(0.08f, 0.10f, 0.15f, 0.9f));
+            SetAnchored(contentBg.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(800f, 380f));
+
+            // Rewards Box (Left)
+            Text rewardsTitle = CreateText(contentBg.rectTransform, "RewardsTitle", "REWARDS EARNED", 22, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
+            rewardsTitle.fontStyle = FontStyle.Bold;
+            SetAnchored(rewardsTitle.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -40f), new Vector2(320f, 40f));
+
+            resultRewardsText = CreateText(contentBg.rectTransform, "RewardsText", "• Gold: 0\n• XP: 0", 20, Color.white, TextAnchor.UpperLeft);
+            SetAnchored(resultRewardsText.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -90f), new Vector2(320f, 260f));
+
+            // Divider line
+            Image divider = CreateImage(contentBg.rectTransform, "Divider", new Color(0.24f, 0.32f, 0.48f, 0.5f));
+            SetAnchored(divider.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 320f));
+
+            // Damage Report Box (Right)
+            Text damageTitle = CreateText(contentBg.rectTransform, "DamageTitle", "DAMAGE REPORT", 22, new Color(0.4f, 0.8f, 1f), TextAnchor.UpperLeft);
+            damageTitle.fontStyle = FontStyle.Bold;
+            SetAnchored(damageTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(50f, -40f), new Vector2(320f, 40f));
+
+            resultDamageReportText = CreateText(contentBg.rectTransform, "DamageText", "Archer: 0 dmg (0%)\nBombardier: 0 dmg (0%)", 20, Color.white, TextAnchor.UpperLeft);
+            SetAnchored(resultDamageReportText.rectTransform, new Vector2(0.5f, 1f), new Vector2(50f, -90f), new Vector2(320f, 260f));
+
+            // OK Button
+            resultOkButton = CreateButton(rect, "OkButton", "OK", new Vector2(240f, 60f), new Vector2(0.5f, 0.18f), new Vector2(-140f, 0f), () => { OnOkClicked(); });
+
+            // Double Rewards Button (disabled/placeholder)
+            resultDoubleButton = CreateButton(rect, "DoubleButton", "2X REWARDS (AD)", new Vector2(240f, 60f), new Vector2(0.5f, 0.18f), new Vector2(140f, 0f), () => { });
+            resultDoubleButton.interactable = false; // Disabled placeholder
+            Text doubleLabel = resultDoubleButton.GetComponentInChildren<Text>();
+            if (doubleLabel != null)
+            {
+                doubleLabel.text = "2X REWARDS (AD)";
+                doubleLabel.color = new Color(0.6f, 0.6f, 0.6f);
+            }
+
+            resultPanelGroup = dim.gameObject.AddComponent<CanvasGroup>();
+            resultPanelGroup.alpha = 0f;
+            resultPanelGroup.interactable = false;
+            resultPanelGroup.blocksRaycasts = false;
+        }
+
+        private void OnOkClicked()
+        {
+            ShowPanel(resultPanelGroup, false);
+            if (game != null)
+            {
+                game.LoadMainMenu();
+            }
+        }
+
+        public void ShowBattleResult(bool victory)
+        {
+            int wave = waves != null ? waves.CurrentWave : 1;
+            int runNumber = SaveManager.TotalRuns + 1;
+
+            var rewards = RewardCalculator.CalculateRewards(wave);
+            var damageEntries = new List<DamageReportEntry>();
+            float totalDamage = DamageTracker.Instance != null ? DamageTracker.Instance.GetTotalDamage() : 0f;
+
+            if (DamageTracker.Instance != null && DamageTracker.Instance.DamageByHeroId != null)
+            {
+                foreach (var kvp in DamageTracker.Instance.DamageByHeroId)
+                {
+                    string id = kvp.Key;
+                    float dmg = kvp.Value;
+                    float pct = totalDamage > 0f ? (dmg / totalDamage) * 100f : 0f;
+                    string name = GetHeroDisplayName(id);
+                    damageEntries.Add(new DamageReportEntry(id, name, dmg, pct));
+                }
+            }
+
+            damageEntries.Sort((a, b) => b.damageDealt.CompareTo(a.damageDealt));
+
+            if (resultTitleText != null)
+            {
+                resultTitleText.text = victory ? "VICTORY" : "DEFEAT";
+                resultTitleText.color = victory ? new Color(1f, 0.85f, 0.2f) : new Color(0.95f, 0.3f, 0.25f);
+            }
+
+            if (resultSubtitleText != null)
+            {
+                resultSubtitleText.text = $"Wave Reached: {wave}  |  Battle: #{runNumber}";
+            }
+
+            if (resultRewardsText != null)
+            {
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                foreach (var r in rewards)
+                {
+                    sb.AppendLine($"• {r.rewardName}: {r.amount}");
+                }
+                resultRewardsText.text = sb.ToString();
+            }
+
+            if (resultDamageReportText != null)
+            {
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                if (damageEntries.Count == 0)
+                {
+                    sb.AppendLine("No damage recorded.");
+                }
+                else
+                {
+                    foreach (var entry in damageEntries)
+                    {
+                        sb.AppendLine($"• {entry.displayName}: {entry.damageDealt:N0} dmg ({entry.percentage:F1}%)");
+                    }
+                }
+                resultDamageReportText.text = sb.ToString();
+            }
+
+            ShowPanel(resultPanelGroup, true);
+        }
+
+        private string GetHeroDisplayName(string heroId)
+        {
+            var activeHeroes = UnityEngine.Object.FindObjectsByType<HeroAttack>(UnityEngine.FindObjectsSortMode.None);
+            foreach (var h in activeHeroes)
+            {
+                if (h.Definition != null && h.Definition.id == heroId)
+                {
+                    return h.Definition.displayName;
+                }
+            }
+            if (string.IsNullOrEmpty(heroId)) return "Unknown";
+            string formatted = System.Text.RegularExpressions.Regex.Replace(heroId, @"_([a-z])", m => " " + m.Groups[1].Value.ToUpper());
+            return char.ToUpper(formatted[0]) + formatted.Substring(1);
+        }
         // ------------------------------------------------------------- Helpers
 
         private static RectTransform CreateRoot(RectTransform parent, string name)
