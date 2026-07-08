@@ -135,7 +135,6 @@ namespace Stonehold
             SelectedStageIndex = 0;
             HighestStageUnlocked = 1;
             Stage1Completed = false;
-            MetaGold = 0;
 
             PlayerPrefs.DeleteKey(KeyBestWave);
             PlayerPrefs.DeleteKey(KeyTotalWins);
@@ -144,6 +143,13 @@ namespace Stonehold
             PlayerPrefs.DeleteKey(KeySelectedStage);
             PlayerPrefs.DeleteKey(KeyHighestStageUnlocked);
             PlayerPrefs.DeleteKey(KeyStage1Completed);
+            PlayerPrefs.Save();
+        }
+
+        public static void ResetAll()
+        {
+            ResetProgress();
+            MetaGold = 0;
             PlayerPrefs.DeleteKey(KeyMetaGold);
 
             PlayerPrefs.DeleteKey("meta_level_archer_defender");
