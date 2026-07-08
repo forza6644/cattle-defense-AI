@@ -41,6 +41,10 @@ namespace Stonehold
         private Text upgradeDefenderBtnLabel;
         private int currentDefenderIndex = 0;
 
+        private Text[] metaUpgradeNameTexts = new Text[4];
+        private Button[] metaUpgradeButtons = new Button[4];
+        private Text[] metaUpgradeButtonLabels = new Text[4];
+
         private struct DefenderInfo
         {
             public string id;
@@ -66,6 +70,11 @@ namespace Stonehold
         private void Awake()
         {
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (FindAnyObjectByType<MetaUpgradeManager>() == null)
+            {
+                GameObject managerGo = new GameObject("MetaUpgradeManager", typeof(MetaUpgradeManager));
+                DontDestroyOnLoad(managerGo);
+            }
             BuildMenu();
         }
 
@@ -277,19 +286,45 @@ namespace Stonehold
             cb.selectedColor = new Color(0.8f, 0.2f, 0.15f, 1.0f);
             startButton.colors = cb;
 
-            // 7. Right Events/Offers Container
-            Image offersBg = CreateImage(canvasRect, "OffersPanel", new Color(0.12f, 0.16f, 0.24f, 0.5f));
-            Place(offersBg.rectTransform, new Vector2(1f, 0.5f), new Vector2(-260f, 50f), new Vector2(400f, 400f));
+            // 7. Right Meta Upgrades Container
+            Image upgradesBg = CreateImage(canvasRect, "UpgradesPanel", new Color(0.12f, 0.16f, 0.24f, 0.8f));
+            Place(upgradesBg.rectTransform, new Vector2(1f, 0.5f), new Vector2(-260f, 30f), new Vector2(400f, 460f));
 
-            Text offersTitle = CreateText(offersBg.rectTransform, "Title", "EVENTS & OFFERS", 22, new Color(1f, 0.85f, 0.35f));
-            Place(offersTitle.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(340f, 40f));
+            Text upgradesTitle = CreateText(upgradesBg.rectTransform, "Title", "META UPGRADES", 22, new Color(1f, 0.85f, 0.35f));
+            Place(upgradesTitle.rectTransform, new Vector2(0.5f, 0.92f), Vector2.zero, new Vector2(340f, 32f));
 
-            string offersContent = "🏆 <b>Daily Challenge</b>\nReach Wave 15 on Castle Road!\n\n" +
-                                   "🎁 <b>Free Daily Chest</b>\nAvailable in Shop!\n\n" +
-                                   "<color=#888a90>Offers / Events coming soon</color>";
-            Text offersBody = CreateText(offersBg.rectTransform, "Body", offersContent, 20, new Color(0.8f, 0.8f, 0.85f));
-            offersBody.alignment = TextAnchor.UpperLeft;
-            Place(offersBody.rectTransform, new Vector2(0.5f, 0.44f), Vector2.zero, new Vector2(340f, 260f));
+            // Populate the 4 rows
+            float rowStartY = 0.76f;
+            float rowSpacingY = 0.21f;
+
+            if (MetaUpgradeManager.Instance != null)
+            {
+                var list = MetaUpgradeManager.Instance.Upgrades;
+                for (int i = 0; i < 4; i++)
+                {
+                    int index = i;
+                    var upgrade = list[i];
+
+                    // Name & level text
+                    metaUpgradeNameTexts[i] = CreateText(upgradesBg.rectTransform, $"UpgradeName_{i}", "", 18, Color.white);
+                    metaUpgradeNameTexts[i].alignment = TextAnchor.MiddleLeft;
+                    Place(metaUpgradeNameTexts[i].rectTransform, new Vector2(0.5f, rowStartY - i * rowSpacingY), new Vector2(-50f, 20f), new Vector2(260f, 24f));
+
+                    // Description text (subtext)
+                    Text descText = CreateText(upgradesBg.rectTransform, $"UpgradeDesc_{i}", upgrade.description, 13, new Color(0.7f, 0.7f, 0.75f));
+                    descText.alignment = TextAnchor.MiddleLeft;
+                    Place(descText.rectTransform, new Vector2(0.5f, rowStartY - i * rowSpacingY), new Vector2(-50f, -8f), new Vector2(260f, 20f));
+
+                    // Buy button
+                    metaUpgradeButtons[i] = CreateButton(upgradesBg.rectTransform, $"BuyBtn_{i}", "", new Vector2(110f, 44f),
+                        new Vector2(0.5f, rowStartY - i * rowSpacingY), new Vector2(130f, 6f), () => OnMetaUpgradeClicked(upgrade.id));
+                    metaUpgradeButtonLabels[i] = metaUpgradeButtons[i].GetComponentInChildren<Text>();
+                    metaUpgradeButtonLabels[i].fontSize = 16;
+                    metaUpgradeButtonLabels[i].fontStyle = FontStyle.Bold;
+                }
+            }
+
+            RefreshMetaUpgradesPanel();
 
             // 8. Bottom Navigation Bar Placeholder
             Image bottomBar = CreateImage(canvasRect, "BottomBar", new Color(0.05f, 0.06f, 0.08f, 1.0f));
@@ -485,10 +520,15 @@ namespace Stonehold
         private void ResetStats()
         {
             SaveManager.ResetProgress();
+            if (MetaUpgradeManager.Instance != null)
+            {
+                MetaUpgradeManager.Instance.LoadUpgrades();
+            }
             RefreshStats();
             RefreshStageSelection();
             RefreshCurrencies();
             RefreshMetaUpgradeUI();
+            RefreshMetaUpgradesPanel();
         }
 
         private void RefreshStageSelection()
@@ -566,7 +606,72 @@ namespace Stonehold
         {
             if (currencyText != null)
             {
-                currencyText.text = $"🪙 {SaveManager.MetaGold}    💎 350    ⚡ 50/50";
+                currencyText.text = $"🪙 {SaveManager.MetaGold}    ⚡ XP: {SaveManager.AccountXp}    📦 Mat: {SaveManager.CoreMaterials}";
+            }
+        }
+
+        private void OnMetaUpgradeClicked(string id)
+        {
+            if (MetaUpgradeManager.Instance != null)
+            {
+                if (MetaUpgradeManager.Instance.PurchaseUpgrade(id))
+                {
+                    RefreshCurrencies();
+                    RefreshMetaUpgradesPanel();
+                }
+            }
+        }
+
+        private void RefreshMetaUpgradesPanel()
+        {
+            if (MetaUpgradeManager.Instance == null) return;
+
+            var list = MetaUpgradeManager.Instance.Upgrades;
+            for (int i = 0; i < 4; i++)
+            {
+                var upgrade = list[i];
+                int level = upgrade.currentLevel;
+                int cost = upgrade.GetCost();
+
+                if (metaUpgradeNameTexts[i] != null)
+                {
+                    metaUpgradeNameTexts[i].text = $"<b>{upgrade.displayName}</b> <size=14>(Lv. {level}/{upgrade.maxLevel})</size>";
+                }
+
+                if (metaUpgradeButtons[i] != null && metaUpgradeButtonLabels[i] != null)
+                {
+                    if (level >= upgrade.maxLevel)
+                    {
+                        metaUpgradeButtonLabels[i].text = "MAX";
+                        metaUpgradeButtons[i].interactable = false;
+                        ColorBlock cb = metaUpgradeButtons[i].colors;
+                        cb.normalColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+                        metaUpgradeButtons[i].colors = cb;
+                    }
+                    else
+                    {
+                        metaUpgradeButtonLabels[i].text = $"🪙 {cost}";
+                        bool affordable = SaveManager.MetaGold >= cost;
+                        metaUpgradeButtons[i].interactable = affordable;
+
+                        ColorBlock cb = metaUpgradeButtons[i].colors;
+                        if (affordable)
+                        {
+                            cb.normalColor = new Color(0.20f, 0.45f, 0.24f, 0.95f); // Greenish
+                            cb.highlightedColor = new Color(0.28f, 0.58f, 0.34f, 1f);
+                            cb.pressedColor = new Color(0.14f, 0.35f, 0.18f, 1f);
+                            cb.selectedColor = new Color(0.20f, 0.45f, 0.24f, 0.95f);
+                        }
+                        else
+                        {
+                            cb.normalColor = new Color(0.24f, 0.24f, 0.24f, 0.8f); // Grey
+                            cb.highlightedColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+                            cb.pressedColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+                            cb.selectedColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+                        }
+                        metaUpgradeButtons[i].colors = cb;
+                    }
+                }
             }
         }
 

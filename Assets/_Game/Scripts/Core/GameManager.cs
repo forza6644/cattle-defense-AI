@@ -43,6 +43,11 @@ namespace Stonehold
             {
                 gameObject.AddComponent<CardDraftManager>();
             }
+            if (FindAnyObjectByType<MetaUpgradeManager>() == null)
+            {
+                GameObject managerGo = new GameObject("MetaUpgradeManager", typeof(MetaUpgradeManager));
+                DontDestroyOnLoad(managerGo);
+            }
         }
 
         private void Start()
@@ -102,6 +107,16 @@ namespace Stonehold
                 {
                     Debug.Log("[GameManager] Debug Defeat triggered via G key.");
                     SetState(GameState.Defeat);
+                }
+                else if (Keyboard.current.mKey.wasPressedThisFrame)
+                {
+                    Debug.Log("[GameManager] Debug: Added 500 Gold via M key.");
+                    SaveManager.AddMetaGold(500);
+                }
+                else if (Keyboard.current.rKey.wasPressedThisFrame)
+                {
+                    Debug.Log("[GameManager] Debug: Reset all progress via R key.");
+                    SaveManager.ResetAll();
                 }
             }
         }

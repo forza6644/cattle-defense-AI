@@ -77,6 +77,7 @@ namespace Stonehold
         private Text resultDamageReportText;
         private Button resultOkButton;
         private Button resultDoubleButton;
+        private bool rewardsClaimed;
 
         private Text hintText;
         private Image hintBg;
@@ -1437,6 +1438,13 @@ namespace Stonehold
 
         private void OnOkClicked()
         {
+            if (!rewardsClaimed)
+            {
+                rewardsClaimed = true;
+                int wave = waves != null ? waves.CurrentWave : 1;
+                SaveManager.AddRewards(wave * 50, wave * 2, wave * 5);
+                Debug.Log($"[UIManager] Saved run rewards permanently: Gold +{wave*50}, XP +{wave*2}, Materials +{wave*5}.");
+            }
             ShowPanel(resultPanelGroup, false);
             if (game != null)
             {
@@ -1446,6 +1454,7 @@ namespace Stonehold
 
         public void ShowBattleResult(bool victory)
         {
+            rewardsClaimed = false;
             int wave = waves != null ? waves.CurrentWave : 1;
             int runNumber = SaveManager.TotalRuns + 1;
 

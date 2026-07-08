@@ -19,7 +19,18 @@ namespace Stonehold
         public event Action Defeated;
 
         public int CurrentHealth { get; private set; }
-        public int MaxHealth => config != null ? config.castleMaxHealth : 0;
+        public int MaxHealth
+        {
+            get
+            {
+                int baseMax = config != null ? config.castleMaxHealth : 0;
+                if (MetaUpgradeManager.Instance != null)
+                {
+                    baseMax += MetaUpgradeManager.Instance.GetCastleHpBonus();
+                }
+                return baseMax;
+            }
+        }
         public bool IsGameOver { get; private set; }
 
         private void Awake()

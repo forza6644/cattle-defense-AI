@@ -16,6 +16,8 @@ namespace Stonehold
         private const string KeyStage1Completed = "stats_stage_1_completed";
         private const string KeySelectedStartingDefender = "lobby_selected_starting_defender";
         private const string KeyMetaGold = "stats_meta_gold";
+        private const string KeyAccountXp = "stats_account_xp";
+        private const string KeyCoreMaterials = "stats_core_materials";
 
         public static int BestWave { get; private set; }
         public static int TotalWins { get; private set; }
@@ -26,6 +28,9 @@ namespace Stonehold
         public static bool Stage1Completed { get; private set; }
         public static string SelectedStartingDefenderId { get; private set; }
         public static int MetaGold { get; private set; }
+        public static int Coins => MetaGold;
+        public static int AccountXp { get; private set; }
+        public static int CoreMaterials { get; private set; }
 
         static SaveManager()
         {
@@ -43,6 +48,8 @@ namespace Stonehold
             Stage1Completed = PlayerPrefs.GetInt(KeyStage1Completed, 0) == 1;
             SelectedStartingDefenderId = PlayerPrefs.GetString(KeySelectedStartingDefender, "archer_defender");
             MetaGold = PlayerPrefs.GetInt(KeyMetaGold, 0);
+            AccountXp = PlayerPrefs.GetInt(KeyAccountXp, 0);
+            CoreMaterials = PlayerPrefs.GetInt(KeyCoreMaterials, 0);
         }
 
         public static void SetSelectedStage(int index)
@@ -126,6 +133,27 @@ namespace Stonehold
             PlayerPrefs.Save();
         }
 
+        public static void AddRewards(int gold, int xp, int materials)
+        {
+            AddMetaGold(gold);
+            AccountXp += xp;
+            CoreMaterials += materials;
+            PlayerPrefs.SetInt(KeyAccountXp, AccountXp);
+            PlayerPrefs.SetInt(KeyCoreMaterials, CoreMaterials);
+            PlayerPrefs.Save();
+        }
+
+        public static int GetUpgradeLevel(string upgradeId)
+        {
+            return PlayerPrefs.GetInt("meta_upgrade_" + upgradeId, 0);
+        }
+
+        public static void SetUpgradeLevel(string upgradeId, int level)
+        {
+            PlayerPrefs.SetInt("meta_upgrade_" + upgradeId, level);
+            PlayerPrefs.Save();
+        }
+
         public static void ResetProgress()
         {
             BestWave = 0;
@@ -135,6 +163,8 @@ namespace Stonehold
             SelectedStageIndex = 0;
             HighestStageUnlocked = 1;
             Stage1Completed = false;
+            AccountXp = 0;
+            CoreMaterials = 0;
 
             PlayerPrefs.DeleteKey(KeyBestWave);
             PlayerPrefs.DeleteKey(KeyTotalWins);
@@ -143,6 +173,13 @@ namespace Stonehold
             PlayerPrefs.DeleteKey(KeySelectedStage);
             PlayerPrefs.DeleteKey(KeyHighestStageUnlocked);
             PlayerPrefs.DeleteKey(KeyStage1Completed);
+            PlayerPrefs.DeleteKey(KeyAccountXp);
+            PlayerPrefs.DeleteKey(KeyCoreMaterials);
+
+            PlayerPrefs.DeleteKey("meta_upgrade_castle_hp");
+            PlayerPrefs.DeleteKey("meta_upgrade_damage");
+            PlayerPrefs.DeleteKey("meta_upgrade_fire_rate");
+            PlayerPrefs.DeleteKey("meta_upgrade_range");
             PlayerPrefs.Save();
         }
 

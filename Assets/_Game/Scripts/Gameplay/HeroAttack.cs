@@ -29,6 +29,10 @@ namespace Stonehold
         public float GetModifiedDamage()
         {
             float damage = definition != null ? definition.baseDamage : 0f;
+            if (MetaUpgradeManager.Instance != null)
+            {
+                damage *= MetaUpgradeManager.Instance.GetGlobalDamageMultiplier();
+            }
             if (RunModifierManager.Instance != null && definition != null)
             {
                 damage *= RunModifierManager.Instance.GetDamageMultiplier(definition.id);
@@ -39,6 +43,10 @@ namespace Stonehold
         public float GetModifiedFireRate()
         {
             float fireRate = definition != null ? definition.baseFireRate : 1f;
+            if (MetaUpgradeManager.Instance != null)
+            {
+                fireRate *= MetaUpgradeManager.Instance.GetGlobalFireRateMultiplier();
+            }
             if (RunModifierManager.Instance != null && definition != null)
             {
                 fireRate *= RunModifierManager.Instance.GetFireRateMultiplier(definition.id);
@@ -49,6 +57,10 @@ namespace Stonehold
         public float GetModifiedRange()
         {
             float range = definition != null ? definition.baseRange : 0f;
+            if (MetaUpgradeManager.Instance != null)
+            {
+                range *= MetaUpgradeManager.Instance.GetGlobalRangeMultiplier();
+            }
             if (RunModifierManager.Instance != null && definition != null)
             {
                 range *= RunModifierManager.Instance.GetRangeMultiplier(definition.id);
