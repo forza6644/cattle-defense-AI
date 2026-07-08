@@ -30,6 +30,7 @@ namespace Stonehold
         private Button nextStageBtn;
         private Button startButton;
         private Text startButtonLabel;
+        private Text currencyText;
 
         private Text defenderNameText;
         private Button prevDefenderBtn;
@@ -156,9 +157,10 @@ namespace Stonehold
             Place(profileLevel.rectTransform, new Vector2(0f, 0.5f), new Vector2(250f, -14f), new Vector2(240f, 24f));
 
             // Currencies (Top-Right Area)
-            Text currencyText = CreateText(headerBar.rectTransform, "Currencies", "🪙 1,250    💎 350    ⚡ 50/50", 22, new Color(0.9f, 0.9f, 0.95f));
+            currencyText = CreateText(headerBar.rectTransform, "Currencies", "", 22, new Color(0.9f, 0.9f, 0.95f));
             currencyText.alignment = TextAnchor.MiddleRight;
             Place(currencyText.rectTransform, new Vector2(1f, 0.5f), new Vector2(-480f, 0f), new Vector2(500f, 40f));
+            RefreshCurrencies();
 
             // Settings & Quit Buttons in Top Bar
             CreateButton(headerBar.rectTransform, "SettingsButton", "Settings", new Vector2(160f, 54f),
@@ -467,6 +469,7 @@ namespace Stonehold
             SaveManager.ResetProgress();
             RefreshStats();
             RefreshStageSelection();
+            RefreshCurrencies();
         }
 
         private void RefreshStageSelection()
@@ -536,6 +539,14 @@ namespace Stonehold
                 }
 
                 defenderNameText.text = $"<color={colorHex}><b>{lobbyDefenders[currentDefenderIndex].displayName}</b></color> <size=16>({rarity})</size>";
+            }
+        }
+
+        private void RefreshCurrencies()
+        {
+            if (currencyText != null)
+            {
+                currencyText.text = $"🪙 {SaveManager.MetaGold}    💎 350    ⚡ 50/50";
             }
         }
     }

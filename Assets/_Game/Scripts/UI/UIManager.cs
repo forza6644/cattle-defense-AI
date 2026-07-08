@@ -50,6 +50,8 @@ namespace Stonehold
         private Text targetButtonLabel;
         private Button upgradeButton;
         private Button targetButton;
+        private Button sellButton;
+        private Image xpBgImage;
         private readonly List<Text> buildButtonLabels = new List<Text>();
         private readonly List<Button> buildButtons = new List<Button>();
 
@@ -113,6 +115,18 @@ namespace Stonehold
             rangeIndicator = RangeIndicator.Create();
 
             BuildUI();
+
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                if (goldText != null)
+                {
+                    goldText.gameObject.SetActive(false);
+                }
+                if (xpBgImage != null)
+                {
+                    xpBgImage.rectTransform.anchoredPosition = new Vector2(175f, -45f);
+                }
+            }
 
             progression = RunProgressionManager.Instance != null ? RunProgressionManager.Instance : FindFirstObjectByType<RunProgressionManager>();
             if (progression != null)
@@ -288,6 +302,13 @@ namespace Stonehold
 
         private void OnWaveClearBonusAwarded(int waveNumber, int amount)
         {
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                waveText.text = "Wave " + waveNumber + "/" + waves.TotalWaves + " cleared";
+                ShowBanner("Wave " + waveNumber + " Cleared!");
+                return;
+            }
+
             waveText.text = "Wave " + waveNumber + "/" + waves.TotalWaves + " cleared  +" + amount + "g";
             ShowBanner("Wave Clear Bonus: +" + amount + " gold");
         }
@@ -361,6 +382,14 @@ namespace Stonehold
 
         private void OnEnemyKilled(Enemy enemy, int gold)
         {
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                int xpAmount = enemy.Data.xpValue > 0 ? enemy.Data.xpValue : enemy.Data.goldReward;
+                SpawnFloatingText("+" + xpAmount + " XP", enemy.transform.position + Vector3.up * 1.2f,
+                    new Color(0.7f, 0.3f, 0.9f), 34);
+                return;
+            }
+
             SpawnFloatingText("+" + gold, enemy.transform.position + Vector3.up * 1.2f,
                 new Color(1f, 0.9f, 0.2f), 34);
         }
@@ -527,6 +556,20 @@ namespace Stonehold
             selectedSlot = null;
             RefreshTowerPanel();
             ShowPanel(towerPanelGroup, true);
+
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                if (upgradeButton != null) upgradeButton.gameObject.SetActive(false);
+                if (sellButton != null) sellButton.gameObject.SetActive(false);
+                if (targetButton != null) targetButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 55f);
+            }
+            else
+            {
+                if (upgradeButton != null) upgradeButton.gameObject.SetActive(true);
+                if (sellButton != null) sellButton.gameObject.SetActive(true);
+                if (targetButton != null) targetButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 55f);
+            }
+
             ShowPanel(buildMenuGroup, false);
             ShowTowerRange(tower);
 
@@ -644,6 +687,11 @@ namespace Stonehold
 
         private void OnUpgradeClicked()
         {
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                return;
+            }
+
             if (selectedTower == null)
             {
                 return;
@@ -699,6 +747,11 @@ namespace Stonehold
 
         private void OnSellClicked()
         {
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                return;
+            }
+
             if (selectedTower != null && towers != null)
             {
                 towers.SellTower(selectedTower);
@@ -746,6 +799,31 @@ namespace Stonehold
             if (state != GameState.LevelUp)
             {
                 ShowPanel(levelUpPanelGroup, false);
+            }
+
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                if (state == GameState.Victory)
+                {
+                    var subtitle = victoryGroup.transform.Find("Subtitle")?.GetComponent<Text>();
+                    if (subtitle != null)
+                    {
+                        subtitle.text = "You cleared all waves! Excellent defense!\n" +
+                                        "<color=#ffd759>Meta Gold Earned: +300 🪙</color>";
+                    }
+                }
+                else if (state == GameState.Defeat)
+                {
+                    var subtitle = defeatGroup.transform.Find("Subtitle")?.GetComponent<Text>();
+                    if (subtitle != null)
+                    {
+                        int waveReached = SaveManager.BestWave;
+                        if (waveReached < 1) waveReached = 1;
+                        int metaGoldEarned = waveReached * 15;
+                        subtitle.text = $"The castle has fallen at wave {waveReached}.\n" +
+                                        $"<color=#ffd759>Meta Gold Earned: +{metaGoldEarned} 🪙</color>";
+                    }
+                }
             }
         }
 
@@ -966,16 +1044,16 @@ namespace Stonehold
             SetAnchored(goldText.rectTransform, new Vector2(0f, 1f), new Vector2(25f, -20f), new Vector2(400f, 60f));
 
             // XP Bar (top-left, below GoldText)
-            Image xpBg = CreateImage(canvasRect, "XpBarBg", new Color(0f, 0f, 0f, 0.6f));
-            SetAnchored(xpBg.rectTransform, new Vector2(0f, 1f), new Vector2(175f, -95f), new Vector2(300f, 26f));
-            xpFillImage = CreateImage(xpBg.rectTransform, "XpFill", new Color(0.6f, 0.25f, 0.85f));
+            xpBgImage = CreateImage(canvasRect, "XpBarBg", new Color(0f, 0f, 0f, 0.6f));
+            SetAnchored(xpBgImage.rectTransform, new Vector2(0f, 1f), new Vector2(175f, -95f), new Vector2(300f, 26f));
+            xpFillImage = CreateImage(xpBgImage.rectTransform, "XpFill", new Color(0.6f, 0.25f, 0.85f));
             xpFill = xpFillImage.rectTransform;
             xpFill.anchorMin = Vector2.zero;
             xpFill.anchorMax = Vector2.one;
             xpFill.pivot = new Vector2(0f, 0.5f);
             xpFill.offsetMin = new Vector2(2f, 2f);
             xpFill.offsetMax = new Vector2(-2f, -2f);
-            xpText = CreateText(xpBg.rectTransform, "XpText", "Lv.1  XP: 0 / 100", 18, Color.white, TextAnchor.MiddleCenter);
+            xpText = CreateText(xpBgImage.rectTransform, "XpText", "Lv.1  XP: 0 / 100", 18, Color.white, TextAnchor.MiddleCenter);
             xpText.rectTransform.anchorMin = Vector2.zero;
             xpText.rectTransform.anchorMax = Vector2.one;
             xpText.rectTransform.offsetMin = Vector2.zero;
@@ -1183,9 +1261,9 @@ namespace Stonehold
             targetButton = targetBtn;
             targetButtonLabel = targetBtn.GetComponentInChildren<Text>();
 
-            Button sell = CreateButton(panel, "Sell", "Sell", new Vector2(180f, 70f), new Vector2(0.5f, 0f),
+            sellButton = CreateButton(panel, "Sell", "Sell", new Vector2(180f, 70f), new Vector2(0.5f, 0f),
                 new Vector2(210f, 55f), OnSellClicked);
-            sellButtonLabel = sell.GetComponentInChildren<Text>();
+            sellButtonLabel = sellButton.GetComponentInChildren<Text>();
 
             CreateButton(panel, "Close", "X", new Vector2(44f, 44f), new Vector2(1f, 1f),
                 new Vector2(-30f, -28f), HideSelectionPanels);

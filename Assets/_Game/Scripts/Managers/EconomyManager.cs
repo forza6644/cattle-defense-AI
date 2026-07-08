@@ -31,7 +31,7 @@ namespace Stonehold
                 Debug.LogWarning("EconomyManager: GameConfig not assigned.");
             }
 
-            Gold = config != null ? config.startingGold : 0;
+            Gold = (config != null && !config.draftRunMode) ? config.startingGold : 0;
         }
 
         private void Start()
@@ -53,12 +53,23 @@ namespace Stonehold
 
         public void AddGold(int amount)
         {
+            if (config != null && config.draftRunMode)
+            {
+                Gold = 0;
+                return;
+            }
             Gold += amount;
             GoldChanged?.Invoke();
         }
 
         private void OnWaveCleared(int waveNumber, WaveData wave)
         {
+            if (config != null && config.draftRunMode)
+            {
+                WaveClearBonusAwarded?.Invoke(waveNumber, 0);
+                return;
+            }
+
             int bonus = config != null ? config.waveClearGoldBonus : 0;
             if (bonus <= 0)
             {

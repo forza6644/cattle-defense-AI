@@ -15,6 +15,7 @@ namespace Stonehold
         private const string KeyHighestStageUnlocked = "stats_highest_stage_unlocked";
         private const string KeyStage1Completed = "stats_stage_1_completed";
         private const string KeySelectedStartingDefender = "lobby_selected_starting_defender";
+        private const string KeyMetaGold = "stats_meta_gold";
 
         public static int BestWave { get; private set; }
         public static int TotalWins { get; private set; }
@@ -24,6 +25,7 @@ namespace Stonehold
         public static int HighestStageUnlocked { get; private set; }
         public static bool Stage1Completed { get; private set; }
         public static string SelectedStartingDefenderId { get; private set; }
+        public static int MetaGold { get; private set; }
 
         static SaveManager()
         {
@@ -40,6 +42,7 @@ namespace Stonehold
             HighestStageUnlocked = PlayerPrefs.GetInt(KeyHighestStageUnlocked, 1);
             Stage1Completed = PlayerPrefs.GetInt(KeyStage1Completed, 0) == 1;
             SelectedStartingDefenderId = PlayerPrefs.GetString(KeySelectedStartingDefender, "archer_defender");
+            MetaGold = PlayerPrefs.GetInt(KeyMetaGold, 0);
         }
 
         public static void SetSelectedStage(int index)
@@ -102,6 +105,13 @@ namespace Stonehold
             PlayerPrefs.Save();
         }
 
+        public static void AddMetaGold(int amount)
+        {
+            MetaGold += amount;
+            PlayerPrefs.SetInt(KeyMetaGold, MetaGold);
+            PlayerPrefs.Save();
+        }
+
         public static void ResetProgress()
         {
             BestWave = 0;
@@ -111,6 +121,7 @@ namespace Stonehold
             SelectedStageIndex = 0;
             HighestStageUnlocked = 1;
             Stage1Completed = false;
+            MetaGold = 0;
 
             PlayerPrefs.DeleteKey(KeyBestWave);
             PlayerPrefs.DeleteKey(KeyTotalWins);
@@ -119,6 +130,7 @@ namespace Stonehold
             PlayerPrefs.DeleteKey(KeySelectedStage);
             PlayerPrefs.DeleteKey(KeyHighestStageUnlocked);
             PlayerPrefs.DeleteKey(KeyStage1Completed);
+            PlayerPrefs.DeleteKey(KeyMetaGold);
             PlayerPrefs.Save();
         }
     }

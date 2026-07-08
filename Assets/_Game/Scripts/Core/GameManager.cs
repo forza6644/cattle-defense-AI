@@ -121,12 +121,30 @@ namespace Stonehold
 
         private void OnCastleDefeated()
         {
+            var towers = FindFirstObjectByType<TowerManager>();
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                int waveReached = SaveManager.BestWave;
+                if (waveReached < 1) waveReached = 1;
+                int metaGoldEarned = waveReached * 15;
+                SaveManager.AddMetaGold(metaGoldEarned);
+                Debug.Log($"Defeat! Highest Wave: {waveReached}. Awarded {metaGoldEarned} Meta Gold.");
+            }
+
             SaveManager.RecordLoss();
             SetState(GameState.Defeat);
         }
 
         private void OnAllWavesCleared()
         {
+            var towers = FindFirstObjectByType<TowerManager>();
+            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
+            {
+                int metaGoldEarned = 300;
+                SaveManager.AddMetaGold(metaGoldEarned);
+                Debug.Log($"Victory! Awarded {metaGoldEarned} Meta Gold.");
+            }
+
             SaveManager.RecordWin();
             if (SaveManager.SelectedStageIndex == 0)
             {
