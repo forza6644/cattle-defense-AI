@@ -97,7 +97,25 @@ namespace Stonehold
         /// <summary>Called by the spawner right after this enemy is created to set its path.</summary>
         public void SetPath(Vector3[] points, Castle castle)
         {
-            pathPoints = points;
+            if (points != null)
+            {
+                pathPoints = new Vector3[points.Length];
+                for (int i = 0; i < points.Length; i++)
+                {
+                    pathPoints[i] = points[i];
+                    // Add slight spread/random offset to middle waypoints to prevent overlapping
+                    if (i > 0 && i < points.Length - 1)
+                    {
+                        float randomOffset = UnityEngine.Random.Range(-0.8f, 0.8f);
+                        pathPoints[i] += new Vector3(randomOffset, 0f, 0f);
+                    }
+                }
+            }
+            else
+            {
+                pathPoints = null;
+            }
+
             currentWaypointIndex = 0;
             targetCastle = castle;
             if (pathPoints != null && pathPoints.Length > 0)
