@@ -15,14 +15,14 @@ MonoBehaviour:
   waveLabel: Siege
   spawns:
   - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
-    count: 6
-    spawnInterval: 0.6
+    count: 5
+    spawnInterval: 1
   - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
-    count: 3
-    spawnInterval: 1.5
+    count: 2
+    spawnInterval: 2
   - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
-    count: 3
-    spawnInterval: 2.5
+    count: 1
+    spawnInterval: 3
   - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
-    count: 6
-    spawnInterval: 0.35
+    count: 4
+    spawnInterval: 0.8

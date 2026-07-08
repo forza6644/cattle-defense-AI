@@ -99,14 +99,14 @@ namespace Stonehold
         {
             switch (currentLevel)
             {
-                case 1: return 25;
-                case 2: return 60;
-                case 3: return 120;
-                case 4: return 250;
-                case 5: return 400;
-                case 6: return 600;
-                case 7: return 900;
-                default: return 900 + (currentLevel - 7) * 400;
+                case 1: return 20;
+                case 2: return 35;
+                case 3: return 50;
+                case 4: return 80;
+                case 5: return 120;
+                case 6: return 180;
+                case 7: return 260;
+                default: return 260 + (currentLevel - 7) * 150;
             }
         }
 
