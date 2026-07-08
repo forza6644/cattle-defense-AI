@@ -120,6 +120,12 @@ namespace Stonehold
                 reducedAmount = Mathf.Max(1f, amount - data.armor);
             }
 
+            StatusEffectController statusController = GetComponent<StatusEffectController>();
+            if (statusController != null && statusController.IsShocked())
+            {
+                reducedAmount *= 1.3f;
+            }
+
             currentHealth -= reducedAmount;
             AnyDamaged?.Invoke(this, reducedAmount);
 

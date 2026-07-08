@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3712fd46809c4174c83589090a128870, type: 3}
+  m_Name: StormDiscipline
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
+  id: storm_discipline
+  displayName: Storm Discipline
+  description: +20% Chain attack range
+  icon: {fileID: 0}
+  rarity: 0
+  targetType: 2
+  targetHeroId: 
+  targetAttackType: 3
+  modifierType: 2
+  modifierValue: 0.2
+  weight: 1.2

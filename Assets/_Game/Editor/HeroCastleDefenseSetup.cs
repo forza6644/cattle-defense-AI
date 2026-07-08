@@ -20,17 +20,42 @@ namespace Stonehold.EditorTools
             TowerData arrow = AssetDatabase.LoadAssetAtPath<TowerData>("Assets/_Game/ScriptableObjects/Towers/ArrowTowerData.asset");
             TowerData cannon = AssetDatabase.LoadAssetAtPath<TowerData>("Assets/_Game/ScriptableObjects/Towers/CannonTowerData.asset");
             TowerData frost = AssetDatabase.LoadAssetAtPath<TowerData>("Assets/_Game/ScriptableObjects/Towers/FrostTowerData.asset");
+            TowerData iceMage = AssetDatabase.LoadAssetAtPath<TowerData>("Assets/_Game/ScriptableObjects/Towers/IceMageData.asset");
+            TowerData machineGun = AssetDatabase.LoadAssetAtPath<TowerData>("Assets/_Game/ScriptableObjects/Towers/MachineGunSoldierData.asset");
+            TowerData sniperData = AssetDatabase.LoadAssetAtPath<TowerData>("Assets/_Game/ScriptableObjects/Towers/SniperData.asset");
 
             WeaponDefinition arrowWeapon = CreateWeapon("ArcherWeapon", AttackType.SingleTarget, arrow, StatusEffectType.None);
             WeaponDefinition cannonWeapon = CreateWeapon("BombardierWeapon", AttackType.Splash, cannon, StatusEffectType.None);
             WeaponDefinition frostWeapon = CreateWeapon("FrostMageWeapon", AttackType.Slow, frost, StatusEffectType.Slow);
+            WeaponDefinition fireWeapon = CreateWeapon("FireMageWeapon", AttackType.DoT, iceMage, StatusEffectType.Burn, 3f, 3f);
+            WeaponDefinition electricWeapon = CreateWeapon("ElectricEngineerWeapon", AttackType.Chain, machineGun, StatusEffectType.Shock, 1f, 3f);
+            WeaponDefinition sniperWeapon = CreateWeapon("SniperWeapon", AttackType.SingleTarget, sniperData, StatusEffectType.None);
 
             HeroDefinition archer = CreateHero("ArcherHero", "archer", "Archer", arrow, arrowWeapon);
             HeroDefinition bombardier = CreateHero("BombardierHero", "bombardier", "Bombardier", cannon, cannonWeapon);
             HeroDefinition frostMage = CreateHero("FrostMageHero", "frost_mage", "Frost Mage", frost, frostWeapon);
+            HeroDefinition fireMage = CreateHero("FireMageHero", "fire_mage", "Fire Mage", iceMage, fireWeapon);
+            HeroDefinition electricEngineer = CreateHero("ElectricEngineerHero", "electric_engineer", "Electric Engineer", machineGun, electricWeapon);
+            HeroDefinition sniper = CreateHero("SniperHero", "sniper", "Sniper", sniperData, sniperWeapon);
+
+            // Override specific parameters for the MVP heroes
+            fireMage.baseDamage = 8f;
+            fireMage.baseFireRate = 1.0f;
+            fireMage.baseRange = 7f;
+            EditorUtility.SetDirty(fireMage);
+
+            electricEngineer.baseDamage = 5f;
+            electricEngineer.baseFireRate = 1.2f;
+            electricEngineer.baseRange = 7.5f;
+            EditorUtility.SetDirty(electricEngineer);
+
+            sniper.baseDamage = 30f;
+            sniper.baseFireRate = 0.4f;
+            sniper.baseRange = 13f;
+            EditorUtility.SetDirty(sniper);
 
             Scene scene = EditorSceneManager.OpenScene(GameScenePath, OpenSceneMode.Single);
-            SetupScene(archer, bombardier, frostMage);
+            SetupScene(archer, bombardier, frostMage, fireMage, electricEngineer, sniper);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
@@ -63,7 +88,7 @@ namespace Stonehold.EditorTools
             AssetDatabase.CreateFolder(parent, name);
         }
 
-        private static WeaponDefinition CreateWeapon(string assetName, AttackType attackType, TowerData tower, StatusEffectType status)
+        private static WeaponDefinition CreateWeapon(string assetName, AttackType attackType, TowerData tower, StatusEffectType status, float statusValue = 0f, float statusDuration = 0f)
         {
             string path = WeaponsFolder + "/" + assetName + ".asset";
             WeaponDefinition weapon = AssetDatabase.LoadAssetAtPath<WeaponDefinition>(path);
@@ -77,8 +102,18 @@ namespace Stonehold.EditorTools
             weapon.projectilePrefab = tower != null ? tower.projectilePrefab : null;
             weapon.splashRadius = attackType == AttackType.Splash && tower != null ? tower.splashRadius : 0f;
             weapon.statusEffectType = status;
-            weapon.statusEffectValue = status == StatusEffectType.Slow && tower != null ? tower.slowMultiplier : 0f;
-            weapon.statusEffectDuration = status == StatusEffectType.Slow && tower != null ? tower.slowDuration : 0f;
+
+            if (status == StatusEffectType.Slow && tower != null)
+            {
+                weapon.statusEffectValue = tower.slowMultiplier;
+                weapon.statusEffectDuration = tower.slowDuration;
+            }
+            else
+            {
+                weapon.statusEffectValue = statusValue;
+                weapon.statusEffectDuration = statusDuration;
+            }
+
             EditorUtility.SetDirty(weapon);
             return weapon;
         }
@@ -105,7 +140,9 @@ namespace Stonehold.EditorTools
             return hero;
         }
 
-        private static void SetupScene(HeroDefinition archer, HeroDefinition bombardier, HeroDefinition frostMage)
+        private static void SetupScene(
+            HeroDefinition archer, HeroDefinition bombardier, HeroDefinition frostMage,
+            HeroDefinition fireMage, HeroDefinition electricEngineer, HeroDefinition sniper)
         {
             GameObject systems = GameObject.Find("_Systems");
             if (systems == null)
@@ -146,7 +183,7 @@ namespace Stonehold.EditorTools
             TowerSlot[] towerSlots = Object.FindObjectsByType<TowerSlot>(FindObjectsSortMode.None);
             System.Array.Sort(towerSlots, (a, b) => string.Compare(a.name, b.name, System.StringComparison.Ordinal));
 
-            HeroDefinition[] heroes = { archer, bombardier, frostMage };
+            HeroDefinition[] heroes = { archer, bombardier, frostMage, fireMage, electricEngineer, sniper };
             int startIndex = Mathf.Max(0, (towerSlots.Length - heroes.Length) / 2);
 
             for (int i = 0; i < heroes.Length; i++)
@@ -156,9 +193,16 @@ namespace Stonehold.EditorTools
 
                 if (towerSlots.Length > 0)
                 {
-                    TowerSlot source = towerSlots[Mathf.Clamp(startIndex + i, 0, towerSlots.Length - 1)];
+                    int slotIndex = Mathf.Clamp(startIndex + i, 0, towerSlots.Length - 1);
+                    TowerSlot source = towerSlots[slotIndex];
                     slotObject.transform.position = source.transform.position;
                     slotObject.transform.rotation = source.transform.rotation;
+
+                    if (i >= towerSlots.Length)
+                    {
+                        // Offset overlapping heroes slightly next to the slot
+                        slotObject.transform.position += source.transform.right * 1.8f;
+                    }
                 }
                 else
                 {
