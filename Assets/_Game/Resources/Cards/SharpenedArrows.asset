@@ -18,7 +18,7 @@ MonoBehaviour:
   icon: {fileID: 0}
   rarity: 0
   targetType: 0
-  targetHeroId: 
+  targetHeroId:
   targetAttackType: 0
   modifierType: 0
   modifierValue: 0.15

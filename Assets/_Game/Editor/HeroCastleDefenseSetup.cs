@@ -184,7 +184,6 @@ namespace Stonehold.EditorTools
             System.Array.Sort(towerSlots, (a, b) => string.Compare(a.name, b.name, System.StringComparison.Ordinal));
 
             HeroDefinition[] heroes = { archer, bombardier, frostMage, fireMage, electricEngineer, sniper };
-            int startIndex = Mathf.Max(0, (towerSlots.Length - heroes.Length) / 2);
 
             for (int i = 0; i < heroes.Length; i++)
             {
@@ -193,16 +192,14 @@ namespace Stonehold.EditorTools
 
                 if (towerSlots.Length > 0)
                 {
-                    int slotIndex = Mathf.Clamp(startIndex + i, 0, towerSlots.Length - 1);
-                    TowerSlot source = towerSlots[slotIndex];
-                    slotObject.transform.position = source.transform.position;
-                    slotObject.transform.rotation = source.transform.rotation;
+                    int midIndex = towerSlots.Length / 2;
+                    TowerSlot centerSlot = towerSlots[midIndex];
 
-                    if (i >= towerSlots.Length)
-                    {
-                        // Offset overlapping heroes slightly next to the slot
-                        slotObject.transform.position += source.transform.right * 1.8f;
-                    }
+                    float spacing = 1.8f;
+                    float offsetIndex = i - (heroes.Length - 1) / 2.0f;
+
+                    slotObject.transform.position = centerSlot.transform.position + centerSlot.transform.right * (offsetIndex * spacing);
+                    slotObject.transform.rotation = centerSlot.transform.rotation;
                 }
                 else
                 {

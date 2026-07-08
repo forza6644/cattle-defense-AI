@@ -177,13 +177,13 @@ namespace Stonehold
                 return;
             }
 
+            float appliedDamage = target.TakeDamage(GetModifiedDamage());
+            DamageTracker.RecordDamage(definition.id, appliedDamage);
+
             if (appliedEffectType != StatusEffectType.None && appliedEffectDuration > 0f)
             {
                 target.ApplyStatusEffect(new StatusEffect(appliedEffectType, appliedEffectValue, appliedEffectDuration, definition.id));
             }
-
-            float appliedDamage = target.TakeDamage(GetModifiedDamage());
-            DamageTracker.RecordDamage(definition.id, appliedDamage);
         }
 
         private static Color GetTrailColor(WeaponDefinition weapon, StatusEffectType resolvedEffectType)

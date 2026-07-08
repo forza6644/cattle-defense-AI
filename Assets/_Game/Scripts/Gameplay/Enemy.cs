@@ -123,6 +123,9 @@ namespace Stonehold
             StatusEffectController statusController = GetComponent<StatusEffectController>();
             if (statusController != null && statusController.IsShocked())
             {
+                // INTENTIONAL MVP BEHAVIOR: Shock increases all incoming damage by +30%, including Burn DoT ticks.
+                // This creates a synergy between Fire (Burn) and Electric (Shock) heroes.
+                // Note: Balance tuning might be required later.
                 reducedAmount *= 1.3f;
             }
 

@@ -219,13 +219,13 @@ namespace Stonehold
 
         private void HitEnemy(Enemy enemy)
         {
+            float appliedDamage = enemy.TakeDamage(damage);
+            DamageTracker.RecordDamage(sourceHeroId, appliedDamage);
+
             if (statusEffectType != StatusEffectType.None && statusEffectDuration > 0f)
             {
                 enemy.ApplyStatusEffect(new StatusEffect(statusEffectType, statusEffectValue, statusEffectDuration, sourceHeroId));
             }
-
-            float appliedDamage = enemy.TakeDamage(damage);
-            DamageTracker.RecordDamage(sourceHeroId, appliedDamage);
         }
 
         private void Return()
