@@ -7,13 +7,15 @@ Stonehold TD has pivoted from a traditional Tower Defense prototype toward a Her
 - Static castle/base defense.
 - Heroes are mounted on fixed castle/wall slots.
 - Heroes auto-attack enemies.
-- Future systems include status effects, 3-card draft choices, rewards, damage report, and meta progression.
+- Status effects (Slow, Burn DoT, Shock flag) are fully implemented.
+- A 3-card wave-cleared draft system applies run-wide upgrades.
+- Run ends trigger a Battle Result and Damage Report screen.
 
 ## Current Working Branch And Commit
 
 - Branch: `feature/hero-castle-defense-pivot`
-- Latest commit: `8a7576217cada029b39413b65b491c56596ebc5c`
-- Commit message: `Add hero castle defense foundation`
+- Latest commit: `6363fb87f08318df61aa98e89737696259a88875`
+- Commit message: `Add battle result and damage report screen`
 - Remote branch URL: `https://github.com/forza6644/cattle-defense-AI/tree/feature/hero-castle-defense-pivot`
 
 ## Correct Unity Project And Scene
@@ -24,115 +26,104 @@ Stonehold TD has pivoted from a traditional Tower Defense prototype toward a Her
 
 Important: `TD_Asset_Lab` is only an asset/map lab. It is not the current gameplay project.
 
-## Task 1 Completed
+---
 
-Task 1 added the first safe data-driven Hero Castle Defense foundation without rewriting the project.
+## Tasks Completed
 
-- Added `HeroDefinition`.
-- Added `WeaponDefinition`.
-- Added `AttackType`.
-- Added `StatusEffectType`.
-- Added `HeroSlot`.
-- Added `HeroAttack`.
-- Added `DamageTracker`.
-- Created Archer, Bombardier, and Frost Mage hero ScriptableObjects.
-- Created matching weapon ScriptableObjects.
-- Added 3 prototype hero slots in `GameScene`.
-- Disabled/bypassed the old `TowerManager` in `GameScene`.
-- Old tower/grid/placement systems were not deleted.
+### Task 1: Hero slots & auto-attack
+- Added `HeroDefinition` and `WeaponDefinition` configurations.
+- Added `HeroSlot` and `HeroAttack` components.
+- Integrated `DamageTracker`.
+- Created prototype hero assets and disabled old `TowerManager` in `GameScene`.
 
-## Important Files Created Or Modified In Task 1
+### Task 2: Status Effects Foundation
+- Created `StatusEffect` data model and `StatusEffectController` script.
+- Implemented **Slow** (movespeed multiplier), **Burn** (damage-over-time), and **Shock** (flag for combos).
+- Enabled project-wide `DamageTracker` support for burn ticks.
+- Dynamic color trails: blue/cyan for Slow, red/orange for Burn, yellow for Shock.
+
+### Task 3: 3-Card Draft System
+- Created `CardDefinition` ScriptableObject model.
+- Created `RunModifierManager` to store drafted cards and scale hero stats (damage, range, fire rate, slows, burns, shocks).
+- Created `CardDraftManager` to handle weighted random picks, pausing/resuming time, and driving choices.
+- Generated 10 starter cards under `Assets/_Game/Resources/Cards/`.
+- Hooked drafts between waves and added a manual test trigger via the `C` key.
+
+### Task 4: Battle Result + Damage Report
+- Created `BattleResultData` runtime structure.
+- Extended `DamageTracker` to compute total damage, individual sums, and percentage contributions.
+- Extended UIManager to programmatically construct a **Battle Result** split overlay.
+- Displays Gold, XP, and Material rewards based on wave reached, alongside a sorted damage breakdown.
+- Hooked screens to Castle HP (defeat) and wave-cleared (victory) events, with debug triggers `G` (GameOver) and `V` (Victory).
+- OK button returns to MainMenu scene safely, and 2X Rewards serves as an ad placeholder.
+
+---
+
+## Important Files Created Or Modified
 
 ### Data Scripts
-
 - `Assets/_Game/Scripts/Data/AttackType.cs`
 - `Assets/_Game/Scripts/Data/StatusEffectType.cs`
 - `Assets/_Game/Scripts/Data/HeroDefinition.cs`
 - `Assets/_Game/Scripts/Data/WeaponDefinition.cs`
+- `Assets/_Game/Scripts/Data/CardDefinition.cs`
+- `Assets/_Game/Scripts/Data/BattleResultData.cs`
 
 ### Gameplay Scripts
-
 - `Assets/_Game/Scripts/Gameplay/HeroSlot.cs`
 - `Assets/_Game/Scripts/Gameplay/HeroAttack.cs`
 - `Assets/_Game/Scripts/Gameplay/Enemy.cs`
 - `Assets/_Game/Scripts/Gameplay/Projectile.cs`
+- `Assets/_Game/Scripts/Gameplay/StatusEffect.cs`
+- `Assets/_Game/Scripts/Gameplay/StatusEffectController.cs`
 
 ### Manager Scripts
-
 - `Assets/_Game/Scripts/Managers/DamageTracker.cs`
+- `Assets/_Game/Scripts/Managers/RunModifierManager.cs`
+- `Assets/_Game/Scripts/Managers/CardDraftManager.cs`
+- `Assets/_Game/Scripts/Managers/WaveManager.cs`
 
-### Editor Utility
+### UI Scripts
+- `Assets/_Game/Scripts/UI/UIManager.cs`
 
-- `Assets/_Game/Editor/HeroCastleDefenseSetup.cs`
-
-### Hero Assets
-
-- `Assets/_Game/ScriptableObjects/Heroes/ArcherHero.asset`
-- `Assets/_Game/ScriptableObjects/Heroes/BombardierHero.asset`
-- `Assets/_Game/ScriptableObjects/Heroes/FrostMageHero.asset`
-
-### Weapon Assets
-
-- `Assets/_Game/ScriptableObjects/Weapons/ArcherWeapon.asset`
-- `Assets/_Game/ScriptableObjects/Weapons/BombardierWeapon.asset`
-- `Assets/_Game/ScriptableObjects/Weapons/FrostMageWeapon.asset`
-
-### Scene
-
-- `Assets/_Game/Scenes/GameScene.unity`
+---
 
 ## Current Manual Verification Result
 
 Manual Unity verification passed.
-
-- `GameScene` opens.
-- Wave UI appears.
-- Enemies spawn.
-- Projectiles fire.
-- Gameplay progresses.
-- Unity Console has no red errors.
-- Branch was pushed to GitHub.
+- `GameScene` compiles and runs cleanly.
+- Card drafts pause combat, allow selection, and scale statistics (C key).
+- Victory/Defeat screen shows sorted damage contributions, percentages, calculated rewards, and returns to menu on OK.
+- Console has zero red errors.
 
 ## Known Current Limitations
+- Map is still the old gameplay prototype.
+- New assets/maps from `TD_Asset_Lab` are not integrated yet.
+- Only 3 active heroes exist.
+- Save system does not permanently write rewards or meta upgrades yet.
 
-- Map is still the old gameplay map.
-- New asset/map work from `TD_Asset_Lab` is not integrated yet.
-- Only 3 prototype heroes exist.
-- No card draft system yet.
-- No rewards/result screen yet.
-- No meta progression yet.
-- `DamageTracker` has no UI yet.
-- UI still has old TD wording in places.
-- Old tower/grid systems are disabled/bypassed, not removed.
+---
 
 ## Recommended Next Task For Antigravity
 
-### Task 2: Status Effects Foundation
+### Task 5: Meta Upgrade + Save System
+Extend the `SaveManager` and add a Meta Progression layer.
+- Save run rewards (Gold, XP, Materials) permanently across runs using PlayerPrefs.
+- Add a Meta Upgrades UI in the Lobby/MainMenu to purchase permanent stats upgrades for heroes (e.g. +5% Archer damage).
+- Ensure the permanent upgrades are loaded and applied to hero slots on run start.
 
-Implement reusable status effect foundations for heroes and weapons.
-
-- Implement reusable Slow, Burn, and Shock status effects.
-- Keep the task small and verifiable.
-- Do not implement cards yet.
-- Do not implement rewards yet.
-- Do not implement new UI yet.
-- Do not integrate the new map yet.
-- Reuse current `HeroAttack` and `WeaponDefinition` data.
-- Ensure Unity compiles and `GameScene` runs with no console errors.
+---
 
 ## Future Roadmap
+1. **Task 5**: Meta Upgrade + Save System
+2. **Task 6**: Add remaining heroes and 30 cards
+3. **Task 7**: Integrate improved map/assets from `TD_Asset_Lab`
+4. **Task 8**: VFX, audio, camera, UI polish
+5. **Task 9**: Build/testing
 
-1. Task 2: Status Effects Foundation
-2. Task 3: 3-Card Draft System
-3. Task 4: Damage Report + Rewards Screen
-4. Task 5: Meta Upgrade + Save System
-5. Task 6: Add remaining heroes and 30 cards
-6. Task 7: Integrate improved map/assets from `TD_Asset_Lab`
-7. Task 8: VFX, audio, camera, UI polish
-8. Task 9: Build/testing
+---
 
 ## Safety Rules For Future Agents
-
 - Do not delete old systems until the replacement is verified.
 - Do not modify third-party asset files.
 - Work on feature branches.
