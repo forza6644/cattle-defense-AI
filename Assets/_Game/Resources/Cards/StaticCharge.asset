@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3712fd46809c4174c83589090a128870, type: 3}
+  m_Name: StaticCharge
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
+  id: static_charge
+  displayName: Static Charge
+  description: Attacks apply shock for 3 seconds to prepare electrical combos
+  icon: {fileID: 0}
+  rarity: 2
+  targetType: 0
+  targetHeroId: 
+  targetAttackType: 0
+  modifierType: 5
+  modifierValue: 1
+  weight: 0.5

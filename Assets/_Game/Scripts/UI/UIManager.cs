@@ -132,7 +132,7 @@ namespace Stonehold
             if (progression != null)
             {
                 progression.XpChanged += OnXpChanged;
-                progression.ShowLevelUpDraft += OnShowLevelUpDraft;
+                progression.ShowLevelUpDraft += OnShowLevelUpDraftFromProgression;
             }
 
             if (economy != null)
@@ -175,7 +175,7 @@ namespace Stonehold
             if (progression != null)
             {
                 progression.XpChanged -= OnXpChanged;
-                progression.ShowLevelUpDraft -= OnShowLevelUpDraft;
+                progression.ShowLevelUpDraft -= OnShowLevelUpDraftFromProgression;
             }
 
             if (economy != null)
@@ -841,7 +841,32 @@ namespace Stonehold
             }
         }
 
-        private void OnShowLevelUpDraft(RunProgressionManager.CardChoice[] choices)
+        private void OnShowLevelUpDraftFromProgression(RunProgressionManager.CardChoice[] choices)
+        {
+            SetLevelUpPanelTitle("LEVEL UP!", "Choose a blessing for your defenders");
+            OnShowLevelUpDraft(choices);
+        }
+
+        public void SetLevelUpPanelTitle(string title, string subtitle)
+        {
+            if (levelUpPanelGroup != null)
+            {
+                Text[] texts = levelUpPanelGroup.GetComponentsInChildren<Text>(true);
+                foreach (var t in texts)
+                {
+                    if (t.name == "Title")
+                    {
+                        t.text = title;
+                    }
+                    else if (t.name == "Subtitle")
+                    {
+                        t.text = subtitle;
+                    }
+                }
+            }
+        }
+
+        public void OnShowLevelUpDraft(RunProgressionManager.CardChoice[] choices)
         {
             if (choices == null || choices.Length < 3)
             {
@@ -884,7 +909,7 @@ namespace Stonehold
                 }
                 if (cardTypeLabels[i] != null)
                 {
-                    cardTypeLabels[i].text = badgeLabel;
+                    cardTypeLabels[i].text = $"{badgeLabel} ({cRarity.ToUpper()})";
                 }
 
                 // Setup Rarity colors

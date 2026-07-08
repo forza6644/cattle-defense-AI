@@ -146,6 +146,11 @@ namespace Stonehold
                 Debug.Log("Wave " + CurrentWave + " cleared");
                 WaveCleared?.Invoke(CurrentWave, wave);
 
+                // Insert card draft before next wave countdown
+                if (w < activeWaves.Length - 1 && CardDraftManager.Instance != null)
+                {
+                    yield return CardDraftManager.Instance.StartDraftCoroutine();
+                }
             }
 
             Debug.Log("All " + TotalWaves + " waves cleared - VICTORY");

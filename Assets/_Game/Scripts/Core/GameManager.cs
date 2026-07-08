@@ -31,6 +31,18 @@ namespace Stonehold
             {
                 gameObject.AddComponent<RunProgressionManager>();
             }
+            if (GetComponent<RunModifierManager>() == null)
+            {
+                gameObject.AddComponent<RunModifierManager>();
+            }
+            else
+            {
+                GetComponent<RunModifierManager>().ClearModifiers();
+            }
+            if (GetComponent<CardDraftManager>() == null)
+            {
+                gameObject.AddComponent<CardDraftManager>();
+            }
         }
 
         private void Start()
