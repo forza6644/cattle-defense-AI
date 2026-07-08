@@ -38,6 +38,14 @@ namespace Stonehold.EditorTools
             HeroDefinition electricEngineer = CreateHero("ElectricEngineerHero", "electric_engineer", "Electric Engineer", machineGun, electricWeapon);
             HeroDefinition sniper = CreateHero("SniperHero", "sniper", "Sniper", sniperData, sniperWeapon);
 
+            // Override hero prefabs with specific visual versions
+            archer.heroPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Game/Prefabs/Towers/ArcherDefender.prefab");
+            bombardier.heroPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Game/Prefabs/Towers/CatapultDefender.prefab");
+            frostMage.heroPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Game/Prefabs/Towers/IceMage.prefab");
+            fireMage.heroPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Game/Prefabs/Towers/IceMage.prefab");
+            electricEngineer.heroPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Game/Prefabs/Towers/MachineGunSoldier.prefab");
+            sniper.heroPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Game/Prefabs/Towers/Sniper.prefab");
+
             // Override specific parameters for the MVP heroes
             fireMage.baseDamage = 8f;
             fireMage.baseFireRate = 1.0f;

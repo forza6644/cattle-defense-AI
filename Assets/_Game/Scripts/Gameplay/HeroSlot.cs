@@ -41,6 +41,25 @@ namespace Stonehold
                 currentHero = instance.AddComponent<HeroAttack>();
             }
 
+            if (hero.id == "fire_mage")
+            {
+                Renderer[] renderers = instance.GetComponentsInChildren<Renderer>();
+                foreach (var renderer in renderers)
+                {
+                    foreach (var mat in renderer.materials)
+                    {
+                        if (mat.HasProperty("_BaseColor"))
+                        {
+                            mat.SetColor("_BaseColor", new Color(1f, 0.2f, 0.2f));
+                        }
+                        else if (mat.HasProperty("_Color"))
+                        {
+                            mat.SetColor("_Color", new Color(1f, 0.2f, 0.2f));
+                        }
+                    }
+                }
+            }
+
             currentHero.Configure(hero);
             return true;
         }

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: bombardier
   displayName: Bombardier
   icon: {fileID: 0}
-  heroPrefab: {fileID: 735014437353856166, guid: 7d714dff3143cc144bea75ed23375a70, type: 3}
+  heroPrefab: {fileID: 735014437353856166, guid: 3b4c5d6e708190a1b2c3d4e5f6071829, type: 3}
   weapon: {fileID: 11400000, guid: 38b5ddf4fbb0cf4439a5b0fefc82de10, type: 2}
   baseDamage: 22
   baseFireRate: 0.5
