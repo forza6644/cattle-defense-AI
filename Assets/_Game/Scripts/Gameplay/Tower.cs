@@ -41,6 +41,8 @@ namespace Stonehold
                 {
                     dmg *= RunProgressionManager.Instance.RunDamageMultiplier;
                 }
+                int metaLevel = SaveManager.GetMetaLevel(data.defenderId);
+                dmg *= (1.0f + (metaLevel - 1) * 0.08f);
                 return dmg;
             }
         }

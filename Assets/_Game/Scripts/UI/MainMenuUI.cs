@@ -35,6 +35,10 @@ namespace Stonehold
         private Text defenderNameText;
         private Button prevDefenderBtn;
         private Button nextDefenderBtn;
+        private Text metaLevelText;
+        private Text upgradeCostText;
+        private Button upgradeDefenderBtn;
+        private Text upgradeDefenderBtnLabel;
         private int currentDefenderIndex = 0;
 
         private struct DefenderInfo
@@ -218,19 +222,32 @@ namespace Stonehold
 
             // 5. Starting Defender Panel
             Image defenderBg = CreateImage(canvasRect, "DefenderPanel", new Color(0.12f, 0.16f, 0.24f, 0.7f));
-            Place(defenderBg.rectTransform, new Vector2(0.5f, 0.38f), Vector2.zero, new Vector2(800f, 100f));
+            Place(defenderBg.rectTransform, new Vector2(0.5f, 0.40f), new Vector2(0f, -20f), new Vector2(800f, 210f));
 
             Text defenderTitleText = CreateText(defenderBg.rectTransform, "DefenderTitle", "STARTING DEFENDER", 16, new Color(1f, 0.85f, 0.35f));
-            Place(defenderTitleText.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(700f, 24f));
+            Place(defenderTitleText.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(700f, 24f));
 
             defenderNameText = CreateText(defenderBg.rectTransform, "DefenderName", "", 26, Color.white);
-            Place(defenderNameText.rectTransform, new Vector2(0.5f, 0.35f), Vector2.zero, new Vector2(700f, 36f));
+            Place(defenderNameText.rectTransform, new Vector2(0.5f, 0.7f), Vector2.zero, new Vector2(700f, 36f));
 
             prevDefenderBtn = CreateButton(defenderBg.rectTransform, "PrevDefender", "<", new Vector2(46f, 46f),
-                new Vector2(0f, 0.5f), new Vector2(30f, 0f), () => CycleDefender(-1));
+                new Vector2(0f, 0.7f), new Vector2(30f, 0f), () => CycleDefender(-1));
 
             nextDefenderBtn = CreateButton(defenderBg.rectTransform, "NextDefender", ">", new Vector2(46f, 46f),
-                new Vector2(1f, 0.5f), new Vector2(-30f, 0f), () => CycleDefender(1));
+                new Vector2(1f, 0.7f), new Vector2(-30f, 0f), () => CycleDefender(1));
+
+            metaLevelText = CreateText(defenderBg.rectTransform, "MetaLevelText", "", 20, new Color(0.85f, 0.85f, 0.9f));
+            Place(metaLevelText.rectTransform, new Vector2(0.5f, 0.45f), Vector2.zero, new Vector2(700f, 30f));
+
+            upgradeCostText = CreateText(defenderBg.rectTransform, "UpgradeCostText", "", 20, new Color(0.7f, 0.7f, 0.75f));
+            upgradeCostText.alignment = TextAnchor.MiddleLeft;
+            Place(upgradeCostText.rectTransform, new Vector2(0.35f, 0.2f), Vector2.zero, new Vector2(400f, 30f));
+
+            upgradeDefenderBtn = CreateButton(defenderBg.rectTransform, "UpgradeDefenderBtn", "UPGRADE", new Vector2(200f, 50f),
+                new Vector2(0.78f, 0.2f), Vector2.zero, OnUpgradeDefenderClicked);
+            upgradeDefenderBtnLabel = upgradeDefenderBtn.GetComponentInChildren<Text>();
+            upgradeDefenderBtnLabel.fontSize = 20;
+            upgradeDefenderBtnLabel.fontStyle = FontStyle.Bold;
 
             // Initialize starting defender index from saved settings
             string savedId = SaveManager.SelectedStartingDefenderId;
@@ -244,6 +261,7 @@ namespace Stonehold
                 }
             }
             RefreshDefenderSelection();
+            RefreshMetaUpgradeUI();
 
             // 6. Large Premium Battle Button
             startButton = CreateButton(canvasRect, "StartButton", "BATTLE", new Vector2(400f, 96f), new Vector2(0.5f, 0.23f), Vector2.zero, Play);
@@ -470,6 +488,7 @@ namespace Stonehold
             RefreshStats();
             RefreshStageSelection();
             RefreshCurrencies();
+            RefreshMetaUpgradeUI();
         }
 
         private void RefreshStageSelection()
@@ -521,6 +540,7 @@ namespace Stonehold
 
             SaveManager.SetSelectedStartingDefender(lobbyDefenders[currentDefenderIndex].id);
             RefreshDefenderSelection();
+            RefreshMetaUpgradeUI();
         }
 
         private void RefreshDefenderSelection()
@@ -547,6 +567,96 @@ namespace Stonehold
             if (currencyText != null)
             {
                 currencyText.text = $"🪙 {SaveManager.MetaGold}    💎 350    ⚡ 50/50";
+            }
+        }
+
+        private int GetMetaUpgradeCost(int level)
+        {
+            switch (level)
+            {
+                case 1: return 100;
+                case 2: return 150;
+                case 3: return 225;
+                case 4: return 300;
+                case 5: return 400;
+                case 6: return 550;
+                case 7: return 750;
+                case 8: return 1000;
+                case 9: return 1500;
+                default: return 0; // Max level
+            }
+        }
+
+        private void RefreshMetaUpgradeUI()
+        {
+            if (lobbyDefenders == null || currentDefenderIndex >= lobbyDefenders.Length) return;
+
+            string id = lobbyDefenders[currentDefenderIndex].id;
+            int level = SaveManager.GetMetaLevel(id);
+            int cost = GetMetaUpgradeCost(level);
+
+            if (metaLevelText != null)
+            {
+                int dmgBonus = (level - 1) * 8;
+                metaLevelText.text = $"<b>Meta Progression</b>: Level {level}/10  <color=#ffd759>(+{dmgBonus}% Damage)</color>";
+            }
+
+            if (level >= 10)
+            {
+                if (upgradeCostText != null) upgradeCostText.text = "MAX LEVEL REACHED";
+                if (upgradeDefenderBtnLabel != null) upgradeDefenderBtnLabel.text = "MAX";
+                if (upgradeDefenderBtn != null) upgradeDefenderBtn.interactable = false;
+            }
+            else
+            {
+                if (upgradeCostText != null) upgradeCostText.text = $"Cost: 🪙 {cost} Meta Gold";
+                if (upgradeDefenderBtnLabel != null) upgradeDefenderBtnLabel.text = "UPGRADE";
+
+                bool affordable = SaveManager.MetaGold >= cost;
+                if (upgradeDefenderBtn != null)
+                {
+                    upgradeDefenderBtn.interactable = affordable;
+
+                    ColorBlock cb = upgradeDefenderBtn.colors;
+                    if (affordable)
+                    {
+                        cb.normalColor = new Color(0.20f, 0.45f, 0.24f, 0.95f); // Greenish
+                        cb.highlightedColor = new Color(0.28f, 0.58f, 0.34f, 1f);
+                        cb.pressedColor = new Color(0.14f, 0.35f, 0.18f, 1f);
+                        cb.selectedColor = new Color(0.20f, 0.45f, 0.24f, 0.95f);
+                    }
+                    else
+                    {
+                        cb.normalColor = new Color(0.24f, 0.24f, 0.24f, 0.8f); // Disabled grey
+                        cb.highlightedColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+                        cb.pressedColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+                        cb.selectedColor = new Color(0.24f, 0.24f, 0.24f, 0.8f);
+                    }
+                    upgradeDefenderBtn.colors = cb;
+                }
+            }
+        }
+
+        private void OnUpgradeDefenderClicked()
+        {
+            if (lobbyDefenders == null || currentDefenderIndex >= lobbyDefenders.Length) return;
+
+            string id = lobbyDefenders[currentDefenderIndex].id;
+            int level = SaveManager.GetMetaLevel(id);
+            int cost = GetMetaUpgradeCost(level);
+
+            if (level < 10 && SaveManager.MetaGold >= cost)
+            {
+                SaveManager.AddMetaGold(-cost);
+                SaveManager.UpgradeMetaLevel(id);
+
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayButton();
+                }
+
+                RefreshCurrencies();
+                RefreshMetaUpgradeUI();
             }
         }
     }

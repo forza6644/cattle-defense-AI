@@ -112,6 +112,20 @@ namespace Stonehold
             PlayerPrefs.Save();
         }
 
+        public static int GetMetaLevel(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return 1;
+            return PlayerPrefs.GetInt("meta_level_" + id, 1);
+        }
+
+        public static void UpgradeMetaLevel(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return;
+            int current = GetMetaLevel(id);
+            PlayerPrefs.SetInt("meta_level_" + id, current + 1);
+            PlayerPrefs.Save();
+        }
+
         public static void ResetProgress()
         {
             BestWave = 0;
@@ -131,6 +145,13 @@ namespace Stonehold
             PlayerPrefs.DeleteKey(KeyHighestStageUnlocked);
             PlayerPrefs.DeleteKey(KeyStage1Completed);
             PlayerPrefs.DeleteKey(KeyMetaGold);
+
+            PlayerPrefs.DeleteKey("meta_level_archer_defender");
+            PlayerPrefs.DeleteKey("meta_level_machine_gun_soldier");
+            PlayerPrefs.DeleteKey("meta_level_catapult_defender");
+            PlayerPrefs.DeleteKey("meta_level_ice_mage");
+            PlayerPrefs.DeleteKey("meta_level_sniper");
+
             PlayerPrefs.Save();
         }
     }
