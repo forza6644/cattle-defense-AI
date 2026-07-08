@@ -140,6 +140,12 @@ namespace Stonehold
 
         private void TriggerLevelUpDraft()
         {
+            if (CardDraftManager.Instance != null && !CardDraftManager.Instance.IsDraftActive)
+            {
+                StartCoroutine(CardDraftManager.Instance.StartDraftCoroutine());
+                return;
+            }
+
             // Pause the game state safely
             if (GameManager.Instance != null)
             {

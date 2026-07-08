@@ -26,6 +26,12 @@ namespace Stonehold
         ShockEnable
     }
 
+    public enum CardCategory
+    {
+        Modifier,
+        RecruitHero
+    }
+
     [CreateAssetMenu(fileName = "CardDefinition", menuName = "Stonehold/Cards/Card Definition")]
     public class CardDefinition : ScriptableObject
     {
@@ -34,6 +40,10 @@ namespace Stonehold
         [TextArea(2, 5)]
         public string description;
         public Sprite icon;
+        public CardCategory cardCategory = CardCategory.Modifier;
+        public string recruitHeroId;
+        public string requiredOwnedHeroId;
+        public string blockedIfOwnedHeroId;
         public CardRarity rarity = CardRarity.Common;
         public CardTargetType targetType = CardTargetType.Global;
         public string targetHeroId;

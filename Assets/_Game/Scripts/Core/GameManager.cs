@@ -27,6 +27,10 @@ namespace Stonehold
             Instance = this;
             Time.timeScale = 1f;
             Application.targetFrameRate = 60;
+            if (GetComponent<HeroRosterManager>() == null)
+            {
+                gameObject.AddComponent<HeroRosterManager>();
+            }
             if (GetComponent<RunProgressionManager>() == null)
             {
                 gameObject.AddComponent<RunProgressionManager>();

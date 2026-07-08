@@ -13,6 +13,12 @@ namespace Stonehold
 
         private void Start()
         {
+            if (HeroRosterManager.Instance != null)
+            {
+                HeroRosterManager.Instance.RegisterSlot(this);
+                return;
+            }
+
             if (startingHero != null)
             {
                 SpawnHero(startingHero);
@@ -62,6 +68,17 @@ namespace Stonehold
 
             currentHero.Configure(hero);
             return true;
+        }
+
+        public void ClearHero()
+        {
+            if (currentHero == null)
+            {
+                return;
+            }
+
+            Destroy(currentHero.gameObject);
+            currentHero = null;
         }
     }
 }

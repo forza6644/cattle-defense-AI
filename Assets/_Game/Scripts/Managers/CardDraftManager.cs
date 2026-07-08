@@ -73,9 +73,10 @@ namespace Stonehold
             // Reload card pool to make sure any dynamically created/edited cards are captured
             LoadCardPool();
 
-            if (cardPool.Count < 3)
+            List<CardDefinition> validCards = GetValidCardPool();
+            if (validCards.Count == 0)
             {
-                Debug.LogError("[CardDraftManager] Cannot start draft: Card pool has fewer than 3 cards.");
+                Debug.LogWarning("[CardDraftManager] Cannot start draft: no valid cards for the current roster.");
                 yield break;
             }
 
@@ -83,27 +84,21 @@ namespace Stonehold
             isSelectionMade = false;
 
             // Pick 3 random cards based on weights
-            List<CardDefinition> choices = PickRandomCards(3);
+            List<CardDefinition> choices = PickRandomCards(validCards, 3);
 
             // Map CardDefinition to RunProgressionManager.CardChoice
             RunProgressionManager.CardChoice[] choiceStructs = new RunProgressionManager.CardChoice[3];
             for (int i = 0; i < 3; i++)
             {
-                var card = choices[i];
-                choiceStructs[i] = new RunProgressionManager.CardChoice(
-                    card.displayName,
-                    card.description,
-                    () =>
-                    {
-                        if (RunModifierManager.Instance != null)
-                        {
-                            RunModifierManager.Instance.AddCard(card);
-                        }
-                        isSelectionMade = true;
-                    },
-                    "Card", // Sets the badge label type
-                    card.rarity.ToString()
-                );
+                if (i < choices.Count)
+                {
+                    var card = choices[i];
+                    choiceStructs[i] = CreateChoice(card);
+                }
+                else
+                {
+                    choiceStructs[i] = CreateFallbackChoice();
+                }
             }
 
             // Pause combat state
@@ -126,11 +121,123 @@ namespace Stonehold
             }
 
             isDraftActive = false;
+            if (GameManager.Instance != null && GameManager.Instance.State == GameState.LevelUp)
+            {
+                GameManager.Instance.SetState(GameState.Playing);
+            }
         }
 
-        private List<CardDefinition> PickRandomCards(int count)
+        private RunProgressionManager.CardChoice CreateChoice(CardDefinition card)
         {
-            List<CardDefinition> pool = new List<CardDefinition>(cardPool);
+            CardDefinition selectedCard = card;
+            string cardType = selectedCard.cardCategory == CardCategory.RecruitHero ? "Add" : "Card";
+            return new RunProgressionManager.CardChoice(
+                selectedCard.displayName,
+                selectedCard.description,
+                () =>
+                {
+                    ApplyCard(selectedCard);
+                    isSelectionMade = true;
+                },
+                cardType,
+                selectedCard.rarity.ToString()
+            );
+        }
+
+        private RunProgressionManager.CardChoice CreateFallbackChoice()
+        {
+            return new RunProgressionManager.CardChoice(
+                "Hold Formation",
+                "No new draft option is available right now.",
+                () =>
+                {
+                    isSelectionMade = true;
+                },
+                "Card",
+                CardRarity.Common.ToString()
+            );
+        }
+
+        private void ApplyCard(CardDefinition card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            if (card.cardCategory == CardCategory.RecruitHero)
+            {
+                if (HeroRosterManager.Instance != null)
+                {
+                    HeroRosterManager.Instance.RecruitHero(card.recruitHeroId);
+                }
+                return;
+            }
+
+            if (RunModifierManager.Instance != null)
+            {
+                RunModifierManager.Instance.AddCard(card);
+            }
+        }
+
+        private List<CardDefinition> GetValidCardPool()
+        {
+            List<CardDefinition> valid = new List<CardDefinition>();
+            foreach (CardDefinition card in cardPool)
+            {
+                if (IsCardValid(card))
+                {
+                    valid.Add(card);
+                }
+            }
+
+            return valid;
+        }
+
+        private bool IsCardValid(CardDefinition card)
+        {
+            if (card == null)
+            {
+                return false;
+            }
+
+            HeroRosterManager roster = HeroRosterManager.Instance;
+            if (roster == null)
+            {
+                return card.cardCategory != CardCategory.RecruitHero;
+            }
+
+            if (!string.IsNullOrEmpty(card.requiredOwnedHeroId) && !roster.IsHeroOwned(card.requiredOwnedHeroId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(card.blockedIfOwnedHeroId) && roster.IsHeroOwned(card.blockedIfOwnedHeroId))
+            {
+                return false;
+            }
+
+            if (card.cardCategory == CardCategory.RecruitHero)
+            {
+                return roster.CanRecruit(card.recruitHeroId);
+            }
+
+            if (card.targetType == CardTargetType.HeroById && !string.IsNullOrEmpty(card.targetHeroId))
+            {
+                return roster.CanUpgrade(card.targetHeroId);
+            }
+
+            if (card.targetType == CardTargetType.AttackType)
+            {
+                return roster.HasOwnedHeroWithAttackType(card.targetAttackType);
+            }
+
+            return true;
+        }
+
+        private List<CardDefinition> PickRandomCards(List<CardDefinition> sourcePool, int count)
+        {
+            List<CardDefinition> pool = new List<CardDefinition>(sourcePool);
             List<CardDefinition> selected = new List<CardDefinition>();
             System.Random rng = new System.Random();
 
@@ -168,7 +275,16 @@ namespace Stonehold
                     }
                 }
 
-                selected.Add(pool[selectedIndex]);
+                CardDefinition selectedCard = pool[selectedIndex];
+                selected.Add(selectedCard);
+                if (selectedCard.cardCategory == CardCategory.RecruitHero && !string.IsNullOrEmpty(selectedCard.recruitHeroId))
+                {
+                    pool.RemoveAll(card => card != null
+                        && card.cardCategory == CardCategory.RecruitHero
+                        && card.recruitHeroId == selectedCard.recruitHeroId);
+                    continue;
+                }
+
                 pool.RemoveAt(selectedIndex);
             }
 

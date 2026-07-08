@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3712fd46809c4174c83589090a128870, type: 3}
+  m_Name: AddFrostMage
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
+  id: recruit_frost_mage
+  displayName: Add Frost Mage
+  description: Recruit Frost Mage into the next empty wall slot.
+  icon: {fileID: 0}
+  cardCategory: 1
+  recruitHeroId: frost_mage
+  requiredOwnedHeroId:
+  blockedIfOwnedHeroId: frost_mage
+  rarity: 1
+  targetType: 0
+  targetHeroId:
+  targetAttackType: 0
+  modifierType: 0
+  modifierValue: 0
+  weight: 1
