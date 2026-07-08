@@ -94,11 +94,11 @@ namespace Stonehold
         }
 
         /// <summary>Called by projectiles. Kills the enemy (awarding gold) at 0 HP.</summary>
-        public void TakeDamage(float amount)
+        public float TakeDamage(float amount)
         {
             if (isDead)
             {
-                return;
+                return 0f;
             }
 
             float reducedAmount = amount;
@@ -118,6 +118,8 @@ namespace Stonehold
             {
                 animator.PlayHit();
             }
+
+            return reducedAmount;
         }
 
         /// <summary>Non-stacking slow: the newest slow replaces the current one.</summary>

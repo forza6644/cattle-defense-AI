@@ -20,6 +20,7 @@ namespace Stonehold
         private float splashRadius;
         private float slowMultiplier = 1f;
         private float slowDuration;
+        private string sourceHeroId;
         private TrailRenderer trail;
         private GameObject sourcePrefab;
 
@@ -58,11 +59,17 @@ namespace Stonehold
         /// <summary>Called by the tower right after this projectile is spawned.</summary>
         public void Init(Enemy targetEnemy, float damageAmount, float splash, float slowMult, float slowDur, Color trailColor)
         {
+            Init(targetEnemy, damageAmount, splash, slowMult, slowDur, trailColor, null);
+        }
+
+        public void Init(Enemy targetEnemy, float damageAmount, float splash, float slowMult, float slowDur, Color trailColor, string damageSourceHeroId)
+        {
             target = targetEnemy;
             damage = damageAmount;
             splashRadius = splash;
             slowMultiplier = slowMult;
             slowDuration = slowDur;
+            sourceHeroId = damageSourceHeroId;
 
             if (trail == null)
             {
@@ -155,12 +162,14 @@ namespace Stonehold
                 enemy.ApplySlow(slowMultiplier, slowDuration);
             }
 
-            enemy.TakeDamage(damage);
+            float appliedDamage = enemy.TakeDamage(damage);
+            DamageTracker.RecordDamage(sourceHeroId, appliedDamage);
         }
 
         private void Return()
         {
             target = null;
+            sourceHeroId = null;
 
             if (trail != null)
             {

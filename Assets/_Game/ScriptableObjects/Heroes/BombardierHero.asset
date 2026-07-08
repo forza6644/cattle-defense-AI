@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5aa71f337ccca7d4da3fd307d99de4a0, type: 3}
+  m_Name: BombardierHero
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.HeroDefinition
+  id: bombardier
+  displayName: Bombardier
+  icon: {fileID: 0}
+  heroPrefab: {fileID: 735014437353856166, guid: 7d714dff3143cc144bea75ed23375a70, type: 3}
+  weapon: {fileID: 11400000, guid: 38b5ddf4fbb0cf4439a5b0fefc82de10, type: 2}
+  baseDamage: 22
+  baseFireRate: 0.5
+  baseRange: 7
