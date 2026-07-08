@@ -9409,7 +9409,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 40a5bee895acbb747a82a38e0050c09c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerSlot
 --- !u!23 &788441984
 MeshRenderer:
@@ -11712,7 +11712,6 @@ Transform:
   - {fileID: 512017374}
   - {fileID: 847242764}
   - {fileID: 1519799462}
-  - {fileID: 1531911858}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1064145268
@@ -16101,7 +16100,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 40a5bee895acbb747a82a38e0050c09c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerSlot
 --- !u!23 &1359157641
 MeshRenderer:
@@ -18578,7 +18577,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e3530f7473f0cd247b50dd8a7437d338, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WaypointPath
   waypoints: []
 --- !u!1 &1520290368
@@ -18615,72 +18614,6 @@ Transform:
   - {fileID: 1426399537}
   m_Father: {fileID: 224652418}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1531911857
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1043012754}
-    m_Modifications:
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1423488070482060831, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: m_Name
-      value: ArrowTower
-      objectReference: {fileID: 0}
-    - target: {fileID: 1711310749265553130, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-      propertyPath: projectilePrefab
-      value: 
-      objectReference: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
---- !u!4 &1531911858 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 124565947026865755, guid: 74c459e7bc058dc459b6a46ddf073a31, type: 3}
-  m_PrefabInstance: {fileID: 1531911857}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1535506984
 GameObject:
   m_ObjectHideFlags: 0
@@ -18940,7 +18873,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 40a5bee895acbb747a82a38e0050c09c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerSlot
 --- !u!23 &1545222606
 MeshRenderer:
@@ -23687,7 +23620,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 40a5bee895acbb747a82a38e0050c09c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.TowerSlot
 --- !u!23 &1946977327
 MeshRenderer:
