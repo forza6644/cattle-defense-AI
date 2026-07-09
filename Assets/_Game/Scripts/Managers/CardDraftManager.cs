@@ -34,6 +34,7 @@ namespace Stonehold
 
         private void Update()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             // Debug trigger: Press C to start a card draft
             if (Keyboard.current != null && Keyboard.current.cKey.wasPressedThisFrame)
             {
@@ -43,6 +44,7 @@ namespace Stonehold
                     StartCoroutine(StartDraftCoroutine());
                 }
             }
+#endif
         }
 
         private void LoadCardPool()

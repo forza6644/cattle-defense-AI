@@ -1473,13 +1473,6 @@ namespace Stonehold
 
         private void OnOkClicked()
         {
-            if (!rewardsClaimed)
-            {
-                rewardsClaimed = true;
-                int wave = waves != null ? waves.CurrentWave : 1;
-                SaveManager.AddRewards(wave * 50, wave * 2, wave * 5);
-                Debug.Log($"[UIManager] Saved run rewards permanently: Gold +{wave*50}, XP +{wave*2}, Materials +{wave*5}.");
-            }
             ShowPanel(resultPanelGroup, false);
             if (game != null)
             {
@@ -1489,11 +1482,20 @@ namespace Stonehold
 
         public void ShowBattleResult(bool victory)
         {
-            rewardsClaimed = false;
-            int wave = waves != null ? waves.CurrentWave : 1;
-            int runNumber = SaveManager.TotalRuns + 1;
+            int wave = Mathf.Max(1, waves != null ? waves.CurrentWave : 1);
+            int runNumber = Mathf.Max(1, SaveManager.TotalRuns);
 
             var rewards = RewardCalculator.CalculateRewards(wave);
+            rewardsClaimed = SaveManager.TryClaimRunRewards(wave, out int gold, out int xp, out int materials);
+            if (rewardsClaimed)
+            {
+                Debug.Log($"[UIManager] Saved run rewards permanently: Gold +{gold}, XP +{xp}, Materials +{materials}.");
+            }
+            else
+            {
+                Debug.Log("[UIManager] Run rewards were already claimed; result screen refresh did not grant duplicates.");
+            }
+
             var damageEntries = new List<DamageReportEntry>();
             float totalDamage = DamageTracker.Instance != null ? DamageTracker.Instance.GetTotalDamage() : 0f;
 

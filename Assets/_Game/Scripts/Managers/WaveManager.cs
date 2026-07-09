@@ -12,6 +12,9 @@ namespace Stonehold
     /// </summary>
     public class WaveManager : MonoBehaviour
     {
+        private const float WaveClearWaitWarningSeconds = 45f;
+        private const float EnemyRegistrySweepInterval = 2f;
+
         [SerializeField] private GameConfig config;
         [SerializeField] private GameObject spawnPoint;
         [SerializeField] private GameObject castle;
@@ -128,11 +131,33 @@ namespace Stonehold
                 }
 
                 // Wave ends when every spawned enemy is gone (killed or reached castle).
+                float waitingForClearSeconds = 0f;
+                float nextRegistrySweepSeconds = 0f;
+                bool waitWarningLogged = false;
                 while (EnemyManager.AliveCount > 0)
                 {
                     if (IsGameOver)
                     {
                         yield break;
+                    }
+
+                    waitingForClearSeconds += Time.deltaTime;
+                    nextRegistrySweepSeconds += Time.deltaTime;
+
+                    if (nextRegistrySweepSeconds >= EnemyRegistrySweepInterval)
+                    {
+                        nextRegistrySweepSeconds = 0f;
+                        int pruned = EnemyManager.PruneInvalidEntries();
+                        if (pruned > 0)
+                        {
+                            Debug.LogWarning($"WaveManager: Removed {pruned} stale enemy registry entr{(pruned == 1 ? "y" : "ies")} while waiting for wave {CurrentWave} to clear.");
+                        }
+                    }
+
+                    if (!waitWarningLogged && waitingForClearSeconds >= WaveClearWaitWarningSeconds)
+                    {
+                        waitWarningLogged = true;
+                        Debug.LogWarning($"WaveManager: Wave {CurrentWave} has waited {WaveClearWaitWarningSeconds:0}s for {EnemyManager.AliveCount} registered enemies after spawning finished. Continuing to monitor and pruning stale/null entries only.");
                     }
 
                     yield return null;

@@ -38,6 +38,21 @@ namespace Stonehold
             enemies.Remove(enemy);
         }
 
+        public static int PruneInvalidEntries()
+        {
+            int removed = 0;
+            for (int i = enemies.Count - 1; i >= 0; i--)
+            {
+                if (enemies[i] == null)
+                {
+                    enemies.RemoveAt(i);
+                    removed++;
+                }
+            }
+
+            return removed;
+        }
+
         /// <summary>Nearest registered enemy within maxRange of position, or null.</summary>
         public static Enemy FindNearest(Vector3 position, float maxRange)
         {

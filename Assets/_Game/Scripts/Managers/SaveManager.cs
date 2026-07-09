@@ -7,6 +7,8 @@ namespace Stonehold
     /// </summary>
     public static class SaveManager
     {
+        private const int CurrentSaveVersion = 2;
+        private const string KeySaveVersion = "save_version";
         private const string KeyBestWave = "stats_best_wave";
         private const string KeyTotalWins = "stats_total_wins";
         private const string KeyTotalLosses = "stats_total_losses";
@@ -18,6 +20,26 @@ namespace Stonehold
         private const string KeyMetaGold = "stats_meta_gold";
         private const string KeyAccountXp = "stats_account_xp";
         private const string KeyCoreMaterials = "stats_core_materials";
+
+        private static readonly string[] CurrentHeroIds =
+        {
+            "archer",
+            "bombardier",
+            "frost_mage",
+            "fire_mage",
+            "electric_engineer",
+            "sniper"
+        };
+
+        private static readonly string[] CurrentMetaUpgradeIds =
+        {
+            "castle_hp",
+            "damage",
+            "fire_rate",
+            "range"
+        };
+
+        private static bool runRewardsClaimed;
 
         public static int BestWave { get; private set; }
         public static int TotalWins { get; private set; }
@@ -39,6 +61,8 @@ namespace Stonehold
 
         public static void LoadProgress()
         {
+            EnsureSaveVersion();
+
             BestWave = PlayerPrefs.GetInt(KeyBestWave, 0);
             TotalWins = PlayerPrefs.GetInt(KeyTotalWins, 0);
             TotalLosses = PlayerPrefs.GetInt(KeyTotalLosses, 0);
@@ -46,10 +70,44 @@ namespace Stonehold
             SelectedStageIndex = PlayerPrefs.GetInt(KeySelectedStage, 0);
             HighestStageUnlocked = PlayerPrefs.GetInt(KeyHighestStageUnlocked, 1);
             Stage1Completed = PlayerPrefs.GetInt(KeyStage1Completed, 0) == 1;
-            SelectedStartingDefenderId = PlayerPrefs.GetString(KeySelectedStartingDefender, "archer_defender");
+            SelectedStartingDefenderId = PlayerPrefs.GetString(KeySelectedStartingDefender, "archer");
             MetaGold = PlayerPrefs.GetInt(KeyMetaGold, 0);
             AccountXp = PlayerPrefs.GetInt(KeyAccountXp, 0);
             CoreMaterials = PlayerPrefs.GetInt(KeyCoreMaterials, 0);
+        }
+
+        public static void BeginRunRewardSession()
+        {
+            runRewardsClaimed = false;
+        }
+
+        public static bool TryClaimRunRewards(int waveReached, out int gold, out int xp, out int materials)
+        {
+            int safeWave = Mathf.Max(1, waveReached);
+            gold = safeWave * 50;
+            xp = safeWave * 2;
+            materials = safeWave * 5;
+
+            if (runRewardsClaimed)
+            {
+                return false;
+            }
+
+            runRewardsClaimed = true;
+            AddRewards(gold, xp, materials);
+            return true;
+        }
+
+        private static void EnsureSaveVersion()
+        {
+            int savedVersion = PlayerPrefs.GetInt(KeySaveVersion, 0);
+            if (savedVersion >= CurrentSaveVersion)
+            {
+                return;
+            }
+
+            PlayerPrefs.SetInt(KeySaveVersion, CurrentSaveVersion);
+            PlayerPrefs.Save();
         }
 
         public static void SetSelectedStage(int index)
@@ -176,10 +234,11 @@ namespace Stonehold
             PlayerPrefs.DeleteKey(KeyAccountXp);
             PlayerPrefs.DeleteKey(KeyCoreMaterials);
 
-            PlayerPrefs.DeleteKey("meta_upgrade_castle_hp");
-            PlayerPrefs.DeleteKey("meta_upgrade_damage");
-            PlayerPrefs.DeleteKey("meta_upgrade_fire_rate");
-            PlayerPrefs.DeleteKey("meta_upgrade_range");
+            for (int i = 0; i < CurrentMetaUpgradeIds.Length; i++)
+            {
+                PlayerPrefs.DeleteKey("meta_upgrade_" + CurrentMetaUpgradeIds[i]);
+            }
+
             PlayerPrefs.Save();
         }
 
@@ -189,11 +248,10 @@ namespace Stonehold
             MetaGold = 0;
             PlayerPrefs.DeleteKey(KeyMetaGold);
 
-            PlayerPrefs.DeleteKey("meta_level_archer_defender");
-            PlayerPrefs.DeleteKey("meta_level_machine_gun_soldier");
-            PlayerPrefs.DeleteKey("meta_level_catapult_defender");
-            PlayerPrefs.DeleteKey("meta_level_ice_mage");
-            PlayerPrefs.DeleteKey("meta_level_sniper");
+            for (int i = 0; i < CurrentHeroIds.Length; i++)
+            {
+                PlayerPrefs.DeleteKey("meta_level_" + CurrentHeroIds[i]);
+            }
 
             PlayerPrefs.Save();
         }

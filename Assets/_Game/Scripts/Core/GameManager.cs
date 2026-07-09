@@ -33,12 +33,20 @@ namespace Stonehold
 
         private Castle castle;
         private WaveManager waveManager;
+        private bool runResultRecorded;
 
         private void Awake()
         {
             Instance = this;
             Time.timeScale = 1f;
             Application.targetFrameRate = 60;
+            SaveManager.BeginRunRewardSession();
+            runResultRecorded = false;
+
+            if (GetComponent<SceneReferenceValidator>() == null)
+            {
+                gameObject.AddComponent<SceneReferenceValidator>();
+            }
             if (GetComponent<HeroRosterManager>() == null)
             {
                 gameObject.AddComponent<HeroRosterManager>();
@@ -111,18 +119,19 @@ namespace Stonehold
                 TogglePause();
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             // Debug triggers: V for Victory screen, G for Defeat screen
             if (Keyboard.current != null)
             {
                 if (Keyboard.current.vKey.wasPressedThisFrame)
                 {
                     Debug.Log("[GameManager] Debug Victory triggered via V key.");
-                    SetState(GameState.Victory);
+                    CompleteRun(true);
                 }
                 else if (Keyboard.current.gKey.wasPressedThisFrame)
                 {
                     Debug.Log("[GameManager] Debug Defeat triggered via G key.");
-                    SetState(GameState.Defeat);
+                    CompleteRun(false);
                 }
                 else if (Keyboard.current.mKey.wasPressedThisFrame)
                 {
@@ -135,6 +144,7 @@ namespace Stonehold
                     SaveManager.ResetAll();
                 }
             }
+#endif
         }
 
         public void TogglePause()
@@ -212,36 +222,12 @@ namespace Stonehold
 
         private void OnCastleDefeated()
         {
-            var towers = FindFirstObjectByType<TowerManager>();
-            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
-            {
-                int waveReached = SaveManager.BestWave;
-                if (waveReached < 1) waveReached = 1;
-                int metaGoldEarned = waveReached * 15;
-                SaveManager.AddMetaGold(metaGoldEarned);
-                Debug.Log($"Defeat! Highest Wave: {waveReached}. Awarded {metaGoldEarned} Meta Gold.");
-            }
-
-            SaveManager.RecordLoss();
-            SetState(GameState.Defeat);
+            CompleteRun(false);
         }
 
         private void OnAllWavesCleared()
         {
-            var towers = FindFirstObjectByType<TowerManager>();
-            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
-            {
-                int metaGoldEarned = 300;
-                SaveManager.AddMetaGold(metaGoldEarned);
-                Debug.Log($"Victory! Awarded {metaGoldEarned} Meta Gold.");
-            }
-
-            SaveManager.RecordWin();
-            if (SaveManager.SelectedStageIndex == 0)
-            {
-                SaveManager.CompleteStage1();
-            }
-            SetState(GameState.Victory);
+            CompleteRun(true);
         }
 
         private void OnWaveStarted(int waveNumber, WaveData wave)
@@ -265,6 +251,32 @@ namespace Stonehold
             // Restore the player's selected speed on resume; any non-Playing state freezes.
             Time.timeScale = newState == GameState.Playing ? GameSpeed : 0f;
             StateChanged?.Invoke(newState);
+        }
+
+        private void CompleteRun(bool victory)
+        {
+            if (runResultRecorded)
+            {
+                SetState(victory ? GameState.Victory : GameState.Defeat);
+                return;
+            }
+
+            runResultRecorded = true;
+
+            if (victory)
+            {
+                SaveManager.RecordWin();
+                if (SaveManager.SelectedStageIndex == 0)
+                {
+                    SaveManager.CompleteStage1();
+                }
+                SetState(GameState.Victory);
+            }
+            else
+            {
+                SaveManager.RecordLoss();
+                SetState(GameState.Defeat);
+            }
         }
     }
 }
