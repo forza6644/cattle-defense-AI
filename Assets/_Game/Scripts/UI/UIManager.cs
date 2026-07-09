@@ -139,6 +139,38 @@ namespace Stonehold
                 }
             }
 
+            // Enhance gate, lane, and wall visibility programmatically
+            GameObject gate = GameObject.Find("CastleGate_Wood");
+            if (gate != null)
+            {
+                gate.transform.localScale = new Vector3(3.5f, 2.5f, 0.4f);
+                Renderer r = gate.GetComponent<Renderer>();
+                if (r != null)
+                {
+                    r.material.color = new Color(0.45f, 0.25f, 0.15f); // Rich oak wood
+                }
+            }
+
+            GameObject road = GameObject.Find("Road_Dirt");
+            if (road != null)
+            {
+                Renderer r = road.GetComponent<Renderer>();
+                if (r != null)
+                {
+                    r.material.color = new Color(0.35f, 0.28f, 0.22f); // Dark dirt road path
+                }
+            }
+
+            GameObject wall = GameObject.Find("CastleWall_Stone");
+            if (wall != null)
+            {
+                Renderer r = wall.GetComponent<Renderer>();
+                if (r != null)
+                {
+                    r.material.color = new Color(0.3f, 0.32f, 0.35f); // Stone grey
+                }
+            }
+
             progression = RunProgressionManager.Instance != null ? RunProgressionManager.Instance : FindFirstObjectByType<RunProgressionManager>();
             if (progression != null)
             {
@@ -1133,7 +1165,7 @@ namespace Stonehold
 
             // Castle HP bar (top-right)
             Image hpBg = CreateImage(canvasRect, "CastleHpBar", new Color(0f, 0f, 0f, 0.6f));
-            SetAnchored(hpBg.rectTransform, new Vector2(1f, 1f), new Vector2(-190f, -35f), new Vector2(320f, 34f));
+            SetAnchored(hpBg.rectTransform, new Vector2(1f, 1f), new Vector2(-170f, -35f), new Vector2(280f, 30f));
             castleHpFillImage = CreateImage(hpBg.rectTransform, "Fill", new Color(0.25f, 0.8f, 0.3f));
             castleHpFill = castleHpFillImage.rectTransform;
             castleHpFill.anchorMin = Vector2.zero;
@@ -1141,20 +1173,20 @@ namespace Stonehold
             castleHpFill.pivot = new Vector2(0f, 0.5f);
             castleHpFill.offsetMin = new Vector2(2f, 2f);
             castleHpFill.offsetMax = new Vector2(-2f, -2f);
-            castleHpText = CreateText(hpBg.rectTransform, "Label", "10 / 10", 22, Color.white, TextAnchor.MiddleCenter);
+            castleHpText = CreateText(hpBg.rectTransform, "Label", "10 / 10", 20, Color.white, TextAnchor.MiddleCenter);
             castleHpText.rectTransform.anchorMin = Vector2.zero;
             castleHpText.rectTransform.anchorMax = Vector2.one;
             castleHpText.rectTransform.offsetMin = Vector2.zero;
             castleHpText.rectTransform.offsetMax = Vector2.zero;
 
-            // Pause button (under the HP bar)
-            CreateButton(canvasRect, "PauseButton", "Pause", new Vector2(120f, 44f), new Vector2(1f, 1f),
-                new Vector2(-90f, -90f), () => { if (game != null) game.TogglePause(); });
+            // Pause & Speed buttons (side-by-side, under the HP bar)
+            CreateButton(canvasRect, "PauseButton", "Pause", new Vector2(95f, 36f), new Vector2(1f, 1f),
+                new Vector2(-150f, -80f), () => { if (game != null) game.TogglePause(); });
 
-            // Speed button (under the Pause button): cycles 1x -> 1.5x -> 2x -> 1x.
+            // Speed button: cycles 1x -> 1.5x -> 2x -> 1x.
             Button speedButton = CreateButton(canvasRect, "SpeedButton",
                 game != null ? FormatSpeed(game.GameSpeed) : "1x",
-                new Vector2(120f, 44f), new Vector2(1f, 1f), new Vector2(-90f, -138f),
+                new Vector2(95f, 36f), new Vector2(1f, 1f), new Vector2(-50f, -80f),
                 () =>
                 {
                     if (game != null)
@@ -1437,7 +1469,7 @@ namespace Stonehold
             rewardsTitle.fontStyle = FontStyle.Bold;
             SetAnchored(rewardsTitle.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -40f), new Vector2(320f, 40f));
 
-            resultRewardsText = CreateText(contentBg.rectTransform, "RewardsText", "• Gold: 0\n• XP: 0", 20, Color.white, TextAnchor.UpperLeft);
+            resultRewardsText = CreateText(contentBg.rectTransform, "RewardsText", "• Gold: 0\n• XP: 0", 17, Color.white, TextAnchor.UpperLeft);
             SetAnchored(resultRewardsText.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -90f), new Vector2(320f, 260f));
 
             // Divider line
@@ -1531,6 +1563,27 @@ namespace Stonehold
                 {
                     sb.AppendLine($"• {r.rewardName}: {r.amount}");
                 }
+
+                if (HeroRosterManager.Instance != null && HeroRosterManager.Instance.OwnedHeroIds.Count > 0)
+                {
+                    List<string> heroNames = new List<string>();
+                    foreach (string id in HeroRosterManager.Instance.OwnedHeroIds)
+                    {
+                        heroNames.Add(GetHeroDisplayName(id));
+                    }
+                    sb.AppendLine($"\nDefenders: {string.Join(", ", heroNames)}");
+                }
+
+                if (RunModifierManager.Instance != null && RunModifierManager.Instance.ActiveCards.Count > 0)
+                {
+                    List<string> cardNames = new List<string>();
+                    foreach (var card in RunModifierManager.Instance.ActiveCards)
+                    {
+                        cardNames.Add(card.displayName);
+                    }
+                    sb.AppendLine($"Blessings: {string.Join(", ", cardNames)}");
+                }
+
                 resultRewardsText.text = sb.ToString();
             }
 

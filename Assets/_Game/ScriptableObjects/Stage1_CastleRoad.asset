@@ -28,7 +28,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 31995248dd544eefb654f92efd58f6db, type: 2}
   - {fileID: 11400000, guid: e3df568a28da4fc0a3a1481e3f3705b1, type: 2}
   - {fileID: 11400000, guid: ad54c4adcaa748b7872efe454c6835f0, type: 2}
-  - {fileID: 11400000, guid: 6195b8b8541e43f3864bcec178dd8a8d, type: 2}
-  - {fileID: 11400000, guid: 8861dfaa72ef470bb7856f4e5e2a1cb2, type: 2}
   - {fileID: 11400000, guid: 04def31d071444c180015196452e626e, type: 2}
   expectedEnemyTypes: []

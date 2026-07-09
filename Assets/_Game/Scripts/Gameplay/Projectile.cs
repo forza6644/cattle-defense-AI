@@ -101,6 +101,9 @@ namespace Stonehold
                 Color end = trailColor;
                 end.a = 0f;
                 trail.endColor = end;
+                trail.startWidth = 0.3f;
+                trail.endWidth = 0.05f;
+                trail.time = 0.4f;
             }
         }
 
@@ -146,6 +149,9 @@ namespace Stonehold
                 Color end = trailColor;
                 end.a = 0f;
                 trail.endColor = end;
+                trail.startWidth = 0.3f;
+                trail.endWidth = 0.05f;
+                trail.time = 0.4f;
             }
         }
 
