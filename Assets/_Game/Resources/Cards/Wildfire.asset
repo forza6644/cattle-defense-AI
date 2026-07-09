@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
   id: wildfire
   displayName: Wildfire
-  description: +2 global Burn damage
+  description: +2 burn damage for Fire Mage and non-elemental defenders (Archer, Bombardier, Sniper)
   icon: {fileID: 0}
   rarity: 2
   targetType: 0

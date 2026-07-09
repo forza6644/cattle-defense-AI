@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
   id: static_charge
   displayName: Static Charge
-  description: Attacks apply shock for 3 seconds to prepare electrical combos
+  description: Non-elemental defenders (Archer, Bombardier, Sniper) can apply Shock for 3 seconds to prepare electrical combos
   icon: {fileID: 0}
   rarity: 2
   targetType: 0

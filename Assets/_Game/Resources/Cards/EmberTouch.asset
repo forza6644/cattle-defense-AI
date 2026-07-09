@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
   id: ember_touch
   displayName: Ember Touch
-  description: Attacks apply a fiery burn dealing 3 damage per second for 3 seconds
+  description: Fire Mage and non-elemental defenders (Archer, Bombardier, Sniper) gain a fiery burn dealing 3 damage per second for 3 seconds
   icon: {fileID: 0}
   rarity: 2
   targetType: 0
