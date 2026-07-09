@@ -120,24 +120,27 @@ namespace Stonehold
             int finalAmount = Mathf.RoundToInt(amount * runXpMultiplier);
             currentXp += finalAmount;
             int needed = GetXpNeededForNextLevel();
-            bool levelUpTriggered = false;
 
             while (currentXp >= needed)
             {
                 currentXp -= needed;
                 currentLevel++;
-                levelUpTriggered = true;
                 needed = GetXpNeededForNextLevel();
             }
 
             XpChanged?.Invoke(currentXp, needed, currentLevel);
 
-            if (levelUpTriggered)
-            {
-                TriggerLevelUpDraft();
-            }
+            // MVP progression rule (Task 9): drafts happen BETWEEN WAVES ONLY, owned by
+            // WaveManager -> CardDraftManager. XP still accrues and updates the HUD level
+            // for display/reward data, but a level-up no longer opens a second draft.
+            // TriggerLevelUpDraft() and its tower-era choice helpers below are intentionally
+            // left intact but unreferenced (orphan-safe) rather than deleted.
         }
 
+        // DISABLED FOR MVP (Task 9): no longer called. XP level-ups must not open a draft;
+        // the between-wave draft (WaveManager -> CardDraftManager) is the only draft owner.
+        // Kept intact but unreferenced so the legacy path can be revived deliberately later
+        // rather than being destructively removed. Do not re-wire this to AddXp.
         private void TriggerLevelUpDraft()
         {
             if (CardDraftManager.Instance != null && !CardDraftManager.Instance.IsDraftActive)
