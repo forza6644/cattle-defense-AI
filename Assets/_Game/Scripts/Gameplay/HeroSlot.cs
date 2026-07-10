@@ -24,7 +24,7 @@ namespace Stonehold
             Renderer r = pad.GetComponent<Renderer>();
             if (r != null)
             {
-                r.material = new Material(Shader.Find("Standard"));
+                r.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
                 r.material.color = new Color(0.2f, 0.25f, 0.3f);
             }
 

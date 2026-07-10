@@ -55,17 +55,19 @@ namespace Stonehold
             {
                 gameObject.AddComponent<RunProgressionManager>();
             }
-            if (GetComponent<RunModifierManager>() == null)
+            if (RunModifierManager.Instance == null)
             {
-                gameObject.AddComponent<RunModifierManager>();
+                GameObject rmGo = new GameObject("RunModifierManager", typeof(RunModifierManager));
+                DontDestroyOnLoad(rmGo);
             }
             else
             {
-                GetComponent<RunModifierManager>().ClearModifiers();
+                RunModifierManager.Instance.ClearModifiers();
             }
-            if (GetComponent<CardDraftManager>() == null)
+            if (CardDraftManager.Instance == null)
             {
-                gameObject.AddComponent<CardDraftManager>();
+                GameObject cdGo = new GameObject("CardDraftManager", typeof(CardDraftManager));
+                DontDestroyOnLoad(cdGo);
             }
             if (FindAnyObjectByType<MetaUpgradeManager>() == null)
             {
