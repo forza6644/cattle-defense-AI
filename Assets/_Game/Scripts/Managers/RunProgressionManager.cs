@@ -155,6 +155,14 @@ namespace Stonehold
                     yield return null;
                 }
 
+                if (GameManager.Instance != null && 
+                    GameManager.Instance.State != GameState.Playing && 
+                    GameManager.Instance.State != GameState.LevelUp)
+                {
+                    pendingLevelUpDrafts = 0;
+                    break;
+                }
+
                 pendingLevelUpDrafts--;
                 if (CardDraftManager.Instance != null)
                 {
