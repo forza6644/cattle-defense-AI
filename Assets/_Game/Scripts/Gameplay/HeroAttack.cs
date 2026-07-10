@@ -11,6 +11,7 @@ namespace Stonehold
         private Enemy currentTarget;
         private float targetRefreshTimer;
         private float fireCooldown;
+        private float abilityCooldown;
         private ProceduralAnimator animator;
 
         public HeroDefinition Definition => definition;
@@ -23,6 +24,7 @@ namespace Stonehold
         public void Configure(HeroDefinition heroDefinition)
         {
             definition = heroDefinition;
+            abilityCooldown = definition != null ? definition.abilityCooldown * 0.5f : 0f;
             enabled = definition != null && definition.weapon != null;
         }
 
@@ -77,6 +79,7 @@ namespace Stonehold
 
             targetRefreshTimer -= Time.deltaTime;
             fireCooldown -= Time.deltaTime;
+            abilityCooldown -= Time.deltaTime;
 
             if (targetRefreshTimer <= 0f)
             {
@@ -87,6 +90,12 @@ namespace Stonehold
             if (currentTarget == null || !currentTarget.gameObject.activeInHierarchy)
             {
                 return;
+            }
+
+            if (definition.abilityType != HeroAbilityType.None && abilityCooldown <= 0f)
+            {
+                UseSignatureAbility(currentTarget);
+                abilityCooldown = Mathf.Max(1f, definition.abilityCooldown);
             }
 
             Vector3 direction = currentTarget.transform.position - transform.position;
@@ -101,6 +110,84 @@ namespace Stonehold
                 Fire(currentTarget);
                 float rate = GetModifiedFireRate();
                 fireCooldown = rate > 0f ? 1f / rate : 1f;
+            }
+        }
+
+        private void UseSignatureAbility(Enemy primaryTarget)
+        {
+            if (animator != null)
+            {
+                animator.PlayAttack();
+            }
+
+            float abilityDamage = GetModifiedDamage() * Mathf.Max(1f, definition.abilityPowerMultiplier);
+            switch (definition.abilityType)
+            {
+                case HeroAbilityType.PowerShot:
+                    ApplyAbilityHit(primaryTarget, abilityDamage, StatusEffectType.None, 0f, 0f);
+                    break;
+                case HeroAbilityType.FrostNova:
+                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Slow, 0.25f, 3.5f);
+                    break;
+                case HeroAbilityType.FlameWave:
+                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Burn, abilityDamage * 0.2f, 4f);
+                    break;
+                case HeroAbilityType.ArtilleryBarrage:
+                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.None, 0f, 0f);
+                    break;
+                case HeroAbilityType.MultiShot:
+                case HeroAbilityType.ChainStorm:
+                    HitMultipleEnemies(
+                        abilityDamage,
+                        definition.abilityType == HeroAbilityType.ChainStorm ? StatusEffectType.Shock : StatusEffectType.None);
+                    break;
+            }
+        }
+
+        private void HitEnemiesInRadius(Vector3 center, float damage, StatusEffectType effectType, float effectValue, float effectDuration)
+        {
+            float radiusSqr = definition.abilityRadius * definition.abilityRadius;
+            var enemies = EnemyManager.All;
+            for (int i = enemies.Count - 1; i >= 0; i--)
+            {
+                Enemy enemy = enemies[i];
+                if (enemy != null && !enemy.IsDead && (enemy.transform.position - center).sqrMagnitude <= radiusSqr)
+                {
+                    ApplyAbilityHit(enemy, damage, effectType, effectValue, effectDuration);
+                }
+            }
+        }
+
+        private void HitMultipleEnemies(float damage, StatusEffectType effectType)
+        {
+            int hitsRemaining = Mathf.Max(1, definition.abilityTargetCount);
+            float rangeSqr = GetModifiedRange() * GetModifiedRange();
+            var enemies = EnemyManager.All;
+            for (int i = 0; i < enemies.Count && hitsRemaining > 0; i++)
+            {
+                Enemy enemy = enemies[i];
+                if (enemy == null || enemy.IsDead || (enemy.transform.position - transform.position).sqrMagnitude > rangeSqr)
+                {
+                    continue;
+                }
+
+                ApplyAbilityHit(enemy, damage, effectType, effectType == StatusEffectType.Shock ? 1f : 0f, effectType == StatusEffectType.Shock ? 3f : 0f);
+                hitsRemaining--;
+            }
+        }
+
+        private void ApplyAbilityHit(Enemy enemy, float damage, StatusEffectType effectType, float effectValue, float effectDuration)
+        {
+            if (enemy == null || enemy.IsDead)
+            {
+                return;
+            }
+
+            float appliedDamage = enemy.TakeDamage(damage);
+            DamageTracker.RecordDamage(definition.id, appliedDamage);
+            if (effectType != StatusEffectType.None && effectDuration > 0f && !enemy.IsDead)
+            {
+                enemy.ApplyStatusEffect(new StatusEffect(effectType, effectValue, effectDuration, definition.id));
             }
         }
 

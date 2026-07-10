@@ -18,6 +18,10 @@ namespace Stonehold
         [SerializeField] private GameConfig config;
         [SerializeField] private GameObject spawnPoint;
         [SerializeField] private GameObject castle;
+        [Header("Mobile Swarm Layout")]
+        [SerializeField, Min(0f)] private float laneHalfWidth = 3.2f;
+        [SerializeField, Min(1f)] private float enemyCountMultiplier = 1.8f;
+        [SerializeField, Range(0.2f, 1f)] private float spawnIntervalMultiplier = 0.65f;
 
         /// <summary>Raised at the start of each wave: (wave number, wave data).</summary>
         public event Action<int, WaveData> WaveStarted;
@@ -46,6 +50,7 @@ namespace Stonehold
         private Castle castleComponent;
         private WaypointPath waypointPath;
         private bool startNextWaveRequested;
+        private int spawnSequence;
 
         private bool IsGameOver => castleComponent != null && castleComponent.IsGameOver;
 
@@ -118,7 +123,8 @@ namespace Stonehold
 
                 foreach (WaveData.SpawnEntry entry in wave.spawns)
                 {
-                    for (int i = 0; i < entry.count; i++)
+                    int adjustedCount = Mathf.Max(1, Mathf.CeilToInt(entry.count * enemyCountMultiplier));
+                    for (int i = 0; i < adjustedCount; i++)
                     {
                         if (IsGameOver)
                         {
@@ -126,7 +132,9 @@ namespace Stonehold
                         }
 
                         SpawnEnemy(entry.enemy);
-                        yield return new WaitForSeconds(entry.spawnInterval);
+                        float baseInterval = Mathf.Max(0.05f, entry.spawnInterval * spawnIntervalMultiplier);
+                        float randomizedInterval = baseInterval * UnityEngine.Random.Range(0.7f, 1.3f);
+                        yield return new WaitForSeconds(randomizedInterval);
                     }
                 }
 
@@ -237,14 +245,22 @@ namespace Stonehold
             {
                 if (waypointPath != null && waypointPath.Points != null && waypointPath.Points.Length > 0)
                 {
-                    enemy.SetPath(waypointPath.Points, castleComponent);
+                    enemy.SetPath(waypointPath.Points, castleComponent, NextLaneOffset());
                 }
                 else
                 {
                     Vector3[] fallbackPoints = new Vector3[] { spawnPoint.transform.position, castle.transform.position };
-                    enemy.SetPath(fallbackPoints, castleComponent);
+                    enemy.SetPath(fallbackPoints, castleComponent, NextLaneOffset());
                 }
             }
+        }
+
+        private float NextLaneOffset()
+        {
+            // Golden-ratio spacing avoids repeated clumps while retaining organic variation.
+            float normalized = Mathf.Repeat(spawnSequence++ * 0.61803398875f, 1f);
+            float offset = Mathf.Lerp(-laneHalfWidth, laneHalfWidth, normalized);
+            return Mathf.Clamp(offset + UnityEngine.Random.Range(-0.35f, 0.35f), -laneHalfWidth, laneHalfWidth);
         }
     }
 }

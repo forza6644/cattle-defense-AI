@@ -19,6 +19,7 @@ namespace Stonehold
 
         [SerializeField] private EnemyData data;
         [SerializeField] private float arriveDistance = 0.1f;
+        [SerializeField, Min(0.2f)] private float castleAttackInterval = 1.25f;
 
         private Vector3[] pathPoints;
         private int currentWaypointIndex;
@@ -28,12 +29,15 @@ namespace Stonehold
         private float slowMultiplier = 1f;
         private float slowTimer;
         private bool isDead;
+        private bool isAttackingCastle;
+        private float castleAttackTimer;
 
         public EnemyData Data => data;
         public float CurrentHealth => currentHealth;
         public float MaxHealth => data != null ? data.health : 0f;
         public bool IsSlowed => slowTimer > 0f;
         public bool IsDead => isDead;
+        public bool IsAttackingCastle => isAttackingCastle;
 
         public float SlowMultiplier
         {
@@ -50,6 +54,11 @@ namespace Stonehold
         {
             get
             {
+                if (isAttackingCastle)
+                {
+                    return 0f;
+                }
+
                 if (pathPoints == null || pathPoints.Length == 0 || currentWaypointIndex >= pathPoints.Length)
                 {
                     return float.PositiveInfinity;
@@ -95,20 +104,17 @@ namespace Stonehold
         }
 
         /// <summary>Called by the spawner right after this enemy is created to set its path.</summary>
-        public void SetPath(Vector3[] points, Castle castle)
+        public void SetPath(Vector3[] points, Castle castle, float laneOffset = 0f)
         {
             if (points != null)
             {
                 pathPoints = new Vector3[points.Length];
                 for (int i = 0; i < points.Length; i++)
                 {
-                    pathPoints[i] = points[i];
-                    // Add slight spread/random offset to middle waypoints to prevent overlapping
-                    if (i > 0 && i < points.Length - 1)
-                    {
-                        float randomOffset = UnityEngine.Random.Range(-0.8f, 0.8f);
-                        pathPoints[i] += new Vector3(randomOffset, 0f, 0f);
-                    }
+                    float localJitter = i > 0 && i < points.Length - 1
+                        ? UnityEngine.Random.Range(-0.25f, 0.25f)
+                        : 0f;
+                    pathPoints[i] = points[i] + Vector3.right * (laneOffset + localJitter);
                 }
             }
             else
@@ -118,6 +124,8 @@ namespace Stonehold
 
             currentWaypointIndex = 0;
             targetCastle = castle;
+            isAttackingCastle = false;
+            castleAttackTimer = 0f;
             if (pathPoints != null && pathPoints.Length > 0)
             {
                 transform.position = pathPoints[0];
@@ -216,6 +224,12 @@ namespace Stonehold
                 return;
             }
 
+            if (isAttackingCastle)
+            {
+                AttackCastle();
+                return;
+            }
+
             if (GetComponent<StatusEffectController>() == null)
             {
                 if (slowTimer > 0f)
@@ -265,15 +279,43 @@ namespace Stonehold
         private void ReachCastle()
         {
             if (isDead) return;
-            isDead = true;
-            EnemyManager.Unregister(this);
-
-            if (targetCastle != null)
+            isAttackingCastle = true;
+            castleAttackTimer = UnityEngine.Random.Range(0.05f, 0.3f);
+            if (animator != null)
             {
-                targetCastle.TakeDamage(data.castleDamage);
+                animator.SetMoving(false);
+            }
+        }
+
+        private void AttackCastle()
+        {
+            if (targetCastle == null || targetCastle.IsGameOver)
+            {
+                return;
             }
 
-            Destroy(gameObject); // Reached the castle: no gold reward.
+            Vector3 direction = targetCastle.transform.position - transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.Slerp(
+                    transform.rotation,
+                    Quaternion.LookRotation(direction),
+                    12f * Time.deltaTime);
+            }
+
+            castleAttackTimer -= Time.deltaTime;
+            if (castleAttackTimer > 0f)
+            {
+                return;
+            }
+
+            targetCastle.TakeDamage(data.castleDamage);
+            castleAttackTimer = Mathf.Max(0.2f, castleAttackInterval);
+            if (animator != null)
+            {
+                animator.PlayAttack();
+            }
         }
     }
 }
