@@ -279,7 +279,7 @@ namespace Stonehold
             float pct = castle.MaxHealth > 0 ? (float)castle.CurrentHealth / castle.MaxHealth : 0f;
             castleHpFill.localScale = new Vector3(pct, 1f, 1f);
             castleHpFillImage.color = Color.Lerp(new Color(0.85f, 0.2f, 0.2f), new Color(0.25f, 0.8f, 0.3f), pct);
-            castleHpText.text = castle.CurrentHealth + " / " + castle.MaxHealth;
+            castleHpText.text = "CASTLE  " + castle.CurrentHealth + " / " + castle.MaxHealth;
         }
 
         private void OnWaveStarted(int number, WaveData wave)
@@ -1144,9 +1144,9 @@ namespace Stonehold
             goldText = CreateText(safeAreaRect, "GoldText", "Gold: 0", 40, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
             SetAnchored(goldText.rectTransform, new Vector2(0f, 1f), new Vector2(25f, -20f), new Vector2(400f, 60f));
 
-            // XP Bar (top-left, below GoldText)
+            // XP Bar (top-left, clear of the centered castle-health bar)
             xpBgImage = CreateImage(safeAreaRect, "XpBarBg", new Color(0f, 0f, 0f, 0.6f));
-            SetAnchored(xpBgImage.rectTransform, new Vector2(0f, 1f), new Vector2(175f, -95f), new Vector2(300f, 26f));
+            SetAnchored(xpBgImage.rectTransform, new Vector2(0f, 1f), new Vector2(175f, -145f), new Vector2(300f, 26f));
             xpFillImage = CreateImage(xpBgImage.rectTransform, "XpFill", new Color(0.6f, 0.25f, 0.85f));
             xpFill = xpFillImage.rectTransform;
             xpFill.anchorMin = Vector2.zero;
@@ -1164,9 +1164,9 @@ namespace Stonehold
             waveText = CreateText(safeAreaRect, "WaveText", "Wave -", 40, Color.white, TextAnchor.UpperCenter);
             SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(400f, 60f));
 
-            // Hint panel background (top-center, below wave counter)
+            // Hint panel background (top-center, below castle health)
             hintBg = CreateImage(safeAreaRect, "HintPanel", new Color(0.08f, 0.1f, 0.15f, 0.85f));
-            SetAnchored(hintBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(900f, 48f));
+            SetAnchored(hintBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -155f), new Vector2(760f, 48f));
             hintText = CreateText(hintBg.rectTransform, "Label", "", 22, new Color(0.95f, 0.95f, 1f), TextAnchor.MiddleCenter);
             hintText.rectTransform.anchorMin = Vector2.zero;
             hintText.rectTransform.anchorMax = Vector2.one;
@@ -1176,9 +1176,9 @@ namespace Stonehold
 
             BuildWaveControl();
 
-            // Castle HP bar (top-right)
+            // Castle HP is a primary objective, so keep it large and centered at the top.
             Image hpBg = CreateImage(safeAreaRect, "CastleHpBar", new Color(0f, 0f, 0f, 0.6f));
-            SetAnchored(hpBg.rectTransform, new Vector2(1f, 1f), new Vector2(-170f, -35f), new Vector2(280f, 30f));
+            SetAnchored(hpBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -95f), new Vector2(520f, 42f));
             castleHpFillImage = CreateImage(hpBg.rectTransform, "Fill", new Color(0.25f, 0.8f, 0.3f));
             castleHpFill = castleHpFillImage.rectTransform;
             castleHpFill.anchorMin = Vector2.zero;
@@ -1186,7 +1186,7 @@ namespace Stonehold
             castleHpFill.pivot = new Vector2(0f, 0.5f);
             castleHpFill.offsetMin = new Vector2(2f, 2f);
             castleHpFill.offsetMax = new Vector2(-2f, -2f);
-            castleHpText = CreateText(hpBg.rectTransform, "Label", "10 / 10", 20, Color.white, TextAnchor.MiddleCenter);
+            castleHpText = CreateText(hpBg.rectTransform, "Label", "CASTLE  10 / 10", 24, Color.white, TextAnchor.MiddleCenter);
             castleHpText.rectTransform.anchorMin = Vector2.zero;
             castleHpText.rectTransform.anchorMax = Vector2.one;
             castleHpText.rectTransform.offsetMin = Vector2.zero;

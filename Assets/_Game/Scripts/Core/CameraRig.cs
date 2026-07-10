@@ -27,7 +27,8 @@ namespace Stonehold
             if (cam != null && Screen.width < Screen.height)
             {
                 const float referenceAspect = 9f / 16f;
-                const float referenceVerticalFov = 33f;
+                // Keep the castle in the lower quarter and the spawn edge near the top.
+                const float referenceVerticalFov = 30f;
 
                 transform.localPosition = new Vector3(0f, 35f, -12.5f);
                 transform.localRotation = Quaternion.Euler(70f, 0f, 0f);

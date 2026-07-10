@@ -74,7 +74,7 @@ namespace Stonehold
         /// <summary>
         /// Suspends wave progression, shows the draft UI, and blocks until a card is selected.
         /// </summary>
-        public IEnumerator StartDraftCoroutine()
+        public IEnumerator StartDraftCoroutine(string title = "CARD DRAFT", string subtitle = "Choose a card to upgrade your run")
         {
             if (isDraftActive)
             {
@@ -121,7 +121,7 @@ namespace Stonehold
             // Update LevelUp Panel title & subtitle in UIManager
             if (UIManager.Instance != null)
             {
-                UIManager.Instance.SetLevelUpPanelTitle("CARD DRAFT", "Choose a card to upgrade your run");
+                UIManager.Instance.SetLevelUpPanelTitle(title, subtitle);
                 UIManager.Instance.OnShowLevelUpDraft(choiceStructs);
             }
 

@@ -179,10 +179,12 @@ namespace Stonehold
                 Debug.Log("Wave " + CurrentWave + " cleared");
                 WaveCleared?.Invoke(CurrentWave, wave);
 
-                // Insert card draft before next wave countdown
+                // Every cleared wave grants a card choice before the next wave begins.
                 if (w < activeWaves.Length - 1 && CardDraftManager.Instance != null)
                 {
-                    yield return CardDraftManager.Instance.StartDraftCoroutine();
+                    yield return CardDraftManager.Instance.StartDraftCoroutine(
+                        "WAVE " + CurrentWave + " CLEARED",
+                        "Choose one card before the next wave");
                 }
             }
 
