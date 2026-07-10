@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Stonehold
@@ -38,6 +39,9 @@ namespace Stonehold
         [SerializeField] private float runFireRateMultiplier = 1.0f;
         [SerializeField] private float runRangeMultiplier = 1.0f;
         [SerializeField] private float runXpMultiplier = 1.0f;
+
+        private int pendingLevelUpDrafts;
+        private Coroutine levelUpDraftRoutine;
 
         public int CurrentXp => currentXp;
         public int CurrentLevel => currentLevel;
@@ -120,27 +124,54 @@ namespace Stonehold
             int finalAmount = Mathf.RoundToInt(amount * runXpMultiplier);
             currentXp += finalAmount;
             int needed = GetXpNeededForNextLevel();
+            int levelsGained = 0;
 
             while (currentXp >= needed)
             {
                 currentXp -= needed;
                 currentLevel++;
+                levelsGained++;
                 needed = GetXpNeededForNextLevel();
             }
 
             XpChanged?.Invoke(currentXp, needed, currentLevel);
 
-            // MVP progression rule (Task 9): drafts happen BETWEEN WAVES ONLY, owned by
-            // WaveManager -> CardDraftManager. XP still accrues and updates the HUD level
-            // for display/reward data, but a level-up no longer opens a second draft.
-            // TriggerLevelUpDraft() and its tower-era choice helpers below are intentionally
-            // left intact but unreferenced (orphan-safe) rather than deleted.
+            if (levelsGained > 0)
+            {
+                pendingLevelUpDrafts += levelsGained;
+                if (levelUpDraftRoutine == null)
+                {
+                    levelUpDraftRoutine = StartCoroutine(ProcessLevelUpDrafts());
+                }
+            }
         }
 
-        // DISABLED FOR MVP (Task 9): no longer called. XP level-ups must not open a draft;
-        // the between-wave draft (WaveManager -> CardDraftManager) is the only draft owner.
-        // Kept intact but unreferenced so the legacy path can be revived deliberately later
-        // rather than being destructively removed. Do not re-wire this to AddXp.
+        private IEnumerator ProcessLevelUpDrafts()
+        {
+            while (pendingLevelUpDrafts > 0)
+            {
+                while (CardDraftManager.Instance != null && CardDraftManager.Instance.IsDraftActive)
+                {
+                    yield return null;
+                }
+
+                pendingLevelUpDrafts--;
+                if (CardDraftManager.Instance != null)
+                {
+                    yield return CardDraftManager.Instance.StartDraftCoroutine(
+                        "LEVEL UP!",
+                        "Choose one card for your new level");
+                }
+                else
+                {
+                    TriggerLevelUpDraft();
+                    yield return null;
+                }
+            }
+
+            levelUpDraftRoutine = null;
+        }
+
         private void TriggerLevelUpDraft()
         {
             if (CardDraftManager.Instance != null && !CardDraftManager.Instance.IsDraftActive)
