@@ -88,6 +88,7 @@ namespace Stonehold
         // Floating text + enemy bars
         private RectTransform barsRoot;
         private RectTransform floatingRoot;
+        private RectTransform safeAreaRect;
         private readonly Queue<Text> floatingPool = new Queue<Text>();
         private readonly List<RectTransform> barBackgrounds = new List<RectTransform>();
         private readonly List<RectTransform> barFills = new List<RectTransform>();
@@ -1118,21 +1119,33 @@ namespace Stonehold
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasRect = canvas.GetComponent<RectTransform>();
 
+            bool isPortrait = Screen.width < Screen.height;
+
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            if (isPortrait)
+            {
+                scaler.referenceResolution = new Vector2(1080f, 1920f);
+            }
+            else
+            {
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+            }
             scaler.matchWidthOrHeight = 0.5f;
 
             // Draw order: enemy bars underneath, floating text, HUD, panels on top.
             barsRoot = CreateRoot(canvasRect, "EnemyBars");
             floatingRoot = CreateRoot(canvasRect, "FloatingText");
 
+            // Safe Area Container
+            safeAreaRect = CreateSafeArea(canvasRect);
+
             // Gold (top-left)
-            goldText = CreateText(canvasRect, "GoldText", "Gold: 0", 40, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
+            goldText = CreateText(safeAreaRect, "GoldText", "Gold: 0", 40, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
             SetAnchored(goldText.rectTransform, new Vector2(0f, 1f), new Vector2(25f, -20f), new Vector2(400f, 60f));
 
             // XP Bar (top-left, below GoldText)
-            xpBgImage = CreateImage(canvasRect, "XpBarBg", new Color(0f, 0f, 0f, 0.6f));
+            xpBgImage = CreateImage(safeAreaRect, "XpBarBg", new Color(0f, 0f, 0f, 0.6f));
             SetAnchored(xpBgImage.rectTransform, new Vector2(0f, 1f), new Vector2(175f, -95f), new Vector2(300f, 26f));
             xpFillImage = CreateImage(xpBgImage.rectTransform, "XpFill", new Color(0.6f, 0.25f, 0.85f));
             xpFill = xpFillImage.rectTransform;
@@ -1148,11 +1161,11 @@ namespace Stonehold
             xpText.rectTransform.offsetMax = Vector2.zero;
 
             // Wave counter (top-center)
-            waveText = CreateText(canvasRect, "WaveText", "Wave -", 40, Color.white, TextAnchor.UpperCenter);
+            waveText = CreateText(safeAreaRect, "WaveText", "Wave -", 40, Color.white, TextAnchor.UpperCenter);
             SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(400f, 60f));
 
             // Hint panel background (top-center, below wave counter)
-            hintBg = CreateImage(canvasRect, "HintPanel", new Color(0.08f, 0.1f, 0.15f, 0.85f));
+            hintBg = CreateImage(safeAreaRect, "HintPanel", new Color(0.08f, 0.1f, 0.15f, 0.85f));
             SetAnchored(hintBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(900f, 48f));
             hintText = CreateText(hintBg.rectTransform, "Label", "", 22, new Color(0.95f, 0.95f, 1f), TextAnchor.MiddleCenter);
             hintText.rectTransform.anchorMin = Vector2.zero;
@@ -1164,7 +1177,7 @@ namespace Stonehold
             BuildWaveControl();
 
             // Castle HP bar (top-right)
-            Image hpBg = CreateImage(canvasRect, "CastleHpBar", new Color(0f, 0f, 0f, 0.6f));
+            Image hpBg = CreateImage(safeAreaRect, "CastleHpBar", new Color(0f, 0f, 0f, 0.6f));
             SetAnchored(hpBg.rectTransform, new Vector2(1f, 1f), new Vector2(-170f, -35f), new Vector2(280f, 30f));
             castleHpFillImage = CreateImage(hpBg.rectTransform, "Fill", new Color(0.25f, 0.8f, 0.3f));
             castleHpFill = castleHpFillImage.rectTransform;
@@ -1180,11 +1193,11 @@ namespace Stonehold
             castleHpText.rectTransform.offsetMax = Vector2.zero;
 
             // Pause & Speed buttons (side-by-side, under the HP bar)
-            CreateButton(canvasRect, "PauseButton", "Pause", new Vector2(95f, 36f), new Vector2(1f, 1f),
+            CreateButton(safeAreaRect, "PauseButton", "Pause", new Vector2(95f, 36f), new Vector2(1f, 1f),
                 new Vector2(-150f, -80f), () => { if (game != null) game.TogglePause(); });
 
             // Speed button: cycles 1x -> 1.5x -> 2x -> 1x.
-            Button speedButton = CreateButton(canvasRect, "SpeedButton",
+            Button speedButton = CreateButton(safeAreaRect, "SpeedButton",
                 game != null ? FormatSpeed(game.GameSpeed) : "1x",
                 new Vector2(95f, 36f), new Vector2(1f, 1f), new Vector2(-50f, -80f),
                 () =>
@@ -1197,7 +1210,7 @@ namespace Stonehold
             speedButtonLabel = speedButton.GetComponentInChildren<Text>();
 
             // Wave banner (center)
-            bannerText = CreateText(canvasRect, "WaveBanner", "", 72, Color.white, TextAnchor.MiddleCenter);
+            bannerText = CreateText(safeAreaRect, "WaveBanner", "", 72, Color.white, TextAnchor.MiddleCenter);
             bannerText.fontStyle = FontStyle.Bold;
             SetAnchored(bannerText.rectTransform, new Vector2(0.5f, 0.68f), Vector2.zero, new Vector2(1200f, 110f));
             bannerGroup = bannerText.gameObject.AddComponent<CanvasGroup>();
@@ -1235,22 +1248,33 @@ namespace Stonehold
 
             Text titleText = CreateText(rect, "Title", "LEVEL UP!", 64, new Color(1f, 0.85f, 0.2f), TextAnchor.MiddleCenter);
             titleText.fontStyle = FontStyle.Bold;
-            SetAnchored(titleText.rectTransform, new Vector2(0.5f, 0.85f), Vector2.zero, new Vector2(1200f, 80f));
 
             Text subtitleText = CreateText(rect, "Subtitle", "Choose a blessing for your defenders", 26, new Color(0.85f, 0.85f, 0.9f), TextAnchor.MiddleCenter);
-            SetAnchored(subtitleText.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(1200f, 40f));
 
-            float startX = -450f;
-            float spacing = 450f;
-            float cardY = -40f;
-            Vector2 cardSize = new Vector2(380f, 540f);
+            bool isPortrait = Screen.width < Screen.height;
+            if (isPortrait)
+            {
+                SetAnchored(titleText.rectTransform, new Vector2(0.5f, 0.90f), Vector2.zero, new Vector2(1000f, 80f));
+                SetAnchored(subtitleText.rectTransform, new Vector2(0.5f, 0.85f), Vector2.zero, new Vector2(1000f, 40f));
+            }
+            else
+            {
+                SetAnchored(titleText.rectTransform, new Vector2(0.5f, 0.85f), Vector2.zero, new Vector2(1200f, 80f));
+                SetAnchored(subtitleText.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(1200f, 40f));
+            }
+
+            float startX = isPortrait ? 0f : -450f;
+            float spacingX = isPortrait ? 0f : 450f;
+            float startY = isPortrait ? 260f : -40f;
+            float spacingY = isPortrait ? -320f : 0f;
+            Vector2 cardSize = isPortrait ? new Vector2(800f, 260f) : new Vector2(380f, 540f);
 
             for (int i = 0; i < 3; i++)
             {
                 int index = i;
                 Image cardBg = CreateImage(rect, "Card_" + i, new Color(0.12f, 0.16f, 0.24f, 0.95f));
                 RectTransform cardRt = cardBg.rectTransform;
-                SetAnchored(cardRt, new Vector2(0.5f, 0.5f), new Vector2(startX + i * spacing, cardY), cardSize);
+                SetAnchored(cardRt, new Vector2(0.5f, 0.5f), new Vector2(startX + i * spacingX, startY + i * spacingY), cardSize);
 
                 Image border = CreateImage(cardRt, "Border", new Color(0.24f, 0.32f, 0.48f, 0.8f));
                 border.rectTransform.anchorMin = Vector2.zero;
@@ -1270,7 +1294,32 @@ namespace Stonehold
 
                 // Card Type Badge
                 cardTypeBadges[i] = CreateImage(contentRoot, "TypeBadge", new Color(0.1f, 0.1f, 0.1f, 0.9f));
-                SetAnchored(cardTypeBadges[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(180f, 32f));
+
+                // Title
+                cardTitleTexts[i] = CreateText(contentRoot, "Title", "Card Title", 26, new Color(1f, 0.85f, 0.2f), isPortrait ? TextAnchor.MiddleLeft : TextAnchor.UpperCenter);
+                cardTitleTexts[i].fontStyle = FontStyle.Bold;
+
+                // Description
+                cardDescriptionTexts[i] = CreateText(contentRoot, "Description", "Card description...", 19, new Color(0.85f, 0.85f, 0.9f), isPortrait ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter);
+                cardDescriptionTexts[i].horizontalOverflow = HorizontalWrapMode.Wrap;
+
+                // Select Button
+                if (isPortrait)
+                {
+                    SetAnchored(cardTypeBadges[i].rectTransform, new Vector2(0f, 1f), new Vector2(40f, -30f), new Vector2(140f, 32f));
+                    SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(40f, -20f), new Vector2(240f, 100f));
+                    SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(300f, 0f), new Vector2(280f, 200f));
+                    cardButtons[i] = CreateButton(contentRoot, "SelectButton", "SELECT", new Vector2(160f, 64f), new Vector2(1f, 0.5f),
+                        new Vector2(-40f, 0f), () => { });
+                }
+                else
+                {
+                    SetAnchored(cardTypeBadges[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(180f, 32f));
+                    SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -70f), new Vector2(320f, 60f));
+                    SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -20f), new Vector2(300f, 180f));
+                    cardButtons[i] = CreateButton(contentRoot, "SelectButton", "SELECT", new Vector2(240f, 60f), new Vector2(0.5f, 0f),
+                        new Vector2(0f, 40f), () => { });
+                }
 
                 cardTypeLabels[i] = CreateText(cardTypeBadges[i].rectTransform, "Label", "TYPE", 14, Color.white, TextAnchor.MiddleCenter);
                 cardTypeLabels[i].fontStyle = FontStyle.Bold;
@@ -1278,20 +1327,6 @@ namespace Stonehold
                 cardTypeLabels[i].rectTransform.anchorMax = Vector2.one;
                 cardTypeLabels[i].rectTransform.offsetMin = Vector2.zero;
                 cardTypeLabels[i].rectTransform.offsetMax = Vector2.zero;
-
-                // Title
-                cardTitleTexts[i] = CreateText(contentRoot, "Title", "Card Title", 26, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperCenter);
-                cardTitleTexts[i].fontStyle = FontStyle.Bold;
-                SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -70f), new Vector2(320f, 60f));
-
-                // Description
-                cardDescriptionTexts[i] = CreateText(contentRoot, "Description", "Card description...", 19, new Color(0.85f, 0.85f, 0.9f), TextAnchor.MiddleCenter);
-                cardDescriptionTexts[i].horizontalOverflow = HorizontalWrapMode.Wrap;
-                SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -20f), new Vector2(300f, 180f));
-
-                // Select Button
-                cardButtons[i] = CreateButton(contentRoot, "SelectButton", "SELECT", new Vector2(240f, 60f), new Vector2(0.5f, 0f),
-                    new Vector2(0f, 40f), () => { });
             }
 
             levelUpPanelGroup = dim.gameObject.AddComponent<CanvasGroup>();
@@ -1373,7 +1408,7 @@ namespace Stonehold
 
         private void BuildWaveControl()
         {
-            Image bg = CreateImage(canvasRect, "WaveControl", new Color(0.08f, 0.08f, 0.12f, 0.9f));
+            Image bg = CreateImage(safeAreaRect != null ? safeAreaRect : canvasRect, "WaveControl", new Color(0.08f, 0.08f, 0.12f, 0.9f));
             RectTransform panel = bg.rectTransform;
             SetAnchored(panel, new Vector2(0.5f, 1f), new Vector2(0f, -108f), new Vector2(560f, 96f));
 
@@ -1396,7 +1431,7 @@ namespace Stonehold
 
         private CanvasGroup CreateBottomPanel(string name, out RectTransform panel)
         {
-            Image bg = CreateImage(canvasRect, name, new Color(0.08f, 0.08f, 0.12f, 0.92f));
+            Image bg = CreateImage(safeAreaRect != null ? safeAreaRect : canvasRect, name, new Color(0.08f, 0.08f, 0.12f, 0.92f));
             panel = bg.rectTransform;
             SetAnchored(panel, new Vector2(0.5f, 0f), new Vector2(0f, 105f), new Vector2(720f, 190f));
 
@@ -1460,35 +1495,83 @@ namespace Stonehold
             resultSubtitleText = CreateText(rect, "Subtitle", "Wave Reached: - | Run: #1", 24, new Color(0.8f, 0.8f, 0.85f), TextAnchor.MiddleCenter);
             SetAnchored(resultSubtitleText.rectTransform, new Vector2(0.5f, 0.80f), Vector2.zero, new Vector2(1000f, 40f));
 
+            bool isPortrait = Screen.width < Screen.height;
+
             // Content Panel (center)
             Image contentBg = CreateImage(rect, "ContentBg", new Color(0.08f, 0.10f, 0.15f, 0.9f));
-            SetAnchored(contentBg.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(800f, 380f));
+            if (isPortrait)
+            {
+                SetAnchored(contentBg.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 60f), new Vector2(900f, 760f));
+            }
+            else
+            {
+                SetAnchored(contentBg.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(800f, 380f));
+            }
 
-            // Rewards Box (Left)
-            Text rewardsTitle = CreateText(contentBg.rectTransform, "RewardsTitle", "REWARDS EARNED", 22, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
+            // Rewards Box
+            Text rewardsTitle = CreateText(contentBg.rectTransform, "RewardsTitle", "REWARDS EARNED", 22, new Color(1f, 0.85f, 0.2f), isPortrait ? TextAnchor.MiddleCenter : TextAnchor.UpperLeft);
             rewardsTitle.fontStyle = FontStyle.Bold;
-            SetAnchored(rewardsTitle.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -40f), new Vector2(320f, 40f));
 
             resultRewardsText = CreateText(contentBg.rectTransform, "RewardsText", "• Gold: 0\n• XP: 0", 17, Color.white, TextAnchor.UpperLeft);
-            SetAnchored(resultRewardsText.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -90f), new Vector2(320f, 260f));
+
+            if (isPortrait)
+            {
+                SetAnchored(rewardsTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(820f, 40f));
+                SetAnchored(resultRewardsText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -80f), new Vector2(700f, 180f));
+            }
+            else
+            {
+                SetAnchored(rewardsTitle.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -40f), new Vector2(320f, 40f));
+                SetAnchored(resultRewardsText.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -90f), new Vector2(320f, 260f));
+            }
 
             // Divider line
             Image divider = CreateImage(contentBg.rectTransform, "Divider", new Color(0.24f, 0.32f, 0.48f, 0.5f));
-            SetAnchored(divider.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 320f));
+            if (isPortrait)
+            {
+                SetAnchored(divider.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -280f), new Vector2(820f, 2f));
+            }
+            else
+            {
+                SetAnchored(divider.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 320f));
+            }
 
-            // Damage Report Box (Right)
-            Text damageTitle = CreateText(contentBg.rectTransform, "DamageTitle", "DAMAGE REPORT", 22, new Color(0.4f, 0.8f, 1f), TextAnchor.UpperLeft);
+            // Damage Report Box
+            Text damageTitle = CreateText(contentBg.rectTransform, "DamageTitle", "DAMAGE REPORT", 22, new Color(0.4f, 0.8f, 1f), isPortrait ? TextAnchor.MiddleCenter : TextAnchor.UpperLeft);
             damageTitle.fontStyle = FontStyle.Bold;
-            SetAnchored(damageTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(50f, -40f), new Vector2(320f, 40f));
 
             resultDamageReportText = CreateText(contentBg.rectTransform, "DamageText", "Archer: 0 dmg (0%)\nBombardier: 0 dmg (0%)", 20, Color.white, TextAnchor.UpperLeft);
-            SetAnchored(resultDamageReportText.rectTransform, new Vector2(0.5f, 1f), new Vector2(50f, -90f), new Vector2(320f, 260f));
+
+            if (isPortrait)
+            {
+                SetAnchored(damageTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -310f), new Vector2(820f, 40f));
+                SetAnchored(resultDamageReportText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -360f), new Vector2(700f, 360f));
+            }
+            else
+            {
+                SetAnchored(damageTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(50f, -40f), new Vector2(320f, 40f));
+                SetAnchored(resultDamageReportText.rectTransform, new Vector2(0.5f, 1f), new Vector2(50f, -90f), new Vector2(320f, 260f));
+            }
 
             // OK Button
-            resultOkButton = CreateButton(rect, "OkButton", "OK", new Vector2(240f, 60f), new Vector2(0.5f, 0.18f), new Vector2(-140f, 0f), () => { OnOkClicked(); });
+            if (isPortrait)
+            {
+                resultOkButton = CreateButton(rect, "OkButton", "OK", new Vector2(260f, 70f), new Vector2(0.5f, 0.12f), new Vector2(-150f, 0f), () => { OnOkClicked(); });
+            }
+            else
+            {
+                resultOkButton = CreateButton(rect, "OkButton", "OK", new Vector2(240f, 60f), new Vector2(0.5f, 0.18f), new Vector2(-140f, 0f), () => { OnOkClicked(); });
+            }
 
             // Double Rewards Button (disabled/placeholder)
-            resultDoubleButton = CreateButton(rect, "DoubleButton", "2X REWARDS (AD)", new Vector2(240f, 60f), new Vector2(0.5f, 0.18f), new Vector2(140f, 0f), () => { });
+            if (isPortrait)
+            {
+                resultDoubleButton = CreateButton(rect, "DoubleButton", "2X REWARDS (AD)", new Vector2(260f, 70f), new Vector2(0.5f, 0.12f), new Vector2(150f, 0f), () => { });
+            }
+            else
+            {
+                resultDoubleButton = CreateButton(rect, "DoubleButton", "2X REWARDS (AD)", new Vector2(240f, 60f), new Vector2(0.5f, 0.18f), new Vector2(140f, 0f), () => { });
+            }
             resultDoubleButton.interactable = false; // Disabled placeholder
             Text doubleLabel = resultDoubleButton.GetComponentInChildren<Text>();
             if (doubleLabel != null)
@@ -1801,6 +1884,28 @@ namespace Stonehold
             rect.pivot = anchor;
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
+        }
+
+        private static RectTransform CreateSafeArea(RectTransform parent)
+        {
+            GameObject go = new GameObject("SafeAreaContainer", typeof(RectTransform));
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.SetParent(parent, false);
+
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            Rect safeArea = Screen.safeArea;
+            float sw = Screen.width;
+            float sh = Screen.height;
+            if (sw > 0 && sh > 0)
+            {
+                rt.anchorMin = new Vector2(safeArea.x / sw, safeArea.y / sh);
+                rt.anchorMax = new Vector2((safeArea.x + safeArea.width) / sw, (safeArea.y + safeArea.height) / sh);
+            }
+            return rt;
         }
     }
 

@@ -69,6 +69,9 @@ namespace Stonehold
 
         private void Awake()
         {
+#if !UNITY_EDITOR
+            Screen.SetResolution(1080, 1920, false);
+#endif
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (FindAnyObjectByType<MetaUpgradeManager>() == null)
             {
@@ -144,18 +147,37 @@ namespace Stonehold
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasRect = canvas.GetComponent<RectTransform>();
 
+            bool isPortrait = Screen.width < Screen.height;
+
             CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            if (isPortrait)
+            {
+                scaler.referenceResolution = new Vector2(1080f, 1920f);
+            }
+            else
+            {
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+            }
             scaler.matchWidthOrHeight = 0.5f;
 
             // Background
             Image background = CreateImage(canvasRect, "Background", new Color(0.07f, 0.09f, 0.14f));
             Stretch(background.rectTransform);
 
+            // Safe Area
+            RectTransform safeAreaRect = CreateSafeArea(canvasRect);
+
             // 1. Top Header Bar
-            Image headerBar = CreateImage(canvasRect, "HeaderBar", new Color(0.05f, 0.06f, 0.08f, 0.95f));
-            Place(headerBar.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(1920f, 100f));
+            Image headerBar = CreateImage(safeAreaRect, "HeaderBar", new Color(0.05f, 0.06f, 0.08f, 0.95f));
+            if (isPortrait)
+            {
+                Place(headerBar.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(1080f, 100f));
+            }
+            else
+            {
+                Place(headerBar.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(1920f, 100f));
+            }
 
             // Player Profile (Top-Left)
             Image profileAvatar = CreateImage(headerBar.rectTransform, "ProfileAvatar", new Color(0.2f, 0.28f, 0.4f, 1.0f));
@@ -186,17 +208,38 @@ namespace Stonehold
             }
 
             // 2. Title
-            Text title = CreateText(canvasRect, "Title", "STONEHOLD", 110, new Color(1f, 0.85f, 0.35f));
+            Text title = CreateText(safeAreaRect, "Title", "STONEHOLD", 110, new Color(1f, 0.85f, 0.35f));
             title.fontStyle = FontStyle.Bold;
-            Place(title.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(1200f, 130f));
+            if (isPortrait)
+            {
+                Place(title.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(1000f, 130f));
+            }
+            else
+            {
+                Place(title.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(1200f, 130f));
+            }
             titleRect = title.rectTransform;
 
-            Text subtitle = CreateText(canvasRect, "Subtitle", "Defend the keep. Hold the line.", 24, new Color(0.8f, 0.8f, 0.85f));
-            Place(subtitle.rectTransform, new Vector2(0.5f, 0.70f), Vector2.zero, new Vector2(900f, 40f));
+            Text subtitle = CreateText(safeAreaRect, "Subtitle", "Defend the keep. Hold the line.", 24, new Color(0.8f, 0.8f, 0.85f));
+            if (isPortrait)
+            {
+                Place(subtitle.rectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(900f, 40f));
+            }
+            else
+            {
+                Place(subtitle.rectTransform, new Vector2(0.5f, 0.70f), Vector2.zero, new Vector2(900f, 40f));
+            }
 
             // 3. Stats & Progress Panel (Left Side Container)
-            Image statsBg = CreateImage(canvasRect, "StatsPanel", new Color(0.12f, 0.16f, 0.24f, 0.5f));
-            Place(statsBg.rectTransform, new Vector2(0f, 0.5f), new Vector2(260f, 50f), new Vector2(400f, 400f));
+            Image statsBg = CreateImage(safeAreaRect, "StatsPanel", new Color(0.12f, 0.16f, 0.24f, 0.5f));
+            if (isPortrait)
+            {
+                Place(statsBg.rectTransform, new Vector2(0.5f, 0.24f), new Vector2(-220f, 0f), new Vector2(400f, 440f));
+            }
+            else
+            {
+                Place(statsBg.rectTransform, new Vector2(0f, 0.5f), new Vector2(260f, 50f), new Vector2(400f, 400f));
+            }
 
             statsText = CreateText(statsBg.rectTransform, "StatsText", "", 22, new Color(0.85f, 0.85f, 0.9f));
             statsText.alignment = TextAnchor.UpperLeft;
@@ -207,8 +250,15 @@ namespace Stonehold
                 new Vector2(0.5f, 0.12f), Vector2.zero, ResetStats);
 
             // 4. Central Stage Select Panel
-            Image stageBg = CreateImage(canvasRect, "StagePanel", new Color(0.12f, 0.16f, 0.24f, 0.8f));
-            Place(stageBg.rectTransform, new Vector2(0.5f, 0.53f), Vector2.zero, new Vector2(800f, 220f));
+            Image stageBg = CreateImage(safeAreaRect, "StagePanel", new Color(0.12f, 0.16f, 0.24f, 0.8f));
+            if (isPortrait)
+            {
+                Place(stageBg.rectTransform, new Vector2(0.5f, 0.76f), Vector2.zero, new Vector2(800f, 220f));
+            }
+            else
+            {
+                Place(stageBg.rectTransform, new Vector2(0.5f, 0.53f), Vector2.zero, new Vector2(800f, 220f));
+            }
 
             stageNumText = CreateText(stageBg.rectTransform, "StageNumText", "STAGE 1", 20, new Color(1f, 0.85f, 0.35f));
             Place(stageNumText.rectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(700f, 30f));
@@ -230,8 +280,15 @@ namespace Stonehold
                 new Vector2(1f, 0.5f), new Vector2(-30f, 0f), () => CycleStage(1));
 
             // 5. Starting Defender Panel
-            Image defenderBg = CreateImage(canvasRect, "DefenderPanel", new Color(0.12f, 0.16f, 0.24f, 0.7f));
-            Place(defenderBg.rectTransform, new Vector2(0.5f, 0.40f), new Vector2(0f, -20f), new Vector2(800f, 210f));
+            Image defenderBg = CreateImage(safeAreaRect, "DefenderPanel", new Color(0.12f, 0.16f, 0.24f, 0.7f));
+            if (isPortrait)
+            {
+                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(800f, 210f));
+            }
+            else
+            {
+                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.40f), new Vector2(0f, -20f), new Vector2(800f, 210f));
+            }
 
             Text defenderTitleText = CreateText(defenderBg.rectTransform, "DefenderTitle", "STARTING DEFENDER", 16, new Color(1f, 0.85f, 0.35f));
             Place(defenderTitleText.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(700f, 24f));
@@ -273,7 +330,14 @@ namespace Stonehold
             RefreshMetaUpgradeUI();
 
             // 6. Large Premium Battle Button
-            startButton = CreateButton(canvasRect, "StartButton", "BATTLE", new Vector2(400f, 96f), new Vector2(0.5f, 0.23f), Vector2.zero, Play);
+            if (isPortrait)
+            {
+                startButton = CreateButton(safeAreaRect, "StartButton", "BATTLE", new Vector2(400f, 96f), new Vector2(0.5f, 0.48f), Vector2.zero, Play);
+            }
+            else
+            {
+                startButton = CreateButton(safeAreaRect, "StartButton", "BATTLE", new Vector2(400f, 96f), new Vector2(0.5f, 0.23f), Vector2.zero, Play);
+            }
             startButtonLabel = startButton.GetComponentInChildren<Text>();
             startButtonLabel.fontStyle = FontStyle.Bold;
             startButtonLabel.fontSize = 36;
@@ -287,8 +351,15 @@ namespace Stonehold
             startButton.colors = cb;
 
             // 7. Right Meta Upgrades Container
-            Image upgradesBg = CreateImage(canvasRect, "UpgradesPanel", new Color(0.12f, 0.16f, 0.24f, 0.8f));
-            Place(upgradesBg.rectTransform, new Vector2(1f, 0.5f), new Vector2(-260f, 30f), new Vector2(400f, 460f));
+            Image upgradesBg = CreateImage(safeAreaRect, "UpgradesPanel", new Color(0.12f, 0.16f, 0.24f, 0.8f));
+            if (isPortrait)
+            {
+                Place(upgradesBg.rectTransform, new Vector2(0.5f, 0.24f), new Vector2(220f, 0f), new Vector2(400f, 440f));
+            }
+            else
+            {
+                Place(upgradesBg.rectTransform, new Vector2(1f, 0.5f), new Vector2(-260f, 30f), new Vector2(400f, 460f));
+            }
 
             Text upgradesTitle = CreateText(upgradesBg.rectTransform, "Title", "META UPGRADES", 22, new Color(1f, 0.85f, 0.35f));
             Place(upgradesTitle.rectTransform, new Vector2(0.5f, 0.92f), Vector2.zero, new Vector2(340f, 32f));
@@ -306,33 +377,40 @@ namespace Stonehold
                     var upgrade = list[i];
 
                     // Name & level text
-                    metaUpgradeNameTexts[i] = CreateText(upgradesBg.rectTransform, $"UpgradeName_{i}", "", 18, Color.white);
-                    metaUpgradeNameTexts[i].alignment = TextAnchor.MiddleLeft;
-                    Place(metaUpgradeNameTexts[i].rectTransform, new Vector2(0.5f, rowStartY - i * rowSpacingY), new Vector2(-50f, 20f), new Vector2(260f, 24f));
+                    metaUpgradeNameTexts[index] = CreateText(upgradesBg.rectTransform, $"UpgradeName_{index}", "", 18, Color.white);
+                    metaUpgradeNameTexts[index].alignment = TextAnchor.MiddleLeft;
+                    Place(metaUpgradeNameTexts[index].rectTransform, new Vector2(0.5f, rowStartY - index * rowSpacingY), new Vector2(-50f, 20f), new Vector2(260f, 24f));
 
                     // Description text (subtext)
-                    Text descText = CreateText(upgradesBg.rectTransform, $"UpgradeDesc_{i}", upgrade.description, 13, new Color(0.7f, 0.7f, 0.75f));
+                    Text descText = CreateText(upgradesBg.rectTransform, $"UpgradeDesc_{index}", upgrade.description, 13, new Color(0.7f, 0.7f, 0.75f));
                     descText.alignment = TextAnchor.MiddleLeft;
-                    Place(descText.rectTransform, new Vector2(0.5f, rowStartY - i * rowSpacingY), new Vector2(-50f, -8f), new Vector2(260f, 20f));
+                    Place(descText.rectTransform, new Vector2(0.5f, rowStartY - index * rowSpacingY), new Vector2(-50f, -8f), new Vector2(260f, 20f));
 
                     // Buy button
-                    metaUpgradeButtons[i] = CreateButton(upgradesBg.rectTransform, $"BuyBtn_{i}", "", new Vector2(110f, 44f),
-                        new Vector2(0.5f, rowStartY - i * rowSpacingY), new Vector2(130f, 6f), () => OnMetaUpgradeClicked(upgrade.id));
-                    metaUpgradeButtonLabels[i] = metaUpgradeButtons[i].GetComponentInChildren<Text>();
-                    metaUpgradeButtonLabels[i].fontSize = 16;
-                    metaUpgradeButtonLabels[i].fontStyle = FontStyle.Bold;
+                    metaUpgradeButtons[index] = CreateButton(upgradesBg.rectTransform, $"BuyBtn_{index}", "", new Vector2(110f, 44f),
+                        new Vector2(0.5f, rowStartY - index * rowSpacingY), new Vector2(130f, 6f), () => OnMetaUpgradeClicked(upgrade.id));
+                    metaUpgradeButtonLabels[index] = metaUpgradeButtons[index].GetComponentInChildren<Text>();
+                    metaUpgradeButtonLabels[index].fontSize = 16;
+                    metaUpgradeButtonLabels[index].fontStyle = FontStyle.Bold;
                 }
             }
 
             RefreshMetaUpgradesPanel();
 
             // 8. Bottom Navigation Bar Placeholder
-            Image bottomBar = CreateImage(canvasRect, "BottomBar", new Color(0.05f, 0.06f, 0.08f, 1.0f));
-            Place(bottomBar.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(1920f, 100f));
+            Image bottomBar = CreateImage(safeAreaRect, "BottomBar", new Color(0.05f, 0.06f, 0.08f, 1.0f));
+            if (isPortrait)
+            {
+                Place(bottomBar.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(1080f, 100f));
+            }
+            else
+            {
+                Place(bottomBar.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(1920f, 100f));
+            }
 
             string[] tabLabels = { "SHOP", "CHARACTERS", "BATTLES", "LIBRARY", "MAP" };
-            float tabWidth = 240f;
-            float tabSpacing = 280f;
+            float tabWidth = isPortrait ? 150f : 240f;
+            float tabSpacing = isPortrait ? 180f : 280f;
             float tabStartX = -(tabLabels.Length - 1) * tabSpacing / 2f;
 
             for (int i = 0; i < tabLabels.Length; i++)
@@ -344,7 +422,7 @@ namespace Stonehold
                     });
 
                 Text tabBtnLabel = tabBtn.GetComponentInChildren<Text>();
-                tabBtnLabel.fontSize = 22;
+                tabBtnLabel.fontSize = isPortrait ? 15 : 22;
                 tabBtnLabel.fontStyle = FontStyle.Bold;
 
                 ColorBlock tcb = tabBtn.colors;
@@ -425,6 +503,28 @@ namespace Stonehold
                 () => { setter(Mathf.Clamp01(getter() - 0.1f)); refresh(); });
             CreateButton(parent, label + "Plus", "+", new Vector2(60f, 56f), new Vector2(0.5f, y), new Vector2(180f, 0f),
                 () => { setter(Mathf.Clamp01(getter() + 0.1f)); refresh(); });
+        }
+
+        private static RectTransform CreateSafeArea(RectTransform parent)
+        {
+            GameObject go = new GameObject("SafeAreaContainer", typeof(RectTransform));
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.SetParent(parent, false);
+
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            Rect safeArea = Screen.safeArea;
+            float sw = Screen.width;
+            float sh = Screen.height;
+            if (sw > 0 && sh > 0)
+            {
+                rt.anchorMin = new Vector2(safeArea.x / sw, safeArea.y / sh);
+                rt.anchorMax = new Vector2((safeArea.x + safeArea.width) / sw, (safeArea.y + safeArea.height) / sh);
+            }
+            return rt;
         }
 
         // ------------------------------------------------------------- Helpers

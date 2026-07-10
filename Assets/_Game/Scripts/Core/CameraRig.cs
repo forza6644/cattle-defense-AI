@@ -23,6 +23,13 @@ namespace Stonehold
         private void Awake()
         {
             Instance = this;
+            Camera cam = GetComponent<Camera>();
+            if (cam != null && Screen.width < Screen.height)
+            {
+                transform.localPosition = new Vector3(0f, 35f, -12.5f);
+                transform.localRotation = Quaternion.Euler(70f, 0f, 0f);
+                cam.fieldOfView = 33f;
+            }
             basePosition = transform.localPosition;
             baseRotation = transform.localRotation;
         }
