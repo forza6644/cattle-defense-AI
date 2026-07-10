@@ -62,6 +62,15 @@ namespace Stonehold
             }
         }
 
+        public void ResetForRun()
+        {
+            StopAllCoroutines();
+            isDraftActive = false;
+            isSelectionMade = false;
+            LoadCardPool();
+        }
+
+
         /// <summary>
         /// Suspends wave progression, shows the draft UI, and blocks until a card is selected.
         /// </summary>

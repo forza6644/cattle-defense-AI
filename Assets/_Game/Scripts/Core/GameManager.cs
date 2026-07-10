@@ -69,6 +69,8 @@ namespace Stonehold
                 GameObject cdGo = new GameObject("CardDraftManager", typeof(CardDraftManager));
                 DontDestroyOnLoad(cdGo);
             }
+            CardDraftManager.Instance?.ResetForRun();
+
             if (FindAnyObjectByType<MetaUpgradeManager>() == null)
             {
                 GameObject managerGo = new GameObject("MetaUpgradeManager", typeof(MetaUpgradeManager));

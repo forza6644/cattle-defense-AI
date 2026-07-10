@@ -69,9 +69,6 @@ namespace Stonehold
 
         private void Awake()
         {
-#if !UNITY_EDITOR
-            Screen.SetResolution(1080, 1920, false);
-#endif
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (FindAnyObjectByType<MetaUpgradeManager>() == null)
             {
@@ -172,7 +169,11 @@ namespace Stonehold
             Image headerBar = CreateImage(safeAreaRect, "HeaderBar", new Color(0.05f, 0.06f, 0.08f, 0.95f));
             if (isPortrait)
             {
-                Place(headerBar.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(1080f, 100f));
+                headerBar.rectTransform.anchorMin = new Vector2(0f, 1f);
+                headerBar.rectTransform.anchorMax = new Vector2(1f, 1f);
+                headerBar.rectTransform.pivot = new Vector2(0.5f, 1f);
+                headerBar.rectTransform.offsetMin = new Vector2(0f, -100f);
+                headerBar.rectTransform.offsetMax = Vector2.zero;
             }
             else
             {
@@ -401,7 +402,11 @@ namespace Stonehold
             Image bottomBar = CreateImage(safeAreaRect, "BottomBar", new Color(0.05f, 0.06f, 0.08f, 1.0f));
             if (isPortrait)
             {
-                Place(bottomBar.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 50f), new Vector2(1080f, 100f));
+                bottomBar.rectTransform.anchorMin = new Vector2(0f, 0f);
+                bottomBar.rectTransform.anchorMax = new Vector2(1f, 0f);
+                bottomBar.rectTransform.pivot = new Vector2(0.5f, 0f);
+                bottomBar.rectTransform.offsetMin = Vector2.zero;
+                bottomBar.rectTransform.offsetMax = new Vector2(0f, 100f);
             }
             else
             {
