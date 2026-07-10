@@ -28,7 +28,7 @@ MonoBehaviour:
   m_Name: Standalone Settings
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.AdaptivePerformance.AdaptivePerformanceGeneralSettings
   m_LoaderManagerInstance: {fileID: -7066364781791336875}
-  m_InitManagerOnStart: 1
+  m_InitManagerOnStart: 0
   m_LastSelectedProvider: 
 --- !u!114 &11400000
 MonoBehaviour:
