@@ -108,6 +108,7 @@ namespace Stonehold
         // Selection
         private TowerSlot selectedSlot;
         private Tower selectedTower;
+        private HeroAttack selectedHero;
 
         private void Awake()
         {
@@ -605,6 +606,7 @@ namespace Stonehold
         public void ShowTowerPanel(Tower tower)
         {
             selectedTower = tower;
+            selectedHero = null;
             selectedSlot = null;
             RefreshTowerPanel();
             ShowPanel(towerPanelGroup, true);
@@ -632,10 +634,41 @@ namespace Stonehold
             }
         }
 
+        public void ShowHeroPanel(HeroAttack hero)
+        {
+            if (hero == null)
+            {
+                return;
+            }
+
+            selectedHero = hero;
+            selectedTower = null;
+            selectedSlot = null;
+            RefreshTowerPanel();
+            ShowPanel(buildMenuGroup, false);
+            ShowPanel(towerPanelGroup, true);
+
+            if (upgradeButton != null) upgradeButton.gameObject.SetActive(false);
+            if (sellButton != null) sellButton.gameObject.SetActive(false);
+            if (targetButton != null) targetButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(0f, 55f);
+
+            Color color = hero.Definition != null && hero.Definition.weapon != null
+                ? GetHeroRangeColor(hero.Definition.weapon)
+                : Color.white;
+            rangeIndicator?.Show(hero.transform.position, hero.GetModifiedRange(), color);
+
+            if (!hasShownTargetingHint)
+            {
+                hasShownTargetingHint = true;
+                ShowHint("Tap a hero, then use Target to change enemy priority.");
+            }
+        }
+
         public void HideSelectionPanels()
         {
             selectedSlot = null;
             selectedTower = null;
+            selectedHero = null;
             ShowPanel(buildMenuGroup, false);
             ShowPanel(towerPanelGroup, false);
             HideRangeIndicator();
@@ -700,6 +733,16 @@ namespace Stonehold
 
         private void RefreshTowerPanel()
         {
+            if (selectedHero != null)
+            {
+                HeroDefinition hero = selectedHero.Definition;
+                towerPanelTitle.text = (hero != null ? hero.displayName : "Hero")
+                    + "  -  Range " + selectedHero.GetModifiedRange().ToString("0.#");
+                targetButtonLabel.text = "Target:\n" + selectedHero.CurrentTargetingMode + " >";
+                targetButtonLabel.fontSize = 20;
+                return;
+            }
+
             if (selectedTower == null)
             {
                 return;
@@ -780,6 +823,16 @@ namespace Stonehold
 
         private void OnTargetClicked()
         {
+            if (selectedHero != null)
+            {
+                TargetingMode heroCurrent = selectedHero.CurrentTargetingMode;
+                int heroNext = ((int)heroCurrent + 1) % System.Enum.GetValues(typeof(TargetingMode)).Length;
+                selectedHero.CurrentTargetingMode = (TargetingMode)heroNext;
+                AudioManager.Instance?.PlayButton();
+                RefreshTowerPanel();
+                return;
+            }
+
             if (selectedTower == null)
             {
                 return;
@@ -1875,6 +1928,15 @@ namespace Stonehold
             {
                 rangeIndicator.Hide();
             }
+        }
+
+        private static Color GetHeroRangeColor(WeaponDefinition weapon)
+        {
+            if (weapon.attackType == AttackType.Splash) return new Color(1f, 0.55f, 0.2f);
+            if (weapon.statusEffectType == StatusEffectType.Slow) return new Color(0.5f, 0.85f, 1f);
+            if (weapon.statusEffectType == StatusEffectType.Burn) return new Color(1f, 0.3f, 0.1f);
+            if (weapon.statusEffectType == StatusEffectType.Shock) return new Color(0.9f, 0.9f, 0.2f);
+            return new Color(1f, 0.95f, 0.55f);
         }
 
         private static void SetAnchored(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size)

@@ -19,7 +19,7 @@ namespace Stonehold
         [SerializeField] private GameObject spawnPoint;
         [SerializeField] private GameObject castle;
         [Header("Mobile Swarm Layout")]
-        [SerializeField, Min(0f)] private float laneHalfWidth = 3.2f;
+        [SerializeField, Min(0f)] private float laneHalfWidth = 3.8f;
         [SerializeField, Min(1f)] private float enemyCountMultiplier = 1.8f;
         [SerializeField, Range(0.2f, 1f)] private float spawnIntervalMultiplier = 0.65f;
 

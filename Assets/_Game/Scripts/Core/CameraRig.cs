@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Stonehold
 {
@@ -24,13 +25,18 @@ namespace Stonehold
         {
             Instance = this;
             Camera cam = GetComponent<Camera>();
+            if (GetComponent<PhysicsRaycaster>() == null)
+            {
+                gameObject.AddComponent<PhysicsRaycaster>();
+            }
             if (cam != null && Screen.width < Screen.height)
             {
                 const float referenceAspect = 9f / 16f;
                 // Keep the castle in the lower quarter and the spawn edge near the top.
-                const float referenceVerticalFov = 30f;
+                // Show 50% more vertical battlefield than the previous portrait framing.
+                const float referenceVerticalFov = 31.07277f;
 
-                transform.localPosition = new Vector3(0f, 35f, -12.5f);
+                transform.localPosition = new Vector3(0f, 35f, -10.1f);
                 transform.localRotation = Quaternion.Euler(70f, 0f, 0f);
 
                 float aspect = Mathf.Max(0.01f, (float)Screen.width / Screen.height);

@@ -19,7 +19,8 @@ MonoBehaviour:
   weapon: {fileID: 11400000, guid: 3a44b142e14b46c44b6d6edf1b80ead4, type: 2}
   baseDamage: 4
   baseFireRate: 0.9
-  baseRange: 6.5
+  baseRange: 11
+  defaultTargetingMode: 0
   abilityType: 3
   abilityCooldown: 10
   abilityPowerMultiplier: 1.2

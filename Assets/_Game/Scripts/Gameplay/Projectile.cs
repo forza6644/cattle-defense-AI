@@ -23,6 +23,7 @@ namespace Stonehold
         private string sourceHeroId;
         private TrailRenderer trail;
         private GameObject sourcePrefab;
+        private Color impactColor = Color.white;
 
         private StatusEffectType statusEffectType = StatusEffectType.None;
         private float statusEffectValue;
@@ -74,6 +75,7 @@ namespace Stonehold
             slowMultiplier = slowMult;
             slowDuration = slowDur;
             sourceHeroId = damageSourceHeroId;
+            impactColor = trailColor;
 
             if (slowMult < 1f)
             {
@@ -101,7 +103,7 @@ namespace Stonehold
                 Color end = trailColor;
                 end.a = 0f;
                 trail.endColor = end;
-                trail.startWidth = 0.3f;
+                trail.startWidth = GetTrailWidth();
                 trail.endWidth = 0.05f;
                 trail.time = 0.4f;
             }
@@ -124,6 +126,7 @@ namespace Stonehold
             statusEffectType = effectType;
             statusEffectValue = effectValue;
             statusEffectDuration = effectDuration;
+            impactColor = trailColor;
 
             if (effectType == StatusEffectType.Slow)
             {
@@ -149,7 +152,7 @@ namespace Stonehold
                 Color end = trailColor;
                 end.a = 0f;
                 trail.endColor = end;
-                trail.startWidth = 0.3f;
+                trail.startWidth = GetTrailWidth();
                 trail.endWidth = 0.05f;
                 trail.time = 0.4f;
             }
@@ -185,13 +188,21 @@ namespace Stonehold
                 {
                     VfxManager.Instance.PlayExplosion(impactPoint);
                 }
-                else if (slowMultiplier < 1f)
+                else if (statusEffectType == StatusEffectType.Slow)
                 {
                     VfxManager.Instance.PlayFrost(impactPoint);
                 }
+                else if (statusEffectType == StatusEffectType.Burn)
+                {
+                    VfxManager.Instance.PlayBurn(impactPoint);
+                }
+                else if (statusEffectType == StatusEffectType.Shock)
+                {
+                    VfxManager.Instance.PlayShock(impactPoint);
+                }
                 else
                 {
-                    VfxManager.Instance.PlayHit(impactPoint);
+                    VfxManager.Instance.PlayHit(impactPoint, impactColor);
                 }
             }
 
@@ -221,6 +232,16 @@ namespace Stonehold
             {
                 HitEnemy(target);
             }
+        }
+
+        private float GetTrailWidth()
+        {
+            if (splashRadius > 0f) return 0.55f;
+            if (statusEffectType == StatusEffectType.Burn) return 0.48f;
+            if (statusEffectType == StatusEffectType.Slow) return 0.42f;
+            if (statusEffectType == StatusEffectType.Shock) return 0.4f;
+            if (sourceHeroId == "sniper") return 0.24f;
+            return 0.34f;
         }
 
         private void HitEnemy(Enemy enemy)

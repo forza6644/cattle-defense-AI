@@ -90,7 +90,10 @@ namespace Stonehold
         }
 
         public void PlayFrost(Vector3 pos) => Play(frostPrefab, pos);
-        public void PlayHit(Vector3 pos) => Play(hitPrefab, pos);
+        public void PlayBurn(Vector3 pos) => Play(explosionPrefab, pos, new Color(1f, 0.18f, 0.03f, 1f));
+        public void PlayShock(Vector3 pos) => Play(hitPrefab, pos, new Color(1f, 0.95f, 0.1f, 1f));
+        public void PlayHit(Vector3 pos) => Play(hitPrefab, pos, Color.white);
+        public void PlayHit(Vector3 pos, Color color) => Play(hitPrefab, pos, color);
         public void PlayPlace(Vector3 pos) => Play(placePrefab, pos);
         public void PlayUpgrade(Vector3 pos) => Play(upgradePrefab, pos);
 
@@ -133,6 +136,11 @@ namespace Stonehold
 
         private void Play(GameObject prefab, Vector3 position)
         {
+            Play(prefab, position, null);
+        }
+
+        private void Play(GameObject prefab, Vector3 position, Color? color)
+        {
             if (prefab == null)
             {
                 return;
@@ -142,6 +150,11 @@ namespace Stonehold
             instance.transform.position = position;
             instance.gameObject.SetActive(true);
             instance.Clear();
+            if (color.HasValue)
+            {
+                ParticleSystem.MainModule main = instance.main;
+                main.startColor = color.Value;
+            }
             instance.Play();
             StartCoroutine(ReturnWhenDone(prefab, instance));
         }

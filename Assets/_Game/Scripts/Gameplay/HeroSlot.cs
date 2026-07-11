@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Stonehold
 {
@@ -28,11 +29,8 @@ namespace Stonehold
                 r.material.color = new Color(0.2f, 0.25f, 0.3f);
             }
 
-            Collider c = pad.GetComponent<Collider>();
-            if (c != null)
-            {
-                Destroy(c);
-            }
+            HeroSelectionProxy selection = pad.AddComponent<HeroSelectionProxy>();
+            selection.Configure(this);
 
             if (HeroRosterManager.Instance != null)
             {
@@ -89,6 +87,22 @@ namespace Stonehold
             }
 
             currentHero.Configure(hero);
+
+            Collider[] heroColliders = instance.GetComponentsInChildren<Collider>();
+            if (heroColliders.Length == 0)
+            {
+                heroColliders = new Collider[] { instance.AddComponent<CapsuleCollider>() };
+            }
+
+            for (int i = 0; i < heroColliders.Length; i++)
+            {
+                HeroSelectionProxy proxy = heroColliders[i].GetComponent<HeroSelectionProxy>();
+                if (proxy == null)
+                {
+                    proxy = heroColliders[i].gameObject.AddComponent<HeroSelectionProxy>();
+                }
+                proxy.Configure(this);
+            }
             return true;
         }
 
@@ -101,6 +115,21 @@ namespace Stonehold
 
             Destroy(currentHero.gameObject);
             currentHero = null;
+        }
+    }
+
+    internal sealed class HeroSelectionProxy : MonoBehaviour, IPointerClickHandler
+    {
+        private HeroSlot slot;
+
+        public void Configure(HeroSlot heroSlot) => slot = heroSlot;
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (slot != null && slot.CurrentHero != null && UIManager.Instance != null)
+            {
+                UIManager.Instance.ShowHeroPanel(slot.CurrentHero);
+            }
         }
     }
 }

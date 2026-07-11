@@ -13,8 +13,19 @@ namespace Stonehold
         private float fireCooldown;
         private float abilityCooldown;
         private ProceduralAnimator animator;
+        private TargetingMode currentTargetingMode;
 
         public HeroDefinition Definition => definition;
+        public TargetingMode CurrentTargetingMode
+        {
+            get => currentTargetingMode;
+            set
+            {
+                currentTargetingMode = value;
+                currentTarget = null;
+                targetRefreshTimer = 0f;
+            }
+        }
 
         private void Awake()
         {
@@ -24,6 +35,9 @@ namespace Stonehold
         public void Configure(HeroDefinition heroDefinition)
         {
             definition = heroDefinition;
+            currentTargetingMode = definition != null
+                ? definition.defaultTargetingMode
+                : TargetingMode.ClosestToGoal;
             abilityCooldown = definition != null ? definition.abilityCooldown * 0.5f : 0f;
             enabled = definition != null && definition.weapon != null;
         }
@@ -83,7 +97,7 @@ namespace Stonehold
 
             if (targetRefreshTimer <= 0f)
             {
-                currentTarget = EnemyManager.FindNearest(transform.position, GetModifiedRange());
+                currentTarget = EnemyManager.FindTarget(transform.position, GetModifiedRange(), currentTargetingMode);
                 targetRefreshTimer = Mathf.Max(0.05f, targetRefreshInterval);
             }
 
@@ -254,7 +268,7 @@ namespace Stonehold
                         target,
                         GetModifiedDamage(),
                         splashRadius,
-                        GetTrailColor(weapon, appliedEffectType),
+                        GetTrailColor(weapon, appliedEffectType, definition.id),
                         definition.id,
                         appliedEffectType,
                         appliedEffectValue,
@@ -273,7 +287,7 @@ namespace Stonehold
             }
         }
 
-        private static Color GetTrailColor(WeaponDefinition weapon, StatusEffectType resolvedEffectType)
+        private static Color GetTrailColor(WeaponDefinition weapon, StatusEffectType resolvedEffectType, string heroId)
         {
             if (weapon.attackType == AttackType.Splash)
             {
@@ -289,7 +303,9 @@ namespace Stonehold
                 case StatusEffectType.Shock:
                     return new Color(0.9f, 0.9f, 0.2f, 1f);
                 default:
-                    return new Color(1f, 0.95f, 0.55f, 1f);
+                    return heroId == "sniper"
+                        ? new Color(0.9f, 0.35f, 1f, 1f)
+                        : new Color(1f, 0.95f, 0.55f, 1f);
             }
         }
     }

@@ -14,6 +14,9 @@ namespace Stonehold
         public float baseFireRate;
         public float baseRange;
 
+        [Header("Targeting")]
+        public TargetingMode defaultTargetingMode = TargetingMode.ClosestToGoal;
+
         [Header("Signature Ability")]
         public HeroAbilityType abilityType;
         [Min(1f)] public float abilityCooldown = 10f;
