@@ -7,6 +7,10 @@ namespace Stonehold
     {
         public HeroDefinition startingHero;
 
+        // How strongly hero identity color mixes over the prefab's own material colors
+        // (1 = flat identity color, 0 = untouched prefab materials).
+        private const float BodyTintBlend = 0.65f;
+
         private HeroAttack currentHero;
 
         public HeroAttack CurrentHero => currentHero;
@@ -67,24 +71,7 @@ namespace Stonehold
                 currentHero = instance.AddComponent<HeroAttack>();
             }
 
-            if (hero.id == "fire_mage")
-            {
-                Renderer[] renderers = instance.GetComponentsInChildren<Renderer>();
-                foreach (var renderer in renderers)
-                {
-                    foreach (var mat in renderer.materials)
-                    {
-                        if (mat.HasProperty("_BaseColor"))
-                        {
-                            mat.SetColor("_BaseColor", new Color(1f, 0.2f, 0.2f));
-                        }
-                        else if (mat.HasProperty("_Color"))
-                        {
-                            mat.SetColor("_Color", new Color(1f, 0.2f, 0.2f));
-                        }
-                    }
-                }
-            }
+            SetHeroVisuals(hero, instance);
 
             currentHero.Configure(hero);
 
@@ -115,6 +102,156 @@ namespace Stonehold
 
             Destroy(currentHero.gameObject);
             currentHero = null;
+        }
+
+        /// <summary>
+        /// Applies a distinct visual identity to each hero type: unique body color, accent,
+        /// optional scale variation, and a small weapon prop for at-a-glance recognition.
+        /// </summary>
+        private void SetHeroVisuals(HeroDefinition hero, GameObject instance)
+        {
+            Color bodyColor;
+            Color accentColor;
+            Vector3 scaleMultiplier = Vector3.one;
+
+            switch (hero.id)
+            {
+                case "archer":
+                    bodyColor = new Color(0.25f, 0.45f, 0.2f);   // forest green
+                    accentColor = new Color(0.5f, 0.35f, 0.2f);  // brown leather
+                    break;
+                case "bombardier":
+                    bodyColor = new Color(0.3f, 0.3f, 0.32f);    // dark grey
+                    accentColor = new Color(0.9f, 0.5f, 0.15f);  // orange
+                    scaleMultiplier = new Vector3(1.05f, 1f, 1.05f);
+                    break;
+                case "frost_mage":
+                    bodyColor = new Color(0.35f, 0.7f, 0.85f);   // cyan/ice
+                    accentColor = new Color(0.85f, 0.92f, 1f);   // white-blue
+                    break;
+                case "fire_mage":
+                    bodyColor = new Color(0.75f, 0.18f, 0.1f);   // deep red
+                    accentColor = new Color(1f, 0.5f, 0.1f);     // ember orange
+                    break;
+                case "electric_engineer":
+                    bodyColor = new Color(0.85f, 0.78f, 0.2f);   // yellow-gold
+                    accentColor = new Color(0.3f, 0.3f, 0.35f);  // metallic dark
+                    break;
+                case "sniper":
+                    bodyColor = new Color(0.35f, 0.2f, 0.55f);   // dark purple
+                    accentColor = new Color(0.7f, 0.5f, 0.85f);  // lighter indigo
+                    scaleMultiplier = new Vector3(0.85f, 1.1f, 0.85f);
+                    break;
+                default:
+                    bodyColor = new Color(0.5f, 0.5f, 0.5f);
+                    accentColor = Color.white;
+                    break;
+            }
+
+            // Blend each renderer toward the hero identity color via MaterialPropertyBlock.
+            // Blending (not replacing) keeps the prefab's per-part material variation
+            // visible, and property blocks avoid creating material instances.
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>();
+            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+            int baseColorId = Shader.PropertyToID("_BaseColor");
+            foreach (Renderer rend in renderers)
+            {
+                Material shared = rend.sharedMaterial;
+                Color matColor = shared != null && shared.HasProperty(baseColorId)
+                    ? shared.GetColor(baseColorId)
+                    : Color.white;
+                rend.GetPropertyBlock(mpb);
+                mpb.SetColor(baseColorId, Color.Lerp(matColor, bodyColor, BodyTintBlend));
+                rend.SetPropertyBlock(mpb);
+            }
+
+            // Apply scale variation
+            instance.transform.localScale = Vector3.Scale(instance.transform.localScale, scaleMultiplier);
+
+            // Color the slot pad accent
+            Transform padTransform = transform.Find("SlotPad_Visual");
+            if (padTransform != null)
+            {
+                Renderer padRenderer = padTransform.GetComponent<Renderer>();
+                if (padRenderer != null)
+                {
+                    padRenderer.GetPropertyBlock(mpb);
+                    mpb.SetColor(baseColorId, accentColor * 0.5f);
+                    padRenderer.SetPropertyBlock(mpb);
+                }
+            }
+
+            // Add a small weapon prop for visual identification
+            CreateWeaponProp(hero.id, instance.transform, accentColor);
+        }
+
+        private void CreateWeaponProp(string heroId, Transform parent, Color color)
+        {
+            PrimitiveType shape;
+            Vector3 localPos;
+            Vector3 localScale;
+            Quaternion localRot = Quaternion.identity;
+
+            switch (heroId)
+            {
+                case "archer":
+                    shape = PrimitiveType.Cylinder;  // quiver
+                    localPos = new Vector3(-0.25f, 0.35f, -0.15f);
+                    localScale = new Vector3(0.08f, 0.25f, 0.08f);
+                    localRot = Quaternion.Euler(0f, 0f, 15f);
+                    break;
+                case "bombardier":
+                    shape = PrimitiveType.Sphere;    // bomb
+                    localPos = new Vector3(0.3f, 0.1f, 0f);
+                    localScale = new Vector3(0.22f, 0.22f, 0.22f);
+                    break;
+                case "frost_mage":
+                    shape = PrimitiveType.Cube;      // crystal
+                    localPos = new Vector3(0.25f, 0.4f, 0f);
+                    localScale = new Vector3(0.1f, 0.15f, 0.1f);
+                    localRot = Quaternion.Euler(0f, 45f, 45f);
+                    break;
+                case "fire_mage":
+                    shape = PrimitiveType.Sphere;    // glowing ember
+                    localPos = new Vector3(0.25f, 0.45f, 0f);
+                    localScale = new Vector3(0.14f, 0.14f, 0.14f);
+                    break;
+                case "electric_engineer":
+                    shape = PrimitiveType.Cylinder;  // tesla coil
+                    localPos = new Vector3(0f, 0.65f, 0f);
+                    localScale = new Vector3(0.06f, 0.18f, 0.06f);
+                    break;
+                case "sniper":
+                    shape = PrimitiveType.Cylinder;  // rifle barrel
+                    localPos = new Vector3(0.35f, 0.3f, 0f);
+                    localScale = new Vector3(0.04f, 0.3f, 0.04f);
+                    localRot = Quaternion.Euler(0f, 0f, 90f);
+                    break;
+                default:
+                    return;
+            }
+
+            GameObject prop = GameObject.CreatePrimitive(shape);
+            prop.name = "WeaponProp";
+            prop.transform.SetParent(parent);
+            prop.transform.localPosition = localPos;
+            prop.transform.localRotation = localRot;
+            prop.transform.localScale = localScale;
+
+            // Remove collider from prop so it doesn't interfere with gameplay
+            Collider propCollider = prop.GetComponent<Collider>();
+            if (propCollider != null) Destroy(propCollider);
+
+            Renderer propRenderer = prop.GetComponent<Renderer>();
+            if (propRenderer != null)
+            {
+                // Property block only - no material instances for temporary props.
+                // Fire Mage's ember just uses a hotter color instead of true emission.
+                Color propColor = heroId == "fire_mage" ? new Color(1f, 0.45f, 0.08f) : color;
+                MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+                mpb.SetColor(Shader.PropertyToID("_BaseColor"), propColor);
+                propRenderer.SetPropertyBlock(mpb);
+            }
         }
     }
 

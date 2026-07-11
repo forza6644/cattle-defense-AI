@@ -194,11 +194,15 @@ namespace Stonehold
                 }
                 else if (statusEffectType == StatusEffectType.Burn)
                 {
-                    VfxManager.Instance.PlayBurn(impactPoint);
+                    VfxManager.Instance.PlayFireImpact(impactPoint);
                 }
                 else if (statusEffectType == StatusEffectType.Shock)
                 {
-                    VfxManager.Instance.PlayShock(impactPoint);
+                    VfxManager.Instance.PlayShockImpact(impactPoint);
+                }
+                else if (sourceHeroId == "sniper")
+                {
+                    VfxManager.Instance.PlaySniperImpact(impactPoint);
                 }
                 else
                 {

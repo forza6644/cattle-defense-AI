@@ -12,11 +12,38 @@ namespace Stonehold
         private Enemy enemy;
         private readonly List<StatusEffect> activeEffects = new List<StatusEffect>();
 
+        private Renderer[] renderers;
+        private Color[] baseColors;
+        private MaterialPropertyBlock mpb;
+        private bool tintApplied;
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+
+        private static readonly Color SlowTint = new Color(0.4f, 0.8f, 1f, 1f);
+        private static readonly Color BurnTint = new Color(1f, 0.45f, 0.15f, 1f);
+        private static readonly Color ShockTint = new Color(1f, 0.95f, 0.3f, 1f);
+        private const float TintStrength = 0.45f;
+
         public IReadOnlyList<StatusEffect> ActiveEffects => activeEffects;
 
         private void Awake()
         {
             enemy = GetComponent<Enemy>();
+            CacheRenderers();
+        }
+
+        private void CacheRenderers()
+        {
+            if (renderers != null) return;
+            renderers = GetComponentsInChildren<Renderer>();
+            baseColors = new Color[renderers.Length];
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Material shared = renderers[i].sharedMaterial;
+                baseColors[i] = shared != null && shared.HasProperty(BaseColorId)
+                    ? shared.GetColor(BaseColorId)
+                    : Color.white;
+            }
+            mpb = new MaterialPropertyBlock();
         }
 
         /// <summary>
@@ -138,6 +165,60 @@ namespace Stonehold
             {
                 UpdateEnemySlowMultiplier();
             }
+
+            UpdateVisualTint();
+        }
+
+        private void UpdateVisualTint()
+        {
+            if (renderers == null)
+            {
+                CacheRenderers();
+                if (renderers == null) return;
+            }
+
+            // Priority: Shock > Burn > Slow
+            Color targetTint = Color.white;
+            bool hasTint = false;
+
+            if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Shock))
+            {
+                targetTint = ShockTint;
+                hasTint = true;
+            }
+            else if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Burn))
+            {
+                targetTint = BurnTint;
+                hasTint = true;
+            }
+            else if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Slow))
+            {
+                targetTint = SlowTint;
+                hasTint = true;
+            }
+
+            if (!hasTint && !tintApplied)
+            {
+                return; // nothing tinted and nothing to clean up
+            }
+
+            // Re-assert the tint every frame while active (the hit flash also writes
+            // _BaseColor and clears its block when it ends), and restore base colors
+            // exactly once when the last effect expires. Always read-modify-write the
+            // block - never SetPropertyBlock(null) - so unrelated property values
+            // written by other systems survive.
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                renderers[i].GetPropertyBlock(mpb);
+                Color final = hasTint
+                    ? Color.Lerp(baseColors[i], targetTint, TintStrength)
+                    : baseColors[i];
+                mpb.SetColor(BaseColorId, final);
+                renderers[i].SetPropertyBlock(mpb);
+            }
+
+            tintApplied = hasTint;
         }
 
         private void UpdateEnemySlowMultiplier()

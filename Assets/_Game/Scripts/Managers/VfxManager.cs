@@ -33,7 +33,14 @@ namespace Stonehold
         [SerializeField] private GameObject victoryPrefab;
         [SerializeField] private GameObject defeatPrefab;
 
+        private struct EffectDefaults
+        {
+            public ParticleSystem.MinMaxGradient startColor;
+            public Vector3 scale;
+        }
+
         private readonly Dictionary<GameObject, Queue<ParticleSystem>> pools = new Dictionary<GameObject, Queue<ParticleSystem>>();
+        private readonly Dictionary<GameObject, EffectDefaults> prefabDefaults = new Dictionary<GameObject, EffectDefaults>();
         private Transform castle;
 
         private void Awake()
@@ -82,20 +89,39 @@ namespace Stonehold
 
         public void PlayExplosion(Vector3 pos)
         {
-            Play(explosionPrefab, pos);
+            Play(explosionPrefab, pos, null, 1.25f);
             if (CameraRig.Instance != null)
             {
-                CameraRig.Instance.Shake(0.35f);
+                CameraRig.Instance.Shake(0.4f);
             }
         }
 
-        public void PlayFrost(Vector3 pos) => Play(frostPrefab, pos);
+        public void PlayFrost(Vector3 pos) => Play(frostPrefab, pos, new Color(0.3f, 0.85f, 1f, 1f), 1.1f);
         public void PlayBurn(Vector3 pos) => Play(explosionPrefab, pos, new Color(1f, 0.18f, 0.03f, 1f));
         public void PlayShock(Vector3 pos) => Play(hitPrefab, pos, new Color(1f, 0.95f, 0.1f, 1f));
         public void PlayHit(Vector3 pos) => Play(hitPrefab, pos, Color.white);
         public void PlayHit(Vector3 pos, Color color) => Play(hitPrefab, pos, color);
         public void PlayPlace(Vector3 pos) => Play(placePrefab, pos);
         public void PlayUpgrade(Vector3 pos) => Play(upgradePrefab, pos);
+
+        public void PlayFireImpact(Vector3 pos)
+        {
+            Play(explosionPrefab, pos, new Color(1f, 0.35f, 0.05f, 1f), 0.85f);
+            if (CameraRig.Instance != null)
+            {
+                CameraRig.Instance.Shake(0.2f);
+            }
+        }
+
+        public void PlayShockImpact(Vector3 pos)
+        {
+            Play(hitPrefab, pos, new Color(1f, 0.95f, 0.15f, 1f), 1.15f);
+        }
+
+        public void PlaySniperImpact(Vector3 pos)
+        {
+            Play(hitPrefab, pos, new Color(0.85f, 0.3f, 1f, 1f), 0.7f);
+        }
 
         // ----------------------------------------------------------- Event hooks
 
@@ -136,10 +162,15 @@ namespace Stonehold
 
         private void Play(GameObject prefab, Vector3 position)
         {
-            Play(prefab, position, null);
+            Play(prefab, position, null, 1f);
         }
 
         private void Play(GameObject prefab, Vector3 position, Color? color)
+        {
+            Play(prefab, position, color, 1f);
+        }
+
+        private void Play(GameObject prefab, Vector3 position, Color? color, float scale)
         {
             if (prefab == null)
             {
@@ -147,14 +178,19 @@ namespace Stonehold
             }
 
             ParticleSystem instance = Get(prefab);
+            EffectDefaults defaults = prefabDefaults[prefab];
+
+            // Pooled instances are shared across effect types, so every reuse must
+            // restore the prefab's original color/scale before applying overrides -
+            // otherwise a fire tint leaks into later untinted explosions or hits.
             instance.transform.position = position;
+            instance.transform.localScale = defaults.scale * scale;
             instance.gameObject.SetActive(true);
             instance.Clear();
-            if (color.HasValue)
-            {
-                ParticleSystem.MainModule main = instance.main;
-                main.startColor = color.Value;
-            }
+            ParticleSystem.MainModule main = instance.main;
+            main.startColor = color.HasValue
+                ? new ParticleSystem.MinMaxGradient(color.Value)
+                : defaults.startColor;
             instance.Play();
             StartCoroutine(ReturnWhenDone(prefab, instance));
         }
@@ -167,7 +203,20 @@ namespace Stonehold
             }
 
             GameObject go = Instantiate(prefab, transform);
-            return go.GetComponent<ParticleSystem>();
+            ParticleSystem ps = go.GetComponent<ParticleSystem>();
+
+            // Capture the prefab's untouched color/scale the first time we see it,
+            // before any Play() override can mutate the instance.
+            if (!prefabDefaults.ContainsKey(prefab))
+            {
+                prefabDefaults[prefab] = new EffectDefaults
+                {
+                    startColor = ps.main.startColor,
+                    scale = go.transform.localScale
+                };
+            }
+
+            return ps;
         }
 
         private IEnumerator ReturnWhenDone(GameObject prefab, ParticleSystem instance)

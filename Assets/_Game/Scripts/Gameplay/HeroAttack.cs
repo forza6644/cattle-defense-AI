@@ -142,18 +142,25 @@ namespace Stonehold
                     break;
                 case HeroAbilityType.FrostNova:
                     HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Slow, 0.25f, 3.5f);
+                    if (VfxManager.Instance != null) VfxManager.Instance.PlayFrost(primaryTarget.transform.position);
                     break;
                 case HeroAbilityType.FlameWave:
                     HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Burn, abilityDamage * 0.2f, 4f);
+                    if (VfxManager.Instance != null) VfxManager.Instance.PlayFireImpact(primaryTarget.transform.position);
                     break;
                 case HeroAbilityType.ArtilleryBarrage:
                     HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.None, 0f, 0f);
+                    if (VfxManager.Instance != null) VfxManager.Instance.PlayExplosion(primaryTarget.transform.position);
                     break;
                 case HeroAbilityType.MultiShot:
                 case HeroAbilityType.ChainStorm:
                     HitMultipleEnemies(
                         abilityDamage,
                         definition.abilityType == HeroAbilityType.ChainStorm ? StatusEffectType.Shock : StatusEffectType.None);
+                    if (definition.abilityType == HeroAbilityType.ChainStorm && VfxManager.Instance != null)
+                    {
+                        VfxManager.Instance.PlayShockImpact(primaryTarget.transform.position);
+                    }
                     break;
             }
         }
@@ -291,21 +298,21 @@ namespace Stonehold
         {
             if (weapon.attackType == AttackType.Splash)
             {
-                return new Color(1f, 0.55f, 0.2f, 1f);
+                return new Color(1f, 0.5f, 0.15f, 1f);
             }
 
             switch (resolvedEffectType)
             {
                 case StatusEffectType.Slow:
-                    return new Color(0.5f, 0.85f, 1f, 1f);
+                    return new Color(0.3f, 0.9f, 1f, 1f);
                 case StatusEffectType.Burn:
-                    return new Color(1f, 0.3f, 0.1f, 1f);
+                    return new Color(1f, 0.25f, 0.05f, 1f);
                 case StatusEffectType.Shock:
-                    return new Color(0.9f, 0.9f, 0.2f, 1f);
+                    return new Color(1f, 0.95f, 0.15f, 1f);
                 default:
                     return heroId == "sniper"
-                        ? new Color(0.9f, 0.35f, 1f, 1f)
-                        : new Color(1f, 0.95f, 0.55f, 1f);
+                        ? new Color(0.85f, 0.3f, 1f, 1f)
+                        : new Color(1f, 0.88f, 0.4f, 1f);
             }
         }
     }

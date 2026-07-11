@@ -34,9 +34,11 @@ namespace Stonehold
         private Color[] baseColors;
         private MaterialPropertyBlock mpb;
 
-        private const float HitDuration = 0.16f;
-        private const float AttackDuration = 0.18f;
-        private const float FlashDuration = 0.12f;
+        private const float HitDuration = 0.18f;
+        private const float AttackDuration = 0.22f;
+        private const float FlashDuration = 0.14f;
+        private const float BreatheCycleSpeed = 1.1f;
+        private const float BreatheScale = 0.02f;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         private void Awake()
@@ -93,20 +95,23 @@ namespace Stonehold
             float tilt = moving ? Mathf.Sin(phase) * waddleDegrees : 0f;
             model.localRotation = Quaternion.Euler(0f, 0f, tilt);
 
-            Vector3 scale = baseScale;
+            // Subtle idle breathe cycle
+            float breathe = 1f + Mathf.Sin(Time.time * BreatheCycleSpeed) * BreatheScale;
+
+            Vector3 scale = baseScale * breathe;
             if (hitTimer > 0f)
             {
                 hitTimer -= Time.deltaTime;
                 float k = Mathf.Clamp01(hitTimer / HitDuration);
                 // squash wide + short, then recover
-                scale = Vector3.Scale(baseScale, new Vector3(1f + 0.3f * k, 1f - 0.25f * k, 1f + 0.3f * k));
+                scale = Vector3.Scale(baseScale, new Vector3(1f + 0.35f * k, 1f - 0.3f * k, 1f + 0.35f * k));
             }
 
             if (attackTimer > 0f)
             {
                 attackTimer -= Time.deltaTime;
                 float k = Mathf.Clamp01(attackTimer / AttackDuration);
-                scale *= 1f + 0.12f * k; // quick punch
+                scale *= 1f + 0.18f * k; // strong attack punch
             }
 
             model.localScale = scale;
@@ -147,7 +152,7 @@ namespace Stonehold
             Vector3 startScale = model.localScale;
             Quaternion startRot = model.localRotation;
             float t = 0f;
-            const float dur = 0.25f;
+            const float dur = 0.35f;
 
             while (t < dur)
             {
