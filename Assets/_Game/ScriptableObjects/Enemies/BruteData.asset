@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
   enemyName: Brute
   prefab: {fileID: 5555025361673445348, guid: d97830f8f2ae43f4c9a978d818dcf3de, type: 3}
-  health: 180
+  health: 162
   moveSpeed: 1.4
   goldReward: 30
   castleDamage: 4

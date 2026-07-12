@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
   enemyName: Runner
   prefab: {fileID: 5225040395024732567, guid: 5a9a3ed875ba48b6905464bdd305d2de, type: 3}
-  health: 12
+  health: 10.8
   moveSpeed: 4.5
   armor: 0
   goldReward: 4

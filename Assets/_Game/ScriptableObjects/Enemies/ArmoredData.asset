@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
   enemyName: Armored
   prefab: {fileID: 5225040395024732567, guid: 0ad8a56d117b47f4b377a11c99ee7950, type: 3}
-  health: 50
+  health: 45
   moveSpeed: 1.8
   armor: 3
   goldReward: 15

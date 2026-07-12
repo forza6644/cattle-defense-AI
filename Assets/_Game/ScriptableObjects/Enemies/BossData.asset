@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
   enemyName: Warlord Boss
   prefab: {fileID: 5555025361673445348, guid: 7126104e8d4a4133b1465b247095a77a, type: 3}
-  health: 500
+  health: 450
   moveSpeed: 1.2
   armor: 8
   goldReward: 200
