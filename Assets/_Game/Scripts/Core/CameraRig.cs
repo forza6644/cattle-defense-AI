@@ -32,9 +32,9 @@ namespace Stonehold
             if (cam != null && Screen.width < Screen.height)
             {
                 const float referenceAspect = 9f / 16f;
-                // Keep the castle in the lower quarter and the spawn edge near the top.
-                // Show 50% more vertical battlefield than the previous portrait framing.
-                const float referenceVerticalFov = 31.07277f;
+                // Portrait composition: full-width wall in the lower quarter, with
+                // enough vertical battlefield to read large enemy formations.
+                const float referenceVerticalFov = 44f;
 
                 transform.localPosition = new Vector3(0f, 35f, -10.1f);
                 transform.localRotation = Quaternion.Euler(70f, 0f, 0f);

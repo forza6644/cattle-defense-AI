@@ -110,7 +110,7 @@ namespace Stonehold
         }
 
         /// <summary>Called by the spawner right after this enemy is created to set its path.</summary>
-        public void SetPath(Vector3[] points, Castle castle, float laneOffset = 0f)
+        public void SetPath(Vector3[] points, Castle castle, float laneOffset = 0f, float spawnDepthOffset = 0f)
         {
             if (points != null)
             {
@@ -121,6 +121,14 @@ namespace Stonehold
                         ? UnityEngine.Random.Range(-0.25f, 0.25f)
                         : 0f;
                     pathPoints[i] = points[i] + Vector3.right * (laneOffset + localJitter);
+                    if (i == 0)
+                    {
+                        pathPoints[i] += Vector3.forward * spawnDepthOffset;
+                    }
+                    else if (i == 1)
+                    {
+                        pathPoints[i] += Vector3.forward * (spawnDepthOffset * 0.45f);
+                    }
                 }
             }
             else

@@ -19,9 +19,11 @@ namespace Stonehold
         [SerializeField] private GameObject spawnPoint;
         [SerializeField] private GameObject castle;
         [Header("Mobile Swarm Layout")]
-        [SerializeField, Min(0f)] private float laneHalfWidth = 3.8f;
+        [SerializeField, Min(0f)] private float laneHalfWidth = 5.2f;
         [SerializeField, Min(1f)] private float enemyCountMultiplier = 1.8f;
         [SerializeField, Range(0.2f, 1f)] private float spawnIntervalMultiplier = 0.65f;
+        [SerializeField, Range(0f, 0.3f)] private float countVariance = 0.12f;
+        [SerializeField, Min(0f)] private float spawnDepthJitter = 3f;
 
         /// <summary>Raised at the start of each wave: (wave number, wave data).</summary>
         public event Action<int, WaveData> WaveStarted;
@@ -123,7 +125,14 @@ namespace Stonehold
 
                 foreach (WaveData.SpawnEntry entry in wave.spawns)
                 {
-                    int adjustedCount = Mathf.Max(1, Mathf.CeilToInt(entry.count * enemyCountMultiplier));
+                    float waveProgress = activeWaves.Length > 1
+                        ? (float)w / (activeWaves.Length - 1)
+                        : 0f;
+                    float progressionDensity = Mathf.Lerp(0.78f, 1.25f, waveProgress);
+                    float randomDensity = UnityEngine.Random.Range(1f - countVariance, 1f + countVariance);
+                    int adjustedCount = Mathf.Max(
+                        1,
+                        Mathf.CeilToInt(entry.count * enemyCountMultiplier * progressionDensity * randomDensity));
                     for (int i = 0; i < adjustedCount; i++)
                     {
                         if (IsGameOver)
@@ -241,12 +250,12 @@ namespace Stonehold
             {
                 if (waypointPath != null && waypointPath.Points != null && waypointPath.Points.Length > 0)
                 {
-                    enemy.SetPath(waypointPath.Points, castleComponent, NextLaneOffset());
+                    enemy.SetPath(waypointPath.Points, castleComponent, NextLaneOffset(), NextDepthOffset());
                 }
                 else
                 {
                     Vector3[] fallbackPoints = new Vector3[] { spawnPoint.transform.position, castle.transform.position };
-                    enemy.SetPath(fallbackPoints, castleComponent, NextLaneOffset());
+                    enemy.SetPath(fallbackPoints, castleComponent, NextLaneOffset(), NextDepthOffset());
                 }
             }
         }
@@ -257,6 +266,11 @@ namespace Stonehold
             float normalized = Mathf.Repeat(spawnSequence++ * 0.61803398875f, 1f);
             float offset = Mathf.Lerp(-laneHalfWidth, laneHalfWidth, normalized);
             return Mathf.Clamp(offset + UnityEngine.Random.Range(-0.35f, 0.35f), -laneHalfWidth, laneHalfWidth);
+        }
+
+        private float NextDepthOffset()
+        {
+            return UnityEngine.Random.Range(-spawnDepthJitter, spawnDepthJitter);
         }
     }
 }

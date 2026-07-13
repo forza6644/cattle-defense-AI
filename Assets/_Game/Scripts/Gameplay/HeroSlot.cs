@@ -24,7 +24,7 @@ namespace Stonehold
             pad.transform.SetParent(transform);
             pad.transform.localPosition = new Vector3(0f, -0.05f, 0f);
             pad.transform.localRotation = Quaternion.identity;
-            pad.transform.localScale = new Vector3(1.4f, 0.05f, 1.4f);
+            pad.transform.localScale = new Vector3(1.1f, 0.05f, 1.1f);
 
             Renderer r = pad.GetComponent<Renderer>();
             if (r != null)
@@ -57,7 +57,8 @@ namespace Stonehold
 
             GameObject instance = Instantiate(hero.heroPrefab, transform.position, transform.rotation, transform);
             instance.name = hero.displayName + " Hero";
-            instance.transform.localScale = Vector3.one * 1.35f; // Scale up for better visibility
+            // Keep six defenders readable without crowding the full-width wall.
+            instance.transform.localScale = Vector3.one * 1.05f;
 
             Tower[] legacyTowers = instance.GetComponentsInChildren<Tower>();
             for (int i = 0; i < legacyTowers.Length; i++)

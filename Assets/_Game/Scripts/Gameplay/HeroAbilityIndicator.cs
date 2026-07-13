@@ -53,7 +53,7 @@ namespace Stonehold
         {
             int visibleSegments = Mathf.Clamp(Mathf.CeilToInt(Segments * charge), 1, Segments);
             ring.positionCount = visibleSegments + 1;
-            const float radius = 0.72f;
+            const float radius = 0.56f;
             for (int i = 0; i <= visibleSegments; i++)
             {
                 float angle = Mathf.PI * 2f * i / Segments;
