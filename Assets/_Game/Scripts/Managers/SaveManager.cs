@@ -137,9 +137,20 @@ namespace Stonehold
 
         public static void CompleteStage1()
         {
-            Stage1Completed = true;
-            PlayerPrefs.SetInt(KeyStage1Completed, 1);
-            UnlockStage(2);
+            CompleteStage(0);
+        }
+
+        public static void CompleteStage(int stageIndex)
+        {
+            int safeStageIndex = Mathf.Max(0, stageIndex);
+            if (safeStageIndex == 0)
+            {
+                Stage1Completed = true;
+                PlayerPrefs.SetInt(KeyStage1Completed, 1);
+            }
+
+            // Stage indexes are zero-based; unlocked stage numbers are one-based.
+            UnlockStage(safeStageIndex + 2);
             PlayerPrefs.Save();
         }
 

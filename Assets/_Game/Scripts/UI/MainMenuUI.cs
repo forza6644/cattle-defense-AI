@@ -41,9 +41,9 @@ namespace Stonehold
         private Text upgradeDefenderBtnLabel;
         private int currentDefenderIndex = 0;
 
-        private Text[] metaUpgradeNameTexts = new Text[4];
-        private Button[] metaUpgradeButtons = new Button[4];
-        private Text[] metaUpgradeButtonLabels = new Text[4];
+        private Text[] metaUpgradeNameTexts = new Text[5];
+        private Button[] metaUpgradeButtons = new Button[5];
+        private Text[] metaUpgradeButtonLabels = new Text[5];
 
         private struct DefenderInfo
         {
@@ -365,14 +365,15 @@ namespace Stonehold
             Text upgradesTitle = CreateText(upgradesBg.rectTransform, "Title", "META UPGRADES", 22, new Color(1f, 0.85f, 0.35f));
             Place(upgradesTitle.rectTransform, new Vector2(0.5f, 0.92f), Vector2.zero, new Vector2(340f, 32f));
 
-            // Populate the 4 rows
-            float rowStartY = 0.76f;
-            float rowSpacingY = 0.21f;
+            // Populate all permanent upgrades.
+            float rowStartY = 0.79f;
+            float rowSpacingY = 0.16f;
 
             if (MetaUpgradeManager.Instance != null)
             {
                 var list = MetaUpgradeManager.Instance.Upgrades;
-                for (int i = 0; i < 4; i++)
+                int rowCount = Mathf.Min(list.Count, metaUpgradeNameTexts.Length);
+                for (int i = 0; i < rowCount; i++)
                 {
                     int index = i;
                     var upgrade = list[i];
@@ -641,36 +642,43 @@ namespace Stonehold
             int selected = SaveManager.SelectedStageIndex;
             if (stageNameText != null && stageDescText != null)
             {
-                if (selected == 0)
+                string[] names = { "Castle Road", "Highlands", "Frozen Frontier" };
+                string[] descriptions =
                 {
-                    if (stageNumText != null) stageNumText.text = "STAGE 1";
-                    stageNameText.text = "<b>Castle Road</b>";
-                    stageDescText.text = "Defend the road to the keep against grunts, armored troops, runners, and the final boss.\n" +
-                                         "<color=#ffd759>Progress: " + (SaveManager.Stage1Completed ? "Completed (3/3 Stars)" : "Not Cleared (0/3 Stars)") + "</color>";
-                    if (stageRewardText != null) stageRewardText.text = "Rewards: 🪙 Gold  💎 Gems  📦 Common Chest";
-                    if (startButtonLabel != null) startButtonLabel.text = "BATTLE";
-                    if (startButton != null) startButton.interactable = true;
-                }
-                else
+                    "Defend the road to the keep against grunts, armored troops, runners, and the final boss.",
+                    "Defend the highland pass against heavier enemy formations.",
+                    "Hold the frozen frontier against faster and tougher waves."
+                };
+                string[] rewards =
                 {
-                    if (stageNumText != null) stageNumText.text = "STAGE 2";
-                    stageNameText.text = "<b>Highlands</b>";
-                    bool isUnlocked = SaveManager.HighestStageUnlocked >= 2;
-                    stageDescText.text = isUnlocked
-                        ? "Defend the highland pass. Expected enemy types: Giants, Wyverns.\n<color=#ffd759>Progress: Not Cleared</color>"
-                        : "Defend the highland pass. Expected enemy types: Giants, Wyverns.\n<color=#ff5959>LOCKED: Complete Stage 1 to unlock</color>";
-                    if (stageRewardText != null) stageRewardText.text = isUnlocked ? "Rewards: 🪙 Gold  💎 Gems  📦 Rare Chest" : "Rewards: LOCKED";
+                    "Rewards: 🪙 Gold  💎 Gems  📦 Common Chest",
+                    "Rewards: 🪙 Gold  💎 Gems  📦 Rare Chest",
+                    "Rewards: 🪙 Gold  💎 Gems  📦 Epic Chest"
+                };
 
-                    if (startButtonLabel != null) startButtonLabel.text = isUnlocked ? "BATTLE" : "LOCKED";
-                    if (startButton != null) startButton.interactable = isUnlocked;
-                }
+                int stageIndex = Mathf.Clamp(selected, 0, names.Length - 1);
+                int stageNumber = stageIndex + 1;
+                bool isUnlocked = SaveManager.HighestStageUnlocked >= stageNumber;
+                bool isCompleted = stageIndex == 0
+                    ? SaveManager.Stage1Completed
+                    : SaveManager.HighestStageUnlocked > stageNumber;
+
+                if (stageNumText != null) stageNumText.text = "STAGE " + stageNumber;
+                stageNameText.text = "<b>" + names[stageIndex] + "</b>";
+                stageDescText.text = descriptions[stageIndex] + "\n" +
+                    (isUnlocked
+                        ? "<color=#ffd759>Progress: " + (isCompleted ? "Completed" : "Not Cleared") + "</color>"
+                        : "<color=#ff5959>LOCKED: Complete Stage " + (stageNumber - 1) + " to unlock</color>");
+                if (stageRewardText != null) stageRewardText.text = isUnlocked ? rewards[stageIndex] : "Rewards: LOCKED";
+                if (startButtonLabel != null) startButtonLabel.text = isUnlocked ? "BATTLE" : "LOCKED";
+                if (startButton != null) startButton.interactable = isUnlocked;
             }
         }
 
         private void CycleStage(int delta)
         {
             int newIndex = SaveManager.SelectedStageIndex + delta;
-            if (newIndex >= 0 && newIndex < 2)
+            if (newIndex >= 0 && newIndex < 3)
             {
                 SaveManager.SetSelectedStage(newIndex);
                 RefreshStageSelection();
@@ -732,7 +740,8 @@ namespace Stonehold
             if (MetaUpgradeManager.Instance == null) return;
 
             var list = MetaUpgradeManager.Instance.Upgrades;
-            for (int i = 0; i < 4; i++)
+            int rowCount = Mathf.Min(list.Count, metaUpgradeNameTexts.Length);
+            for (int i = 0; i < rowCount; i++)
             {
                 var upgrade = list[i];
                 int level = upgrade.currentLevel;

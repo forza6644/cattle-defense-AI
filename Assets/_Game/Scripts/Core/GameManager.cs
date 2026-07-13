@@ -270,10 +270,7 @@ namespace Stonehold
             if (victory)
             {
                 SaveManager.RecordWin();
-                if (SaveManager.SelectedStageIndex == 0)
-                {
-                    SaveManager.CompleteStage1();
-                }
+                SaveManager.CompleteStage(SaveManager.SelectedStageIndex);
                 SetState(GameState.Victory);
             }
             else
