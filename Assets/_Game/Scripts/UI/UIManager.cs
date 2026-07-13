@@ -9,7 +9,7 @@ namespace Stonehold
 {
     /// <summary>
     /// Builds and runs the whole in-game UI from code (legacy uGUI Text, built-in
-    /// font, responsive CanvasScaler): HUD (gold, wave, castle HP), enemy health
+    /// font, responsive CanvasScaler): HUD (gold, wave, castle HP), combat feedback
     /// bars, damage numbers and gold popups, animated wave banner, build menu,
     /// tower upgrade/sell panel, pause menu and victory/defeat screens.
     /// Everything it displays is driven by gameplay events — no game logic here.
@@ -85,14 +85,10 @@ namespace Stonehold
         private float hintTimer;
         private bool hasShownTargetingHint;
 
-        // Floating text + enemy bars
-        private RectTransform barsRoot;
+        // Floating combat text
         private RectTransform floatingRoot;
         private RectTransform safeAreaRect;
         private readonly Queue<Text> floatingPool = new Queue<Text>();
-        private readonly List<RectTransform> barBackgrounds = new List<RectTransform>();
-        private readonly List<RectTransform> barFills = new List<RectTransform>();
-        private readonly List<Image> barFillImages = new List<Image>();
 
         // Gameplay references
         private EconomyManager economy;
@@ -137,7 +133,7 @@ namespace Stonehold
                 }
                 if (xpBgImage != null)
                 {
-                    xpBgImage.rectTransform.anchoredPosition = new Vector2(175f, -45f);
+                    xpBgImage.rectTransform.anchoredPosition = new Vector2(175f, -72f);
                 }
             }
 
@@ -505,64 +501,6 @@ namespace Stonehold
 
             text.gameObject.SetActive(false);
             floatingPool.Enqueue(text);
-        }
-
-        // ---------------------------------------------------------- Enemy bars
-
-        private void LateUpdate()
-        {
-            var enemies = EnemyManager.All;
-
-            while (barBackgrounds.Count < enemies.Count)
-            {
-                CreateEnemyBar();
-            }
-
-            for (int i = 0; i < barBackgrounds.Count; i++)
-            {
-                Enemy enemy = i < enemies.Count ? enemies[i] : null;
-                Vector2 local = default;
-                float pct = enemy != null && enemy.MaxHealth > 0f ? Mathf.Clamp01(enemy.CurrentHealth / enemy.MaxHealth) : 0f;
-
-                // Only show a bar for enemies that exist, are damaged, and are on-screen.
-                bool used = enemy != null
-                    && enemy.MaxHealth > 0f
-                    && pct < 0.999f
-                    && TryWorldToCanvas(enemy.transform.position + Vector3.up * 1.4f, out local);
-
-                barBackgrounds[i].gameObject.SetActive(used);
-                if (!used)
-                {
-                    continue;
-                }
-
-                barBackgrounds[i].anchoredPosition = local;
-                barFills[i].localScale = new Vector3(pct, 1f, 1f);
-                barFillImages[i].color = pct > 0.5f
-                    ? Color.Lerp(new Color(0.95f, 0.85f, 0.2f), new Color(0.35f, 0.85f, 0.3f), (pct - 0.5f) * 2f)
-                    : Color.Lerp(new Color(0.9f, 0.2f, 0.2f), new Color(0.95f, 0.85f, 0.2f), pct * 2f);
-            }
-        }
-
-        private void CreateEnemyBar()
-        {
-            Image bg = CreateImage(barsRoot, "EnemyBarBg", new Color(0f, 0f, 0f, 0.65f));
-            RectTransform bgRect = bg.rectTransform;
-            bgRect.anchorMin = bgRect.anchorMax = new Vector2(0.5f, 0.5f);
-            bgRect.sizeDelta = new Vector2(64f, 9f);
-
-            Image fill = CreateImage(bgRect, "Fill", new Color(0.9f, 0.25f, 0.25f));
-            RectTransform fillRect = fill.rectTransform;
-            fillRect.anchorMin = new Vector2(0f, 0f);
-            fillRect.anchorMax = new Vector2(1f, 1f);
-            fillRect.pivot = new Vector2(0f, 0.5f);
-            fillRect.offsetMin = new Vector2(1.5f, 1.5f);
-            fillRect.offsetMax = new Vector2(-1.5f, -1.5f);
-
-            bg.gameObject.SetActive(false);
-            barBackgrounds.Add(bgRect);
-            barFills.Add(fillRect);
-            barFillImages.Add(fill);
         }
 
         private bool TryWorldToCanvas(Vector3 worldPos, out Vector2 local)
@@ -1186,8 +1124,8 @@ namespace Stonehold
             }
             scaler.matchWidthOrHeight = 0.5f;
 
-            // Draw order: enemy bars underneath, floating text, HUD, panels on top.
-            barsRoot = CreateRoot(canvasRect, "EnemyBars");
+            // World-space enemy bars are owned by EnemyHealthBar. Keep only damage
+            // numbers on this canvas so each enemy has exactly one health bar.
             floatingRoot = CreateRoot(canvasRect, "FloatingText");
 
             // Safe Area Container
@@ -1197,9 +1135,9 @@ namespace Stonehold
             goldText = CreateText(safeAreaRect, "GoldText", "Gold: 0", 40, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
             SetAnchored(goldText.rectTransform, new Vector2(0f, 1f), new Vector2(25f, -20f), new Vector2(400f, 60f));
 
-            // XP Bar (top-left, clear of the centered castle-health bar)
+            // XP and combat controls share one clean row below the primary counters.
             xpBgImage = CreateImage(safeAreaRect, "XpBarBg", new Color(0f, 0f, 0f, 0.6f));
-            SetAnchored(xpBgImage.rectTransform, new Vector2(0f, 1f), new Vector2(175f, -145f), new Vector2(300f, 26f));
+            SetAnchored(xpBgImage.rectTransform, new Vector2(0f, 1f), new Vector2(175f, -72f), new Vector2(300f, 28f));
             xpFillImage = CreateImage(xpBgImage.rectTransform, "XpFill", new Color(0.6f, 0.25f, 0.85f));
             xpFill = xpFillImage.rectTransform;
             xpFill.anchorMin = Vector2.zero;
@@ -1229,9 +1167,9 @@ namespace Stonehold
 
             BuildWaveControl();
 
-            // Castle HP is a primary objective, so keep it large and centered at the top.
+            // Castle HP sits with the castle at the bottom of the battlefield.
             Image hpBg = CreateImage(safeAreaRect, "CastleHpBar", new Color(0f, 0f, 0f, 0.6f));
-            SetAnchored(hpBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -95f), new Vector2(520f, 42f));
+            SetAnchored(hpBg.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 52f), new Vector2(680f, 46f));
             castleHpFillImage = CreateImage(hpBg.rectTransform, "Fill", new Color(0.25f, 0.8f, 0.3f));
             castleHpFill = castleHpFillImage.rectTransform;
             castleHpFill.anchorMin = Vector2.zero;
@@ -1245,14 +1183,14 @@ namespace Stonehold
             castleHpText.rectTransform.offsetMin = Vector2.zero;
             castleHpText.rectTransform.offsetMax = Vector2.zero;
 
-            // Pause & Speed buttons (side-by-side, under the HP bar)
+            // Pause and speed align with the XP row.
             CreateButton(safeAreaRect, "PauseButton", "Pause", new Vector2(95f, 36f), new Vector2(1f, 1f),
-                new Vector2(-150f, -80f), () => { if (game != null) game.TogglePause(); });
+                new Vector2(-150f, -72f), () => { if (game != null) game.TogglePause(); });
 
             // Speed button: cycles 1x -> 1.5x -> 2x -> 1x.
             Button speedButton = CreateButton(safeAreaRect, "SpeedButton",
                 game != null ? FormatSpeed(game.GameSpeed) : "1x",
-                new Vector2(95f, 36f), new Vector2(1f, 1f), new Vector2(-50f, -80f),
+                new Vector2(95f, 36f), new Vector2(1f, 1f), new Vector2(-50f, -72f),
                 () =>
                 {
                     if (game != null)
