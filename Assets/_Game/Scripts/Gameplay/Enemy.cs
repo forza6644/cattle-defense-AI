@@ -83,6 +83,12 @@ namespace Stonehold
             }
 
             currentHealth = data.health;
+            EnemyHealthBar healthBar = GetComponent<EnemyHealthBar>();
+            if (healthBar == null)
+            {
+                healthBar = gameObject.AddComponent<EnemyHealthBar>();
+            }
+            healthBar.Configure(this);
             animator = GetComponent<ProceduralAnimator>();
             if (animator != null)
             {

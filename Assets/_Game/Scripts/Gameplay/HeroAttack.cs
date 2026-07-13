@@ -16,6 +16,21 @@ namespace Stonehold
         private TargetingMode currentTargetingMode;
 
         public HeroDefinition Definition => definition;
+        public bool HasSignatureAbility => definition != null && definition.abilityType != HeroAbilityType.None;
+        public bool IsAbilityReady => HasSignatureAbility && abilityCooldown <= 0f;
+        public float AbilityCharge01
+        {
+            get
+            {
+                if (!HasSignatureAbility)
+                {
+                    return 0f;
+                }
+
+                float duration = Mathf.Max(1f, definition.abilityCooldown);
+                return 1f - Mathf.Clamp01(abilityCooldown / duration);
+            }
+        }
         public TargetingMode CurrentTargetingMode
         {
             get => currentTargetingMode;

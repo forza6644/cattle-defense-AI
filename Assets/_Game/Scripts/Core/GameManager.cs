@@ -55,6 +55,10 @@ namespace Stonehold
             {
                 gameObject.AddComponent<RunProgressionManager>();
             }
+            if (GetComponent<StagePresentationController>() == null)
+            {
+                gameObject.AddComponent<StagePresentationController>();
+            }
             if (RunModifierManager.Instance == null)
             {
                 GameObject rmGo = new GameObject("RunModifierManager", typeof(RunModifierManager));

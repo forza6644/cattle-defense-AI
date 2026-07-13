@@ -74,6 +74,12 @@ namespace Stonehold
             SetHeroVisuals(hero, instance);
 
             currentHero.Configure(hero);
+            HeroAbilityIndicator abilityIndicator = instance.GetComponent<HeroAbilityIndicator>();
+            if (abilityIndicator == null)
+            {
+                abilityIndicator = instance.AddComponent<HeroAbilityIndicator>();
+            }
+            abilityIndicator.Configure(currentHero, GetHeroIdentityColor(hero.id));
 
             Collider[] heroColliders = instance.GetComponentsInChildren<Collider>();
             if (heroColliders.Length == 0)
@@ -91,6 +97,20 @@ namespace Stonehold
                 proxy.Configure(this);
             }
             return true;
+        }
+
+        private static Color GetHeroIdentityColor(string heroId)
+        {
+            switch (heroId)
+            {
+                case "archer": return new Color(0.45f, 0.9f, 0.3f);
+                case "bombardier": return new Color(1f, 0.5f, 0.12f);
+                case "frost_mage": return new Color(0.25f, 0.85f, 1f);
+                case "fire_mage": return new Color(1f, 0.22f, 0.08f);
+                case "electric_engineer": return new Color(1f, 0.92f, 0.12f);
+                case "sniper": return new Color(0.75f, 0.4f, 1f);
+                default: return Color.white;
+            }
         }
 
         public void ClearHero()
