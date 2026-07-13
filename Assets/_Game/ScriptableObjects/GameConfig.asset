@@ -15,7 +15,7 @@ MonoBehaviour:
   startingGold: 150
   waveClearGoldBonus: 75
   sellRefundPercent: 0.6
-  castleMaxHealth: 15
+  castleMaxHealth: 50
   stages:
   - {fileID: 11400000, guid: cec3e989e4237f848a3ee7578ea50c47, type: 2}
   waves:
@@ -30,3 +30,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ad54c4adcaa748b7872efe454c6835f0, type: 2}
   - {fileID: 11400000, guid: 04def31d071444c180015196452e626e, type: 2}
   timeBetweenWaves: 5
+  draftRunMode: 1
+  defaultStartingDefender: {fileID: 0}

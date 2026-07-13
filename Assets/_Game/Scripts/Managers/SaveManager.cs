@@ -34,6 +34,7 @@ namespace Stonehold
         private static readonly string[] CurrentMetaUpgradeIds =
         {
             "castle_hp",
+            "castle_regen",
             "damage",
             "fire_rate",
             "range"

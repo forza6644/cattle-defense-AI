@@ -6,6 +6,7 @@ namespace Stonehold
     public enum MetaUpgradeEffectType
     {
         CastleHp,
+        CastleRegen,
         GlobalDamage,
         GlobalFireRate,
         GlobalRange
@@ -74,6 +75,7 @@ namespace Stonehold
         {
             upgrades.Clear();
             upgrades.Add(new MetaUpgrade("castle_hp", "Castle Fortification", "+1 Castle HP", 10, 100, 1.5f, MetaUpgradeEffectType.CastleHp, 1f));
+            upgrades.Add(new MetaUpgrade("castle_regen", "Castle Regeneration", "+1 HP every 5 seconds", 10, 125, 1.5f, MetaUpgradeEffectType.CastleRegen, 1f));
             upgrades.Add(new MetaUpgrade("damage", "Sharper Weapons", "+5% Damage", 10, 150, 1.5f, MetaUpgradeEffectType.GlobalDamage, 0.05f));
             upgrades.Add(new MetaUpgrade("fire_rate", "Faster Defenders", "+3% Fire Rate", 10, 150, 1.5f, MetaUpgradeEffectType.GlobalFireRate, 0.03f));
             upgrades.Add(new MetaUpgrade("range", "Longer Watch", "+3% Range", 10, 120, 1.5f, MetaUpgradeEffectType.GlobalRange, 0.03f));
@@ -113,6 +115,15 @@ namespace Stonehold
                 return Mathf.RoundToInt(u.currentLevel * u.effectValuePerLevel);
             }
             return 0;
+        }
+
+        public int GetCastleRegenPerTick()
+        {
+            var u = upgrades.Find(x => x.id == "castle_regen");
+            int upgradeBonus = u != null
+                ? Mathf.RoundToInt(u.currentLevel * u.effectValuePerLevel)
+                : 0;
+            return 1 + upgradeBonus;
         }
 
         public float GetGlobalDamageMultiplier()

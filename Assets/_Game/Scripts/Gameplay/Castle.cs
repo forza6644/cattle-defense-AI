@@ -11,6 +11,9 @@ namespace Stonehold
     public class Castle : MonoBehaviour
     {
         [SerializeField] private GameConfig config;
+        private const float RegenIntervalSeconds = 5f;
+        private float regenTimer;
+
 
         /// <summary>Raised whenever HP changes.</summary>
         public event Action HealthChanged;
@@ -41,6 +44,33 @@ namespace Stonehold
             }
 
             CurrentHealth = MaxHealth;
+        }
+
+        private void Update()
+        {
+            if (IsGameOver)
+            {
+                return;
+            }
+
+            regenTimer += Time.deltaTime;
+            if (regenTimer < RegenIntervalSeconds)
+            {
+                return;
+            }
+
+            int elapsedTicks = Mathf.FloorToInt(regenTimer / RegenIntervalSeconds);
+            regenTimer -= elapsedTicks * RegenIntervalSeconds;
+
+            if (CurrentHealth >= MaxHealth)
+            {
+                return;
+            }
+
+            int regenPerTick = MetaUpgradeManager.Instance != null
+                ? MetaUpgradeManager.Instance.GetCastleRegenPerTick()
+                : 1;
+            Repair(regenPerTick * elapsedTicks);
         }
 
         /// <summary>Called by an enemy when it reaches the castle.</summary>
