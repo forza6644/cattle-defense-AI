@@ -15,6 +15,10 @@ namespace Stonehold
         [Header("Waves")]
         public WaveData[] waves;
 
+        [Header("Stage Pacing")]
+        [Min(0.5f)] public float enemyCountMultiplier = 1f;
+        [Range(0.5f, 1.5f)] public float spawnIntervalMultiplier = 1f;
+
         [Header("Roster Info")]
         public EnemyData[] expectedEnemyTypes;
     }

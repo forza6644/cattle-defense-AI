@@ -49,6 +49,7 @@ namespace Stonehold
         public float NextWaveCountdown { get; private set; }
 
         private WaveData[] activeWaves;
+        private StageData activeStage;
         private Castle castleComponent;
         private WaypointPath waypointPath;
         private bool startNextWaveRequested;
@@ -63,6 +64,7 @@ namespace Stonehold
                 var stage = config.stages[SaveManager.SelectedStageIndex];
                 if (stage != null && stage.waves != null && stage.waves.Length > 0)
                 {
+                    activeStage = stage;
                     activeWaves = stage.waves;
                 }
             }
@@ -130,9 +132,12 @@ namespace Stonehold
                         : 0f;
                     float progressionDensity = Mathf.Lerp(0.78f, 1.25f, waveProgress);
                     float randomDensity = UnityEngine.Random.Range(1f - countVariance, 1f + countVariance);
+                    float stageDensity = activeStage != null
+                        ? Mathf.Max(0.5f, activeStage.enemyCountMultiplier)
+                        : 1f;
                     int adjustedCount = Mathf.Max(
                         1,
-                        Mathf.CeilToInt(entry.count * enemyCountMultiplier * progressionDensity * randomDensity));
+                        Mathf.CeilToInt(entry.count * enemyCountMultiplier * progressionDensity * randomDensity * stageDensity));
                     for (int i = 0; i < adjustedCount; i++)
                     {
                         if (IsGameOver)
@@ -141,7 +146,10 @@ namespace Stonehold
                         }
 
                         SpawnEnemy(entry.enemy);
-                        float baseInterval = Mathf.Max(0.05f, entry.spawnInterval * spawnIntervalMultiplier);
+                        float stageInterval = activeStage != null
+                            ? Mathf.Clamp(activeStage.spawnIntervalMultiplier, 0.5f, 1.5f)
+                            : 1f;
+                        float baseInterval = Mathf.Max(0.05f, entry.spawnInterval * spawnIntervalMultiplier * stageInterval);
                         float randomizedInterval = baseInterval * UnityEngine.Random.Range(0.7f, 1.3f);
                         yield return new WaitForSeconds(randomizedInterval);
                     }

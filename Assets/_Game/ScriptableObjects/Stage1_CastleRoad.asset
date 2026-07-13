@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.StageData
   stageId: stage_1_castle_road
   stageDisplayName: Castle Road
-  stageDescription: Defend the road to the keep against grunts, armored troops, runners,
-    and the final boss.
+  stageDescription: Learn the core defenses across 9 escalating formations, then
+    defeat the Warlord.
   stageNumber: 1
   stageMode: 0
   waves:
@@ -29,4 +29,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e3df568a28da4fc0a3a1481e3f3705b1, type: 2}
   - {fileID: 11400000, guid: ad54c4adcaa748b7872efe454c6835f0, type: 2}
   - {fileID: 11400000, guid: 04def31d071444c180015196452e626e, type: 2}
-  expectedEnemyTypes: []
+  enemyCountMultiplier: 0.9
+  spawnIntervalMultiplier: 1.05
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+  - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+  - {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+  - {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+  - {fileID: 11400000, guid: 94490734d9d14e2d929ee334fc31ca44, type: 2}
