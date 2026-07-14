@@ -15,7 +15,7 @@ MonoBehaviour:
   id: sniper
   displayName: Sniper
   icon: {fileID: 0}
-  heroPrefab: {fileID: 1423488070482060831, guid: 5d6e708190a1b2c3d4e5f60718293a4b, type: 3}
+  heroPrefab: {fileID: 6207163793449953218, guid: 5ac29facaa0ad9a41bfb22d4c8c0366b, type: 3}
   weapon: {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120007, type: 2}
   baseDamage: 30
   baseFireRate: 0.4

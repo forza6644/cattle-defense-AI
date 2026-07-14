@@ -15,7 +15,7 @@ MonoBehaviour:
   id: fire_mage
   displayName: Fire Mage
   icon: {fileID: 0}
-  heroPrefab: {fileID: 6746232236379199591, guid: 4c5d6e708190a1b2c3d4e5f60718293a, type: 3}
+  heroPrefab: {fileID: 7732926408394964600, guid: 46c5fd0f43f46734288b3f72c0dc3219, type: 3}
   weapon: {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120003, type: 2}
   baseDamage: 8
   baseFireRate: 1
