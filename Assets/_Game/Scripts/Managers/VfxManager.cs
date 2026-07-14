@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Stonehold
 {
@@ -41,7 +42,9 @@ namespace Stonehold
 
         private readonly Dictionary<GameObject, Queue<ParticleSystem>> pools = new Dictionary<GameObject, Queue<ParticleSystem>>();
         private readonly Dictionary<GameObject, EffectDefaults> prefabDefaults = new Dictionary<GameObject, EffectDefaults>();
+        private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>();
         private Transform castle;
+        private Material abilityTraceMaterial;
 
         private void Awake()
         {
@@ -83,6 +86,11 @@ namespace Stonehold
             {
                 Instance = null;
             }
+
+            if (abilityTraceMaterial != null)
+            {
+                Destroy(abilityTraceMaterial);
+            }
         }
 
         // -------------------------------------------------------- Public Play API
@@ -121,6 +129,46 @@ namespace Stonehold
         public void PlaySniperImpact(Vector3 pos)
         {
             Play(hitPrefab, pos, new Color(0.85f, 0.3f, 1f, 1f), 0.7f);
+        }
+
+        public void PlayHeroMuzzle(Vector3 pos, string heroId)
+        {
+            Play(hitPrefab, pos, GetHeroColor(heroId), heroId == "bombardier" ? 0.75f : 0.5f);
+        }
+
+        public void PlayHeroAbilityCast(Vector3 pos, string heroId)
+        {
+            Play(upgradePrefab != null ? upgradePrefab : hitPrefab, pos, GetHeroColor(heroId), 0.8f);
+        }
+
+        public void PlayAbilityTrace(Vector3 start, Vector3 end, string heroId, float width = 0.1f)
+        {
+            LineRenderer trace = GetAbilityTrace();
+            Color color = GetHeroColor(heroId);
+            trace.startColor = color;
+            Color endColor = color;
+            endColor.a = 0.65f;
+            trace.endColor = endColor;
+            trace.startWidth = width;
+            trace.endWidth = width * 0.45f;
+            trace.SetPosition(0, start);
+            trace.SetPosition(1, end);
+            trace.enabled = true;
+            StartCoroutine(ReturnAbilityTrace(trace));
+        }
+
+        public static Color GetHeroColor(string heroId)
+        {
+            switch (heroId)
+            {
+                case "archer": return new Color(0.45f, 0.95f, 0.3f, 1f);
+                case "bombardier": return new Color(1f, 0.48f, 0.1f, 1f);
+                case "frost_mage": return new Color(0.25f, 0.85f, 1f, 1f);
+                case "fire_mage": return new Color(1f, 0.2f, 0.04f, 1f);
+                case "electric_engineer": return new Color(1f, 0.95f, 0.12f, 1f);
+                case "sniper": return new Color(0.82f, 0.32f, 1f, 1f);
+                default: return Color.white;
+            }
         }
 
         // ----------------------------------------------------------- Event hooks
@@ -217,6 +265,74 @@ namespace Stonehold
             }
 
             return ps;
+        }
+
+        private LineRenderer GetAbilityTrace()
+        {
+            if (abilityTracePool.Count > 0)
+            {
+                return abilityTracePool.Dequeue();
+            }
+
+            GameObject go = new GameObject("HeroAbilityTrace");
+            go.transform.SetParent(transform, false);
+            LineRenderer trace = go.AddComponent<LineRenderer>();
+            trace.useWorldSpace = true;
+            trace.positionCount = 2;
+            trace.alignment = LineAlignment.View;
+            trace.textureMode = LineTextureMode.Stretch;
+            trace.numCapVertices = 2;
+            trace.numCornerVertices = 2;
+            trace.shadowCastingMode = ShadowCastingMode.Off;
+            trace.receiveShadows = false;
+            trace.sharedMaterial = GetAbilityTraceMaterial();
+            trace.enabled = false;
+            return trace;
+        }
+
+        private Material GetAbilityTraceMaterial()
+        {
+            if (abilityTraceMaterial != null)
+            {
+                return abilityTraceMaterial;
+            }
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null)
+            {
+                shader = Shader.Find("Sprites/Default");
+            }
+
+            abilityTraceMaterial = new Material(shader)
+            {
+                name = "Runtime Hero Ability Trace",
+                renderQueue = (int)RenderQueue.Transparent
+            };
+            if (abilityTraceMaterial.HasProperty("_BaseColor"))
+            {
+                abilityTraceMaterial.SetColor("_BaseColor", Color.white);
+            }
+            if (abilityTraceMaterial.HasProperty("_Surface"))
+            {
+                abilityTraceMaterial.SetFloat("_Surface", 1f);
+            }
+            if (abilityTraceMaterial.HasProperty("_ZWrite"))
+            {
+                abilityTraceMaterial.SetFloat("_ZWrite", 0f);
+            }
+            return abilityTraceMaterial;
+        }
+
+        private IEnumerator ReturnAbilityTrace(LineRenderer trace)
+        {
+            yield return new WaitForSeconds(0.14f);
+            if (trace == null)
+            {
+                yield break;
+            }
+
+            trace.enabled = false;
+            abilityTracePool.Enqueue(trace);
         }
 
         private IEnumerator ReturnWhenDone(GameObject prefab, ParticleSystem instance)

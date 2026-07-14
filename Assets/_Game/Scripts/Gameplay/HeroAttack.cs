@@ -149,10 +149,24 @@ namespace Stonehold
                 animator.PlayAttack();
             }
 
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayHeroAbilityCast(transform.position + projectileLaunchOffset, definition.id);
+            }
+
             float abilityDamage = GetModifiedDamage() * Mathf.Max(1f, definition.abilityPowerMultiplier);
             switch (definition.abilityType)
             {
                 case HeroAbilityType.PowerShot:
+                    if (VfxManager.Instance != null)
+                    {
+                        VfxManager.Instance.PlayAbilityTrace(
+                            transform.position + projectileLaunchOffset,
+                            primaryTarget.transform.position + Vector3.up * 0.25f,
+                            definition.id,
+                            0.16f);
+                        VfxManager.Instance.PlaySniperImpact(primaryTarget.transform.position);
+                    }
                     ApplyAbilityHit(primaryTarget, abilityDamage, StatusEffectType.None, 0f, 0f);
                     break;
                 case HeroAbilityType.FrostNova:
@@ -172,10 +186,6 @@ namespace Stonehold
                     HitMultipleEnemies(
                         abilityDamage,
                         definition.abilityType == HeroAbilityType.ChainStorm ? StatusEffectType.Shock : StatusEffectType.None);
-                    if (definition.abilityType == HeroAbilityType.ChainStorm && VfxManager.Instance != null)
-                    {
-                        VfxManager.Instance.PlayShockImpact(primaryTarget.transform.position);
-                    }
                     break;
             }
         }
@@ -208,6 +218,22 @@ namespace Stonehold
                 }
 
                 ApplyAbilityHit(enemy, damage, effectType, effectType == StatusEffectType.Shock ? 1f : 0f, effectType == StatusEffectType.Shock ? 3f : 0f);
+                if (VfxManager.Instance != null)
+                {
+                    VfxManager.Instance.PlayAbilityTrace(
+                        transform.position + projectileLaunchOffset,
+                        enemy.transform.position + Vector3.up * 0.25f,
+                        definition.id,
+                        effectType == StatusEffectType.Shock ? 0.11f : 0.07f);
+                    if (effectType == StatusEffectType.Shock)
+                    {
+                        VfxManager.Instance.PlayShockImpact(enemy.transform.position);
+                    }
+                    else
+                    {
+                        VfxManager.Instance.PlayHit(enemy.transform.position, VfxManager.GetHeroColor(definition.id));
+                    }
+                }
                 hitsRemaining--;
             }
         }
@@ -233,6 +259,11 @@ namespace Stonehold
             if (animator != null)
             {
                 animator.PlayAttack();
+            }
+
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayHeroMuzzle(transform.position + projectileLaunchOffset, definition.id);
             }
 
             float splashRadius = weapon.attackType == AttackType.Splash ? weapon.splashRadius : 0f;
