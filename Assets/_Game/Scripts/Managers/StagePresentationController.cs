@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Stonehold
@@ -9,7 +10,14 @@ namespace Stonehold
     public sealed class StagePresentationController : MonoBehaviour
     {
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
+        private static readonly Dictionary<Material, Material>[] RuntimeMaterials =
+        {
+            new Dictionary<Material, Material>(),
+            new Dictionary<Material, Material>(),
+            new Dictionary<Material, Material>()
+        };
 
         private const string NatureDressingName = "Stage1NatureDressing";
         private const string RuntimeDressingName = "StageIdentity_Runtime";
@@ -148,10 +156,146 @@ namespace Stonehold
             root.transform.SetParent(environment, false);
 
             BuildAtmosphere(root.transform, stageIndex);
+            BuildImportedNature(root.transform, stageIndex);
             if (stageIndex == 2)
             {
                 BuildFrostCrystals(root.transform);
             }
+        }
+
+        private static void BuildImportedNature(Transform parent, int stageIndex)
+        {
+            switch (stageIndex)
+            {
+                case 1:
+                    SpawnNatureProp(parent, "Rock Cliff 1", new Vector3(-7.8f, 0f, 5.8f), 0.72f, 22f, stageIndex);
+                    SpawnNatureProp(parent, "Standard Rock 3", new Vector3(7.6f, 0f, 4.5f), 0.82f, 118f, stageIndex);
+                    SpawnNatureProp(parent, "Standard Rock 1", new Vector3(-7.5f, 0f, -0.4f), 0.7f, 205f, stageIndex);
+                    SpawnNatureProp(parent, "Tiny Rock 2", new Vector3(7.4f, 0f, -4.6f), 1.15f, 62f, stageIndex);
+                    SpawnNatureProp(parent, "Log", new Vector3(-6.8f, 0f, 2.6f), 0.65f, 28f, stageIndex);
+                    SpawnNatureProp(parent, "Stump", new Vector3(6.9f, 0f, 0.9f), 0.62f, 145f, stageIndex);
+                    SpawnNatureProp(parent, "Bush", new Vector3(-7.2f, 0f, -3.6f), 0.54f, 14f, stageIndex);
+                    break;
+                case 2:
+                    SpawnNatureProp(parent, "Spruce 1", new Vector3(-7.8f, 0f, 6.2f), 0.46f, 12f, stageIndex);
+                    SpawnNatureProp(parent, "Spruce 2", new Vector3(7.7f, 0f, 5.2f), 0.43f, 188f, stageIndex);
+                    SpawnNatureProp(parent, "Spruce 1", new Vector3(-7.7f, 0f, -2.2f), 0.4f, 75f, stageIndex);
+                    SpawnNatureProp(parent, "Standard Rock 1", new Vector3(7.5f, 0f, 1.2f), 0.7f, 126f, stageIndex);
+                    SpawnNatureProp(parent, "Standard Rock 3", new Vector3(-7.4f, 0f, 2.9f), 0.62f, 248f, stageIndex);
+                    SpawnNatureProp(parent, "Tiny Rock 2", new Vector3(7.3f, 0f, -4.8f), 1.05f, 34f, stageIndex);
+                    SpawnNatureProp(parent, "Stump", new Vector3(-6.8f, 0f, -5.1f), 0.55f, 210f, stageIndex);
+                    break;
+                default:
+                    SpawnNatureProp(parent, "Spruce 1", new Vector3(-7.8f, 0f, 6.4f), 0.5f, 8f, stageIndex);
+                    SpawnNatureProp(parent, "Spruce 2", new Vector3(7.7f, 0f, 5.6f), 0.46f, 176f, stageIndex);
+                    SpawnNatureProp(parent, "Spruce 2", new Vector3(-7.7f, 0f, -1.7f), 0.43f, 42f, stageIndex);
+                    SpawnNatureProp(parent, "Spruce 1", new Vector3(7.8f, 0f, -2.8f), 0.45f, 214f, stageIndex);
+                    SpawnNatureProp(parent, "Bush", new Vector3(-7.1f, 0f, 3.3f), 0.52f, 24f, stageIndex);
+                    SpawnNatureProp(parent, "Bush", new Vector3(7.1f, 0f, 1.4f), 0.48f, 132f, stageIndex);
+                    SpawnNatureProp(parent, "Flower", new Vector3(-6.9f, 0f, -4.5f), 0.62f, 18f, stageIndex);
+                    SpawnNatureProp(parent, "Grass", new Vector3(6.9f, 0f, -5f), 0.58f, 202f, stageIndex);
+                    SpawnNatureProp(parent, "Mushrooms Patch", new Vector3(-6.7f, 0f, 0.5f), 0.58f, 68f, stageIndex);
+                    break;
+            }
+        }
+
+        private static void SpawnNatureProp(
+            Transform parent,
+            string resourceName,
+            Vector3 localPosition,
+            float scale,
+            float yaw,
+            int stageIndex)
+        {
+            GameObject prefab = Resources.Load<GameObject>($"StageNature/{resourceName}");
+            if (prefab == null)
+            {
+                return;
+            }
+
+            GameObject instance = Instantiate(prefab, parent);
+            instance.name = $"Imported_{resourceName.Replace(' ', '_')}";
+            instance.transform.localPosition = localPosition;
+            instance.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            instance.transform.localScale *= scale;
+
+            Collider[] colliders = instance.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                Destroy(colliders[i]);
+            }
+
+            Renderer[] renderers = instance.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Material[] materials = renderers[i].sharedMaterials;
+                for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+                {
+                    materials[materialIndex] = GetUrpMaterial(materials[materialIndex], stageIndex);
+                }
+
+                renderers[i].sharedMaterials = materials;
+            }
+        }
+
+        private static Material GetUrpMaterial(Material source, int stageIndex)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            Dictionary<Material, Material> stageMaterials = RuntimeMaterials[Mathf.Clamp(stageIndex, 0, 2)];
+            if (stageMaterials.TryGetValue(source, out Material cached))
+            {
+                return cached;
+            }
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                return source;
+            }
+
+            Material material = new Material(shader)
+            {
+                name = $"{source.name}_URP_Stage{stageIndex + 1}",
+                enableInstancing = true
+            };
+
+            Texture texture = null;
+            if (source.HasProperty(BaseMapId))
+            {
+                texture = source.GetTexture(BaseMapId);
+            }
+            else if (source.HasProperty("_MainTex"))
+            {
+                texture = source.GetTexture("_MainTex");
+            }
+
+            if (texture != null)
+            {
+                material.SetTexture(BaseMapId, texture);
+            }
+
+            Color sourceColor = source.HasProperty("_Color") ? source.GetColor("_Color") : Color.white;
+            Color stageTint = stageIndex == 1
+                ? new Color(1f, 0.82f, 0.62f)
+                : stageIndex == 2
+                    ? new Color(0.72f, 0.9f, 1f)
+                    : Color.white;
+            material.SetColor(BaseColorId, Color.Lerp(sourceColor, sourceColor * stageTint, stageIndex == 0 ? 0.08f : 0.34f));
+
+            if (texture != null && source.HasProperty("_Cutoff"))
+            {
+                material.SetFloat("_AlphaClip", 1f);
+                material.SetFloat("_Cutoff", Mathf.Clamp(source.GetFloat("_Cutoff"), 0.25f, 0.75f));
+                material.EnableKeyword("_ALPHATEST_ON");
+                material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+            }
+
+            stageMaterials[source] = material;
+            return material;
         }
 
         private static void BuildAtmosphere(Transform parent, int stageIndex)
