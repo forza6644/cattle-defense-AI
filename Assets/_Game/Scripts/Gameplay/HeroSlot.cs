@@ -57,8 +57,9 @@ namespace Stonehold
 
             GameObject instance = Instantiate(hero.heroPrefab, transform.position, transform.rotation, transform);
             instance.name = hero.displayName + " Hero";
-            // Keep six defenders readable without crowding the full-width wall.
-            instance.transform.localScale = Vector3.one * 1.05f;
+            // The portrait camera is pulled back to show the complete battlefield.
+            // Compensate here so each defender still reads clearly above the wall.
+            instance.transform.localScale = Vector3.one * 2.1f;
 
             Tower[] legacyTowers = instance.GetComponentsInChildren<Tower>();
             for (int i = 0; i < legacyTowers.Length; i++)

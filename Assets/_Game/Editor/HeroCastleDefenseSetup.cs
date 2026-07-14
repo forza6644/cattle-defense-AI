@@ -176,20 +176,15 @@ namespace Stonehold.EditorTools
                 Object.DestroyImmediate(existingHeroSlots);
             }
 
-            GameObject parentAnchor = GameObject.Find("CastleWall");
-            if (parentAnchor == null)
-            {
-                parentAnchor = GameObject.Find("WallParapet");
-            }
+            // Hero slots are gameplay anchors, not wall geometry. Parenting them to
+            // the scaled wall enlarged the hero models and let the wall occlude them.
+            GameObject parentAnchor = GameObject.Find("Level");
 
             GameObject heroSlots = new GameObject("HeroSlots");
             if (parentAnchor != null)
             {
                 heroSlots.transform.SetParent(parentAnchor.transform);
             }
-
-            TowerSlot[] towerSlots = Object.FindObjectsByType<TowerSlot>(FindObjectsSortMode.None);
-            System.Array.Sort(towerSlots, (a, b) => string.Compare(a.name, b.name, System.StringComparison.Ordinal));
 
             HeroDefinition[] heroes = { archer, bombardier, frostMage, fireMage, electricEngineer, sniper };
 
@@ -198,22 +193,10 @@ namespace Stonehold.EditorTools
                 GameObject slotObject = new GameObject("HeroSlot_" + (i + 1).ToString("00"));
                 slotObject.transform.SetParent(heroSlots.transform);
 
-                if (towerSlots.Length > 0)
-                {
-                    int midIndex = towerSlots.Length / 2;
-                    TowerSlot centerSlot = towerSlots[midIndex];
-
-                    float spacing = 1.8f;
-                    float offsetIndex = i - (heroes.Length - 1) / 2.0f;
-
-                    slotObject.transform.position = centerSlot.transform.position + centerSlot.transform.right * (offsetIndex * spacing);
-                    slotObject.transform.rotation = centerSlot.transform.rotation;
-                }
-                else
-                {
-                    slotObject.transform.localPosition = Vector3.zero;
-                    slotObject.transform.localRotation = Quaternion.identity;
-                }
+                const float spacing = 2.2f;
+                float offsetIndex = i - (heroes.Length - 1) / 2.0f;
+                slotObject.transform.position = new Vector3(offsetIndex * spacing, 2.4f, -4.4f);
+                slotObject.transform.rotation = Quaternion.identity;
 
                 HeroSlot heroSlot = slotObject.AddComponent<HeroSlot>();
                 heroSlot.startingHero = heroes[i];

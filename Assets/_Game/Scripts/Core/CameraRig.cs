@@ -29,11 +29,13 @@ namespace Stonehold
             {
                 gameObject.AddComponent<PhysicsRaycaster>();
             }
-            if (cam != null && Screen.width < Screen.height)
+            if (cam != null)
             {
                 const float referenceAspect = 9f / 16f;
                 // Portrait composition: full-width wall in the lower quarter, with
-                // enough vertical battlefield to read large enemy formations.
+                // enough vertical battlefield to read large enemy formations. Keep
+                // this composition in editor Free Aspect too, so changing the Game
+                // view does not fall back to the old close-up camera.
                 const float referenceVerticalFov = 44f;
 
                 transform.localPosition = new Vector3(0f, 35f, -10.1f);
