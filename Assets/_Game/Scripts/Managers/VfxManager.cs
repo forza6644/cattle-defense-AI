@@ -42,7 +42,11 @@ namespace Stonehold
 
         private readonly Dictionary<GameObject, Queue<ParticleSystem>> pools = new Dictionary<GameObject, Queue<ParticleSystem>>();
         private readonly Dictionary<GameObject, EffectDefaults> prefabDefaults = new Dictionary<GameObject, EffectDefaults>();
-        private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>();
+
+        private readonly Queue<LineRenderer> impactRingPool = new Queue<LineRenderer>();
+        private const int MaxImpactRings = 12;
+        private int activeImpactRings;
+private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>();
         private Transform castle;
         private Material abilityTraceMaterial;
 
@@ -95,16 +99,25 @@ namespace Stonehold
 
         // -------------------------------------------------------- Public Play API
 
+
         public void PlayExplosion(Vector3 pos)
         {
-            Play(explosionPrefab, pos, null, 1.25f);
+            Color color = new Color(1f, 0.48f, 0.08f, 1f);
+            Play(explosionPrefab, pos, color, 1.25f);
+            PlayImpactRing(pos, color, 1.15f, 0.28f, 0.14f);
             if (CameraRig.Instance != null)
             {
                 CameraRig.Instance.Shake(0.4f);
             }
         }
 
-        public void PlayFrost(Vector3 pos) => Play(frostPrefab, pos, new Color(0.3f, 0.85f, 1f, 1f), 1.1f);
+
+        public void PlayFrost(Vector3 pos)
+        {
+            Color color = new Color(0.25f, 0.86f, 1f, 1f);
+            Play(frostPrefab, pos, color, 1.1f);
+            PlayImpactRing(pos, color, 0.85f, 0.24f, 0.1f);
+        }
         public void PlayBurn(Vector3 pos) => Play(explosionPrefab, pos, new Color(1f, 0.18f, 0.03f, 1f));
         public void PlayShock(Vector3 pos) => Play(hitPrefab, pos, new Color(1f, 0.95f, 0.1f, 1f));
         public void PlayHit(Vector3 pos) => Play(hitPrefab, pos, Color.white);
@@ -112,33 +125,56 @@ namespace Stonehold
         public void PlayPlace(Vector3 pos) => Play(placePrefab, pos);
         public void PlayUpgrade(Vector3 pos) => Play(upgradePrefab, pos);
 
+
         public void PlayFireImpact(Vector3 pos)
         {
-            Play(explosionPrefab, pos, new Color(1f, 0.35f, 0.05f, 1f), 0.85f);
+            Color color = new Color(1f, 0.3f, 0.03f, 1f);
+            Play(explosionPrefab, pos, color, 0.9f);
+            PlayImpactRing(pos, color, 0.95f, 0.26f, 0.12f);
             if (CameraRig.Instance != null)
             {
                 CameraRig.Instance.Shake(0.2f);
             }
         }
 
+
         public void PlayShockImpact(Vector3 pos)
         {
-            Play(hitPrefab, pos, new Color(1f, 0.95f, 0.15f, 1f), 1.15f);
+            Color color = new Color(0.16f, 0.72f, 1f, 1f);
+            Play(hitPrefab, pos, color, 1.15f);
+            PlayImpactRing(pos, color, 0.72f, 0.18f, 0.08f);
         }
+
 
         public void PlaySniperImpact(Vector3 pos)
         {
-            Play(hitPrefab, pos, new Color(0.85f, 0.3f, 1f, 1f), 0.7f);
+            Color color = new Color(0.82f, 0.32f, 1f, 1f);
+            Play(hitPrefab, pos, color, 0.72f);
+            PlayImpactRing(pos, color, 0.42f, 0.14f, 0.06f);
         }
+
 
         public void PlayHeroMuzzle(Vector3 pos, string heroId)
         {
-            Play(hitPrefab, pos, GetHeroColor(heroId), heroId == "bombardier" ? 0.75f : 0.5f);
+            float scale;
+            switch (heroId)
+            {
+                case "bombardier": scale = 0.82f; break;
+                case "sniper": scale = 0.38f; break;
+                case "fire_mage": scale = 0.62f; break;
+                default: scale = 0.5f; break;
+            }
+
+            Play(hitPrefab, pos, GetHeroColor(heroId), scale);
         }
+
 
         public void PlayHeroAbilityCast(Vector3 pos, string heroId)
         {
-            Play(upgradePrefab != null ? upgradePrefab : hitPrefab, pos, GetHeroColor(heroId), 0.8f);
+            Color color = GetHeroColor(heroId);
+            float radius = heroId == "bombardier" || heroId == "fire_mage" ? 1.1f : 0.88f;
+            Play(upgradePrefab != null ? upgradePrefab : hitPrefab, pos, color, 1.25f);
+            PlayImpactRing(pos, color, radius, 0.34f, 0.13f);
         }
 
         public void PlayAbilityTrace(Vector3 start, Vector3 end, string heroId, float width = 0.1f)
@@ -165,7 +201,7 @@ namespace Stonehold
                 case "bombardier": return new Color(1f, 0.48f, 0.1f, 1f);
                 case "frost_mage": return new Color(0.25f, 0.85f, 1f, 1f);
                 case "fire_mage": return new Color(1f, 0.2f, 0.04f, 1f);
-                case "electric_engineer": return new Color(1f, 0.95f, 0.12f, 1f);
+                case "electric_engineer": return new Color(0.12f, 0.72f, 1f, 1f);
                 case "sniper": return new Color(0.82f, 0.32f, 1f, 1f);
                 default: return Color.white;
             }
@@ -357,5 +393,86 @@ namespace Stonehold
 
             pool.Enqueue(instance);
         }
-    }
+
+
+
+        private IEnumerator AnimateImpactRing(LineRenderer ring, Color color, float radius, float duration, float width)
+        {
+            float elapsed = 0f;
+            while (elapsed < duration && ring != null)
+            {
+                float t = Mathf.Clamp01(elapsed / duration);
+                float currentRadius = Mathf.Lerp(radius * 0.16f, radius, t);
+                Color faded = color;
+                faded.a = 1f - t;
+                ring.startColor = faded;
+                ring.endColor = faded;
+                ring.startWidth = Mathf.Lerp(width, 0.01f, t);
+                ring.endWidth = ring.startWidth;
+
+                for (int i = 0; i < ring.positionCount; i++)
+                {
+                    float angle = (Mathf.PI * 2f * i) / ring.positionCount;
+                    ring.SetPosition(i, new Vector3(Mathf.Cos(angle) * currentRadius, 0f, Mathf.Sin(angle) * currentRadius));
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            if (ring != null)
+            {
+                ring.enabled = false;
+                impactRingPool.Enqueue(ring);
+            }
+
+            activeImpactRings = Mathf.Max(0, activeImpactRings - 1);
+        }
+
+
+
+        private LineRenderer GetImpactRing()
+        {
+            if (impactRingPool.Count > 0)
+            {
+                return impactRingPool.Dequeue();
+            }
+
+            GameObject go = new GameObject("HeroImpactRing");
+            go.transform.SetParent(transform, false);
+            LineRenderer ring = go.AddComponent<LineRenderer>();
+            ring.useWorldSpace = false;
+            ring.loop = true;
+            ring.positionCount = 32;
+            ring.alignment = LineAlignment.View;
+            ring.textureMode = LineTextureMode.Stretch;
+            ring.numCapVertices = 2;
+            ring.numCornerVertices = 2;
+            ring.shadowCastingMode = ShadowCastingMode.Off;
+            ring.receiveShadows = false;
+            ring.sharedMaterial = GetAbilityTraceMaterial();
+            ring.enabled = false;
+            return ring;
+        }
+
+
+
+        private void PlayImpactRing(Vector3 position, Color color, float radius, float duration, float width)
+        {
+            if (activeImpactRings >= MaxImpactRings)
+            {
+                return;
+            }
+
+            LineRenderer ring = GetImpactRing();
+            ring.transform.position = position + Vector3.up * 0.08f;
+            ring.startColor = color;
+            ring.endColor = color;
+            ring.startWidth = width;
+            ring.endWidth = width;
+            ring.enabled = true;
+            activeImpactRings++;
+            StartCoroutine(AnimateImpactRing(ring, color, radius, duration, width));
+        }
+}
 }

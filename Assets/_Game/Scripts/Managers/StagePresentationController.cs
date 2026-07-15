@@ -20,7 +20,9 @@ namespace Stonehold
         };
 
         private const string NatureDressingName = "Stage1NatureDressing";
-        private const string RuntimeDressingName = "StageIdentity_Runtime";
+
+        private const string BattlefieldPolishName = "BattlefieldPolish_Runtime";
+private const string RuntimeDressingName = "StageIdentity_Runtime";
 
         private void Start()
         {
@@ -86,7 +88,7 @@ namespace Stonehold
             }
 
             ApplyNatureVariation(environment.transform, stageIndex);
-            BuildStageIdentity(environment.transform, stageIndex);
+BuildStageIdentity(environment.transform, stageIndex);
 
             MaterialPropertyBlock block = new MaterialPropertyBlock();
             Renderer[] renderers = environment.GetComponentsInChildren<Renderer>(true);
@@ -104,6 +106,8 @@ namespace Stonehold
                 block.SetColor(BaseColorId, Color.Lerp(sourceColor, sourceColor * environmentTint, 0.28f));
                 renderer.SetPropertyBlock(block);
             }
+
+            BuildBattlefieldComposition(environment.transform, stageIndex);
         }
 
         private static void ApplyNatureVariation(Transform environment, int stageIndex)
@@ -162,6 +166,65 @@ namespace Stonehold
                 BuildFrostCrystals(root.transform);
             }
         }
+
+
+        private static void BuildBattlefieldComposition(Transform environment, int stageIndex)
+        {
+            Transform existing = environment.Find(BattlefieldPolishName);
+            if (existing != null)
+            {
+                Destroy(existing.gameObject);
+            }
+
+            GameObject rootObject = new GameObject(BattlefieldPolishName);
+            rootObject.transform.SetParent(environment, false);
+            Transform root = rootObject.transform;
+
+            Transform road = FindDescendant(environment, "Road");
+            Transform roadStrip = road != null ? FindDescendant(road, "RoadStrip") : null;
+            Color roadColor = GetStageRoadColor(stageIndex);
+
+            if (roadStrip != null)
+            {
+                roadStrip.localPosition = new Vector3(0f, 0.035f, 5.25f);
+                roadStrip.localRotation = Quaternion.identity;
+                roadStrip.localScale = new Vector3(5.7f, 0.06f, 21.5f);
+                ApplyColor(roadStrip.GetComponent<Renderer>(), roadColor);
+            }
+
+            if (road != null)
+            {
+                for (int i = 0; i < road.childCount; i++)
+                {
+                    Transform child = road.GetChild(i);
+                    if (child != roadStrip && child.name.StartsWith("RoadBend", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                }
+            }
+
+            Transform castleWall = FindDescendant(environment, "CastleWall");
+            Material stoneMaterial = castleWall != null ? castleWall.GetComponent<Renderer>()?.sharedMaterial : null;
+            Color stoneColor = GetStageStoneColor(stageIndex);
+            Color stoneDark = Color.Lerp(stoneColor, Color.black, 0.22f);
+            Color accentColor = GetStageAccentColor(stageIndex);
+
+            CreateVisual(root, "LaneShoulder_Left", PrimitiveType.Cube, new Vector3(-3.03f, 0.075f, 5.25f), new Vector3(0.18f, 0.07f, 21.5f), stoneDark, stoneMaterial, false);
+            CreateVisual(root, "LaneShoulder_Right", PrimitiveType.Cube, new Vector3(3.03f, 0.075f, 5.25f), new Vector3(0.18f, 0.07f, 21.5f), stoneDark, stoneMaterial, false);
+            CreateVisual(root, "SpawnThreshold", PrimitiveType.Cube, new Vector3(0f, 0.08f, 15.75f), new Vector3(6.15f, 0.08f, 0.28f), accentColor, stoneMaterial, false);
+
+            float[] markerZ = { -2.8f, 1.2f, 5.2f, 9.2f, 13.2f };
+            for (int i = 0; i < markerZ.Length; i++)
+            {
+                float inset = i % 2 == 0 ? 0.08f : -0.08f;
+                CreateVisual(root, $"LaneMarker_L_{i + 1:00}", PrimitiveType.Cube, new Vector3(-3.28f + inset, 0.13f, markerZ[i]), new Vector3(0.48f, 0.18f, 0.7f), stoneColor, stoneMaterial, true);
+                CreateVisual(root, $"LaneMarker_R_{i + 1:00}", PrimitiveType.Cube, new Vector3(3.28f - inset, 0.13f, markerZ[i]), new Vector3(0.48f, 0.18f, 0.7f), stoneColor, stoneMaterial, true);
+            }
+
+            ConfigureCastlePresentation(environment, root, stageIndex, stoneMaterial, stoneColor, stoneDark, accentColor);
+        }
+
 
         private static void BuildImportedNature(Transform parent, int stageIndex)
         {
@@ -448,5 +511,151 @@ namespace Stonehold
 
             return null;
         }
-    }
+
+
+
+        private static Color GetStageAccentColor(int stageIndex)
+        {
+            switch (stageIndex)
+            {
+                case 1: return new Color(0.82f, 0.28f, 0.12f);
+                case 2: return new Color(0.2f, 0.68f, 0.92f);
+                default: return new Color(0.18f, 0.55f, 0.28f);
+            }
+        }
+
+
+
+
+        private static Color GetStageStoneColor(int stageIndex)
+        {
+            switch (stageIndex)
+            {
+                case 1: return new Color(0.46f, 0.48f, 0.5f);
+                case 2: return new Color(0.52f, 0.62f, 0.68f);
+                default: return new Color(0.5f, 0.54f, 0.56f);
+            }
+        }
+
+
+
+        private static Color GetStageRoadColor(int stageIndex)
+        {
+            switch (stageIndex)
+            {
+                case 1: return new Color(0.48f, 0.34f, 0.22f);
+                case 2: return new Color(0.58f, 0.68f, 0.72f);
+                default: return new Color(0.56f, 0.40f, 0.24f);
+            }
+        }
+
+
+
+        private static void ApplyColor(Renderer renderer, Color color)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            MaterialPropertyBlock block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            block.SetColor(BaseColorId, color);
+            renderer.SetPropertyBlock(block);
+        }
+
+
+
+        private static GameObject CreateVisual(
+            Transform parent,
+            string objectName,
+            PrimitiveType primitive,
+            Vector3 localPosition,
+            Vector3 localScale,
+            Color color,
+            Material sharedMaterial,
+            bool castShadows)
+        {
+            GameObject visual = GameObject.CreatePrimitive(primitive);
+            visual.name = objectName;
+            visual.transform.SetParent(parent, false);
+            visual.transform.localPosition = localPosition;
+            visual.transform.localScale = localScale;
+
+            Collider collider = visual.GetComponent<Collider>();
+            if (collider != null)
+            {
+                Destroy(collider);
+            }
+
+            Renderer renderer = visual.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                if (sharedMaterial != null)
+                {
+                    renderer.sharedMaterial = sharedMaterial;
+                }
+
+                renderer.shadowCastingMode = castShadows
+                    ? UnityEngine.Rendering.ShadowCastingMode.On
+                    : UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = castShadows;
+                ApplyColor(renderer, color);
+            }
+
+            return visual;
+        }
+
+
+
+        private static void ConfigureCastlePresentation(
+            Transform environment,
+            Transform runtimeRoot,
+            int stageIndex,
+            Material stoneMaterial,
+            Color stoneColor,
+            Color stoneDark,
+            Color accentColor)
+        {
+            Renderer[] renderers = environment.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                string objectName = renderers[i].gameObject.name;
+                if (objectName == "Keep" || objectName == "CornerTower" || objectName == "CastleWall")
+                {
+                    ApplyColor(renderers[i], stoneColor);
+                }
+                else if (objectName == "KeepTop" || objectName == "TowerRoof" || objectName == "WallParapet" || objectName.StartsWith("Bat", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    ApplyColor(renderers[i], stoneDark);
+                }
+                else if (objectName == "Banner" || objectName == "Flag")
+                {
+                    ApplyColor(renderers[i], accentColor);
+                }
+                else if (objectName == "CastleCourtyard")
+                {
+                    ApplyColor(renderers[i], Color.Lerp(stoneColor, GetStageRoadColor(stageIndex), 0.48f));
+                }
+            }
+
+            CreateVisual(runtimeRoot, "HeroDeckFront", PrimitiveType.Cube, new Vector3(0f, 2.08f, -4.92f), new Vector3(13.2f, 0.22f, 0.24f), stoneDark, stoneMaterial, true);
+
+            float[] slotX = { -5.5f, -3.3f, -1.1f, 1.1f, 3.3f, 5.5f };
+            for (int i = 0; i < slotX.Length; i++)
+            {
+                CreateVisual(runtimeRoot, $"HeroPlinth_{i + 1:00}", PrimitiveType.Cylinder, new Vector3(slotX[i], 2.18f, -4.4f), new Vector3(1.35f, 0.16f, 1.35f), stoneColor, stoneMaterial, true);
+            }
+
+            float[] bannerX = { -4.4f, 0f, 4.4f };
+            for (int i = 0; i < bannerX.Length; i++)
+            {
+                Color bannerColor = i == 1 ? Color.Lerp(accentColor, Color.white, 0.14f) : accentColor;
+                CreateVisual(runtimeRoot, $"WallBanner_{i + 1:00}", PrimitiveType.Cube, new Vector3(bannerX[i], 1.48f, -4.95f), new Vector3(1.25f, 0.72f, 0.08f), bannerColor, stoneMaterial, false);
+            }
+
+            GameObject crest = CreateVisual(runtimeRoot, "CastleCrest", PrimitiveType.Cube, new Vector3(0f, 2.02f, -5.08f), new Vector3(0.62f, 0.62f, 0.12f), Color.Lerp(accentColor, Color.white, 0.18f), stoneMaterial, false);
+            crest.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+        }
+}
 }

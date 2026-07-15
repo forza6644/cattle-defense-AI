@@ -1075,20 +1075,28 @@ namespace Stonehold
             StartCoroutine(FadePanel(group, visible ? 1f : 0f));
         }
 
+
         private IEnumerator FadePanel(CanvasGroup group, float targetAlpha)
         {
             if (group == null)
             {
                 yield break;
             }
+
             RectTransform rt = group.transform as RectTransform;
             bool overlay = rt != null && rt.anchorMin == Vector2.zero && rt.anchorMax == Vector2.one;
-            float startAlpha = group.alpha;
-
-            Vector3 startScale = group.transform.localScale;
-            if (!overlay && targetAlpha > 0.5f && startAlpha < 0.5f)
+            if (overlay)
             {
-                startScale = Vector3.one * 0.9f; // pop in from slightly small
+                group.alpha = targetAlpha;
+                group.transform.localScale = Vector3.one;
+                yield break;
+            }
+
+            float startAlpha = group.alpha;
+            Vector3 startScale = group.transform.localScale;
+            if (targetAlpha > 0.5f && startAlpha < 0.5f)
+            {
+                startScale = Vector3.one * 0.9f;
             }
 
             for (float t = 0f; t < PanelFadeSeconds; t += Time.unscaledDeltaTime)
@@ -1097,13 +1105,10 @@ namespace Stonehold
                 {
                     yield break;
                 }
+
                 float k = t / PanelFadeSeconds;
                 group.alpha = Mathf.Lerp(startAlpha, targetAlpha, k);
-                if (!overlay)
-                {
-                    group.transform.localScale = Vector3.Lerp(startScale, Vector3.one, k);
-                }
-
+                group.transform.localScale = Vector3.Lerp(startScale, Vector3.one, k);
                 yield return null;
             }
 
@@ -1111,11 +1116,9 @@ namespace Stonehold
             {
                 yield break;
             }
+
             group.alpha = targetAlpha;
-            if (!overlay)
-            {
-                group.transform.localScale = Vector3.one;
-            }
+            group.transform.localScale = Vector3.one;
         }
 
         // ------------------------------------------------------------ UI build
