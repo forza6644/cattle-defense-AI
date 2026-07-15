@@ -25,6 +25,7 @@ namespace Stonehold
         private AudioSource musicSource;
         private AudioSource[] sfxSources;
         private int sfxIndex;
+        private readonly Dictionary<AudioClip, float> lastPlayTime = new Dictionary<AudioClip, float>();
 
         private float masterVolume = 1f;
         private float musicVolume = 0.6f;
@@ -147,6 +148,16 @@ namespace Stonehold
                 return;
             }
 
+            // Prevent spam: if the same clip is played within 0.05 seconds (50ms), skip it!
+            if (lastPlayTime.TryGetValue(clip, out float lastTime))
+            {
+                if (Time.time - lastTime < 0.05f)
+                {
+                    return;
+                }
+            }
+            lastPlayTime[clip] = Time.time;
+
             AudioSource src = sfxSources[sfxIndex];
             sfxIndex = (sfxIndex + 1) % SfxVoices;
             src.pitch = pitch;
@@ -158,6 +169,60 @@ namespace Stonehold
             if (library != null)
             {
                 PlaySfx(library.button, 0.8f);
+            }
+        }
+
+        public void PlayHeroImpact(string heroId, bool isAbility = false)
+        {
+            if (library == null) return;
+
+            float volume = isAbility ? 1.0f : 0.6f;
+            float pitch = Random.Range(0.9f, 1.1f);
+
+            switch (heroId)
+            {
+                case "archer":
+                    if (library.arrowHit != null)
+                    {
+                        PlaySfx(library.arrowHit, volume * 0.8f, pitch * 1.05f);
+                    }
+                    break;
+                case "bombardier":
+                    if (library.cannonExplosion != null)
+                    {
+                        PlaySfx(library.cannonExplosion, volume * 0.55f, pitch * 0.85f);
+                    }
+                    break;
+                case "frost_mage":
+                    if (library.frostHit != null)
+                    {
+                        PlaySfx(library.frostHit, volume * 0.75f, pitch * 1.15f);
+                    }
+                    break;
+                case "fire_mage":
+                    if (library.cannonExplosion != null)
+                    {
+                        PlaySfx(library.cannonExplosion, volume * 0.5f, pitch * 1.25f);
+                    }
+                    break;
+                case "electric_engineer":
+                    // Play a quick high-pitched spark sound
+                    if (library.button != null)
+                    {
+                        PlaySfx(library.button, volume * 0.45f, pitch * 1.6f);
+                    }
+                    break;
+                case "sniper":
+                    // Loud heavy arrow snap/sniper hit
+                    if (library.arrowHit != null)
+                    {
+                        PlaySfx(library.arrowHit, volume * 0.95f, pitch * 0.72f);
+                    }
+                    break;
+                default:
+                    // Fallback
+                    PlayImpact(false, false);
+                    break;
             }
         }
 

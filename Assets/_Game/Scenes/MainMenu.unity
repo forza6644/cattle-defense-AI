@@ -368,6 +368,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.MainMenuUI
   gameSceneName: GameScene
+  heroDefinitions:
+  - {fileID: 11400000, guid: d8d745af09e293c428c7d050d09c11dd, type: 2}
+  - {fileID: 11400000, guid: b215e439c7288fd4f96e6cfea0ef20d9, type: 2}
+  - {fileID: 11400000, guid: 34bb2f6cd2de13d43a7c39ef8e4c1068, type: 2}
+  - {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120002, type: 2}
+  - {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120004, type: 2}
+  - {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120006, type: 2}
 --- !u!4 &1933241609
 Transform:
   m_ObjectHideFlags: 0

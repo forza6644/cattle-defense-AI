@@ -11,6 +11,10 @@ namespace Stonehold
         private Color identityColor;
         private float pulse;
 
+        private float lastCharge = 0f;
+        private float activationPulseTimer = 0f;
+        private const float activationPulseDuration = 0.4f;
+
         public void Configure(HeroAttack owner, Color color)
         {
             hero = owner;
@@ -40,13 +44,60 @@ namespace Stonehold
                 return;
             }
 
+            if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+            {
+                // Freeze visual timer decrement, but still draw the current ring state
+                if (activationPulseTimer > 0f)
+                {
+                    float progress = 1f - (activationPulseTimer / activationPulseDuration);
+                    DrawCircle(Mathf.Lerp(0.56f, 1.3f, progress));
+                }
+                else
+                {
+                    RefreshGeometry(hero.AbilityCharge01);
+                }
+                return;
+            }
+
             float charge = hero.AbilityCharge01;
-            RefreshGeometry(charge);
-            pulse = hero.IsAbilityReady ? (Mathf.Sin(Time.unscaledTime * 7f) + 1f) * 0.5f : 0f;
-            Color color = Color.Lerp(identityColor * 0.55f, Color.white, pulse * 0.65f);
-            color.a = hero.HasSignatureAbility ? Mathf.Lerp(0.35f, 1f, charge) : 0f;
-            ring.startColor = color;
-            ring.endColor = color;
+
+            // Detect activation: charge goes from 1.0 down to a low value
+            if (lastCharge >= 0.95f && charge < 0.2f && activationPulseTimer <= 0f)
+            {
+                activationPulseTimer = activationPulseDuration;
+            }
+            lastCharge = charge;
+
+            if (activationPulseTimer > 0f)
+            {
+                activationPulseTimer -= Time.deltaTime;
+                float progress = 1f - (activationPulseTimer / activationPulseDuration);
+                float currentRadius = Mathf.Lerp(0.56f, 1.3f, progress);
+                DrawCircle(currentRadius);
+                Color col = identityColor;
+                col.a = Mathf.Lerp(1f, 0f, progress);
+                ring.startColor = col;
+                ring.endColor = col;
+            }
+            else
+            {
+                RefreshGeometry(charge);
+                pulse = hero.IsAbilityReady ? (Mathf.Sin(Time.unscaledTime * 7f) + 1f) * 0.5f : 0f;
+                Color color = Color.Lerp(identityColor * 0.55f, Color.white, pulse * 0.65f);
+                color.a = hero.HasSignatureAbility ? Mathf.Lerp(0.35f, 1f, charge) : 0f;
+                ring.startColor = color;
+                ring.endColor = color;
+            }
+        }
+
+        private void DrawCircle(float radius)
+        {
+            ring.positionCount = Segments + 1;
+            for (int i = 0; i <= Segments; i++)
+            {
+                float angle = Mathf.PI * 2f * i / Segments;
+                ring.SetPosition(i, new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0f));
+            }
         }
 
         private void RefreshGeometry(float charge)

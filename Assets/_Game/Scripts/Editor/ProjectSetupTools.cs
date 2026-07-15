@@ -33,6 +33,9 @@ namespace Stonehold
             // 4. Tune Hero ScriptableObject Ranges
             TuneHeroRanges();
 
+            // 5. Assign Hero Definitions to Main Menu
+            AssignHeroDefinitionsToMainMenu();
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[ProjectSetupTools] Project setup completed successfully!");
@@ -405,6 +408,42 @@ namespace Stonehold
                 if (found != null) return found;
             }
             return null;
+        }
+
+        private static void AssignHeroDefinitionsToMainMenu()
+        {
+            string mainMenuPath = "Assets/_Game/Scenes/MainMenu.unity";
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(mainMenuPath);
+            MainMenuUI mainMenuUI = UnityEngine.Object.FindAnyObjectByType<MainMenuUI>();
+            if (mainMenuUI != null)
+            {
+                string[] guids = AssetDatabase.FindAssets("t:HeroDefinition", new string[] { "Assets/_Game/ScriptableObjects/Heroes" });
+                List<HeroDefinition> heroes = new List<HeroDefinition>();
+                foreach (var guid in guids)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    HeroDefinition hd = AssetDatabase.LoadAssetAtPath<HeroDefinition>(path);
+                    if (hd != null)
+                    {
+                        heroes.Add(hd);
+                    }
+                }
+                heroes.Sort((a, b) => {
+                    List<string> order = new List<string> { "archer", "bombardier", "frost_mage", "fire_mage", "electric_engineer", "sniper" };
+                    int indexA = order.IndexOf(a.id);
+                    int indexB = order.IndexOf(b.id);
+                    return indexA.CompareTo(indexB);
+                });
+
+                mainMenuUI.SetHeroDefinitions(heroes.ToArray());
+                EditorUtility.SetDirty(mainMenuUI);
+                UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+                Debug.Log($"[ProjectSetupTools] Successfully assigned {heroes.Count} HeroDefinitions to MainMenuUI in scene and saved.");
+            }
+            else
+            {
+                Debug.LogError("[ProjectSetupTools] MainMenuUI not found in MainMenu.unity scene!");
+            }
         }
     }
 }

@@ -32,7 +32,14 @@ namespace Stonehold
         private Text startButtonLabel;
         private Text currencyText;
 
+        [SerializeField] private HeroDefinition[] heroDefinitions;
+        public void SetHeroDefinitions(HeroDefinition[] definitions)
+        {
+            heroDefinitions = definitions;
+        }
+
         private Text defenderNameText;
+        private Text defenderStatsText;
         private Button prevDefenderBtn;
         private Button nextDefenderBtn;
         private Text metaLevelText;
@@ -44,28 +51,6 @@ namespace Stonehold
         private Text[] metaUpgradeNameTexts = new Text[5];
         private Button[] metaUpgradeButtons = new Button[5];
         private Text[] metaUpgradeButtonLabels = new Text[5];
-
-        private struct DefenderInfo
-        {
-            public string id;
-            public string displayName;
-            public string rarity;
-            public DefenderInfo(string id, string displayName, string rarity)
-            {
-                this.id = id;
-                this.displayName = displayName;
-                this.rarity = rarity;
-            }
-        }
-
-        private readonly DefenderInfo[] lobbyDefenders = new DefenderInfo[]
-        {
-            new DefenderInfo("archer_defender", "Archer Defender", "Common"),
-            new DefenderInfo("machine_gun_soldier", "Machine Gun Soldier", "Rare"),
-            new DefenderInfo("catapult_defender", "Catapult Defender", "Rare"),
-            new DefenderInfo("ice_mage", "Ice Mage", "Rare"),
-            new DefenderInfo("sniper", "Sniper", "Epic")
-        };
 
         private void Awake()
         {
@@ -284,34 +269,38 @@ namespace Stonehold
             Image defenderBg = CreateImage(safeAreaRect, "DefenderPanel", new Color(0.12f, 0.16f, 0.24f, 0.7f));
             if (isPortrait)
             {
-                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.62f), Vector2.zero, new Vector2(800f, 210f));
+                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.60f), Vector2.zero, new Vector2(800f, 340f));
             }
             else
             {
-                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.40f), new Vector2(0f, -20f), new Vector2(800f, 210f));
+                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.40f), new Vector2(0f, -20f), new Vector2(800f, 280f));
             }
 
             Text defenderTitleText = CreateText(defenderBg.rectTransform, "DefenderTitle", "STARTING DEFENDER", 16, new Color(1f, 0.85f, 0.35f));
-            Place(defenderTitleText.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(700f, 24f));
+            Place(defenderTitleText.rectTransform, new Vector2(0.5f, 0.90f), Vector2.zero, new Vector2(700f, 24f));
 
             defenderNameText = CreateText(defenderBg.rectTransform, "DefenderName", "", 26, Color.white);
-            Place(defenderNameText.rectTransform, new Vector2(0.5f, 0.7f), Vector2.zero, new Vector2(700f, 36f));
+            Place(defenderNameText.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(700f, 36f));
 
             prevDefenderBtn = CreateButton(defenderBg.rectTransform, "PrevDefender", "<", new Vector2(46f, 46f),
-                new Vector2(0f, 0.7f), new Vector2(30f, 0f), () => CycleDefender(-1));
+                new Vector2(0f, 0.78f), new Vector2(30f, 0f), () => CycleDefender(-1));
 
             nextDefenderBtn = CreateButton(defenderBg.rectTransform, "NextDefender", ">", new Vector2(46f, 46f),
-                new Vector2(1f, 0.7f), new Vector2(-30f, 0f), () => CycleDefender(1));
+                new Vector2(1f, 0.78f), new Vector2(-30f, 0f), () => CycleDefender(1));
+
+            defenderStatsText = CreateText(defenderBg.rectTransform, "DefenderStatsText", "", 18, Color.white);
+            defenderStatsText.alignment = TextAnchor.MiddleCenter;
+            Place(defenderStatsText.rectTransform, new Vector2(0.5f, 0.52f), Vector2.zero, new Vector2(740f, 90f));
 
             metaLevelText = CreateText(defenderBg.rectTransform, "MetaLevelText", "", 20, new Color(0.85f, 0.85f, 0.9f));
-            Place(metaLevelText.rectTransform, new Vector2(0.5f, 0.45f), Vector2.zero, new Vector2(700f, 30f));
+            Place(metaLevelText.rectTransform, new Vector2(0.5f, 0.28f), Vector2.zero, new Vector2(700f, 30f));
 
             upgradeCostText = CreateText(defenderBg.rectTransform, "UpgradeCostText", "", 20, new Color(0.7f, 0.7f, 0.75f));
             upgradeCostText.alignment = TextAnchor.MiddleLeft;
-            Place(upgradeCostText.rectTransform, new Vector2(0.35f, 0.2f), Vector2.zero, new Vector2(400f, 30f));
+            Place(upgradeCostText.rectTransform, new Vector2(0.35f, 0.11f), Vector2.zero, new Vector2(400f, 30f));
 
             upgradeDefenderBtn = CreateButton(defenderBg.rectTransform, "UpgradeDefenderBtn", "UPGRADE", new Vector2(200f, 50f),
-                new Vector2(0.78f, 0.2f), Vector2.zero, OnUpgradeDefenderClicked);
+                new Vector2(0.78f, 0.11f), Vector2.zero, OnUpgradeDefenderClicked);
             upgradeDefenderBtnLabel = upgradeDefenderBtn.GetComponentInChildren<Text>();
             upgradeDefenderBtnLabel.fontSize = 20;
             upgradeDefenderBtnLabel.fontStyle = FontStyle.Bold;
@@ -319,12 +308,15 @@ namespace Stonehold
             // Initialize starting defender index from saved settings
             string savedId = SaveManager.SelectedStartingDefenderId;
             currentDefenderIndex = 0;
-            for (int i = 0; i < lobbyDefenders.Length; i++)
+            if (heroDefinitions != null && heroDefinitions.Length > 0)
             {
-                if (lobbyDefenders[i].id == savedId)
+                for (int i = 0; i < heroDefinitions.Length; i++)
                 {
-                    currentDefenderIndex = i;
-                    break;
+                    if (heroDefinitions[i] != null && heroDefinitions[i].id == savedId)
+                    {
+                        currentDefenderIndex = i;
+                        break;
+                    }
                 }
             }
             RefreshDefenderSelection();
@@ -333,7 +325,7 @@ namespace Stonehold
             // 6. Large Premium Battle Button
             if (isPortrait)
             {
-                startButton = CreateButton(safeAreaRect, "StartButton", "BATTLE", new Vector2(400f, 96f), new Vector2(0.5f, 0.48f), Vector2.zero, Play);
+                startButton = CreateButton(safeAreaRect, "StartButton", "BATTLE", new Vector2(400f, 96f), new Vector2(0.5f, 0.44f), Vector2.zero, Play);
             }
             else
             {
@@ -685,23 +677,99 @@ namespace Stonehold
             }
         }
 
+        private static string GetHeroRarity(string heroId)
+        {
+            switch (heroId)
+            {
+                case "archer": return "Common";
+                case "sniper": return "Epic";
+                default: return "Rare";
+            }
+        }
+
+        private static string GetAttackIdentityDescription(HeroDefinition hd)
+        {
+            if (hd == null || hd.weapon == null) return "Unknown";
+            string typeStr = hd.weapon.attackType.ToString();
+            if (hd.id == "electric_engineer")
+            {
+                return "Chain Shock Lightning";
+            }
+            if (hd.weapon.statusEffectType != StatusEffectType.None)
+            {
+                return $"{typeStr} ({hd.weapon.statusEffectType})";
+            }
+            return typeStr;
+        }
+
+        private static string GetAbilityDisplayName(HeroAbilityType type)
+        {
+            switch (type)
+            {
+                case HeroAbilityType.MultiShot: return "Multi Shot";
+                case HeroAbilityType.ArtilleryBarrage: return "Artillery Barrage";
+                case HeroAbilityType.FrostNova: return "Frost Nova";
+                case HeroAbilityType.FlameWave: return "Flame Wave";
+                case HeroAbilityType.ChainStorm: return "Chain Storm";
+                case HeroAbilityType.PowerShot: return "Power Shot";
+                default: return "None";
+            }
+        }
+
+        private static string GetAbilityDescription(HeroAbilityType type)
+        {
+            switch (type)
+            {
+                case HeroAbilityType.MultiShot: return "Fires actual projectile volleys at multiple random targets.";
+                case HeroAbilityType.ArtilleryBarrage: return "Fires a large arcing bomb dealing massive splash damage.";
+                case HeroAbilityType.FrostNova: return "Releases a cold blast slowing and damaging all nearby enemies.";
+                case HeroAbilityType.FlameWave: return "Unleashes a fiery wave burning enemies in a large area.";
+                case HeroAbilityType.ChainStorm: return "Releases chain lightning bouncing across multiple targets.";
+                case HeroAbilityType.PowerShot: return "Fires a piercing line trace that damages all enemies in its path.";
+                default: return "No active ability.";
+            }
+        }
+
+        private static string GetTargetingModeDisplayName(TargetingMode mode)
+        {
+            switch (mode)
+            {
+                case TargetingMode.ClosestToGoal: return "First";
+                case TargetingMode.FirstInRange: return "First In Range";
+                case TargetingMode.LastInRange: return "Last";
+                case TargetingMode.Strongest: return "Strongest";
+                case TargetingMode.Weakest: return "Weakest";
+                default: return mode.ToString();
+            }
+        }
+
         private void CycleDefender(int delta)
         {
-            currentDefenderIndex += delta;
-            if (currentDefenderIndex < 0) currentDefenderIndex = lobbyDefenders.Length - 1;
-            if (currentDefenderIndex >= lobbyDefenders.Length) currentDefenderIndex = 0;
+            if (heroDefinitions == null || heroDefinitions.Length == 0) return;
 
-            SaveManager.SetSelectedStartingDefender(lobbyDefenders[currentDefenderIndex].id);
+            currentDefenderIndex += delta;
+            if (currentDefenderIndex < 0) currentDefenderIndex = heroDefinitions.Length - 1;
+            if (currentDefenderIndex >= heroDefinitions.Length) currentDefenderIndex = 0;
+
+            if (heroDefinitions[currentDefenderIndex] != null)
+            {
+                SaveManager.SetSelectedStartingDefender(heroDefinitions[currentDefenderIndex].id);
+            }
             RefreshDefenderSelection();
             RefreshMetaUpgradeUI();
         }
 
         private void RefreshDefenderSelection()
         {
+            if (heroDefinitions == null || heroDefinitions.Length == 0 || currentDefenderIndex >= heroDefinitions.Length) return;
+
+            HeroDefinition hd = heroDefinitions[currentDefenderIndex];
+            if (hd == null) return;
+
             if (defenderNameText != null)
             {
                 string colorHex = "#d9d9f2"; // Common
-                string rarity = lobbyDefenders[currentDefenderIndex].rarity;
+                string rarity = GetHeroRarity(hd.id);
                 if (rarity == "Rare")
                 {
                     colorHex = "#66ccff";
@@ -711,7 +779,20 @@ namespace Stonehold
                     colorHex = "#d980ff";
                 }
 
-                defenderNameText.text = $"<color={colorHex}><b>{lobbyDefenders[currentDefenderIndex].displayName}</b></color> <size=16>({rarity})</size>";
+                defenderNameText.text = $"<color={colorHex}><b>{hd.displayName}</b></color> <size=16>({rarity})</size> <color=#45ff70><size=16>[SELECTED]</size></color>";
+            }
+
+            if (defenderStatsText != null)
+            {
+                string attackType = GetAttackIdentityDescription(hd);
+                string targetSpecialty = GetTargetingModeDisplayName(hd.defaultTargetingMode);
+                string abilityName = GetAbilityDisplayName(hd.abilityType);
+                string abilityDesc = GetAbilityDescription(hd.abilityType);
+
+                defenderStatsText.text =
+                    $"Type: <b>{attackType}</b> | Target Priority: <b>{targetSpecialty}</b>\n" +
+                    $"Dmg: <b>{hd.baseDamage}</b> | Speed: <b>{hd.baseFireRate}/s</b> | Range: <b>{hd.baseRange}</b>\n" +
+                    $"Ability: <color=#ffd759><b>{abilityName}</b></color> - {abilityDesc}";
             }
         }
 
@@ -808,9 +889,12 @@ namespace Stonehold
 
         private void RefreshMetaUpgradeUI()
         {
-            if (lobbyDefenders == null || currentDefenderIndex >= lobbyDefenders.Length) return;
+            if (heroDefinitions == null || heroDefinitions.Length == 0 || currentDefenderIndex >= heroDefinitions.Length) return;
 
-            string id = lobbyDefenders[currentDefenderIndex].id;
+            HeroDefinition hd = heroDefinitions[currentDefenderIndex];
+            if (hd == null) return;
+
+            string id = hd.id;
             int level = SaveManager.GetMetaLevel(id);
             int cost = GetMetaUpgradeCost(level);
 
@@ -858,9 +942,12 @@ namespace Stonehold
 
         private void OnUpgradeDefenderClicked()
         {
-            if (lobbyDefenders == null || currentDefenderIndex >= lobbyDefenders.Length) return;
+            if (heroDefinitions == null || heroDefinitions.Length == 0 || currentDefenderIndex >= heroDefinitions.Length) return;
 
-            string id = lobbyDefenders[currentDefenderIndex].id;
+            HeroDefinition hd = heroDefinitions[currentDefenderIndex];
+            if (hd == null) return;
+
+            string id = hd.id;
             int level = SaveManager.GetMetaLevel(id);
             int cost = GetMetaUpgradeCost(level);
 

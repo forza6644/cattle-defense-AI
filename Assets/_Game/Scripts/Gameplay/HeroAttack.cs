@@ -160,6 +160,11 @@ namespace Stonehold
                 VfxManager.Instance.PlayHeroAbilityCast(transform.position + projectileLaunchOffset, definition.id);
             }
 
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayHeroImpact(definition.id, true);
+            }
+
             float abilityDamage = GetModifiedDamage() * Mathf.Max(1f, definition.abilityPowerMultiplier);
             switch (definition.abilityType)
             {
@@ -308,6 +313,11 @@ namespace Stonehold
                     VfxManager.Instance.PlayShockImpact(current.transform.position);
                 }
 
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayHeroImpact("electric_engineer", true);
+                }
+
                 startSource = endPos;
                 current = FindNextChainTarget(current.transform.position, hitList, 5.0f);
             }
@@ -331,6 +341,11 @@ namespace Stonehold
                 {
                     VfxManager.Instance.PlayAbilityTrace(startSource, endPos, "electric_engineer", 0.08f);
                     VfxManager.Instance.PlayShockImpact(current.transform.position);
+                }
+
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayHeroImpact("electric_engineer", false);
                 }
 
                 if (!current.IsDead)

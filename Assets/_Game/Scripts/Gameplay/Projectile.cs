@@ -267,7 +267,7 @@ namespace Stonehold
 
             if (AudioManager.Instance != null)
             {
-                AudioManager.Instance.PlayImpact(splashRadius > 0f, slowMultiplier < 1f);
+                AudioManager.Instance.PlayHeroImpact(sourceHeroId, false);
             }
 
             if (splashRadius > 0f)
