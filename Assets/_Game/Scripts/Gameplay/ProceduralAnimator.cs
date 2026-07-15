@@ -44,17 +44,37 @@ namespace Stonehold
 
         private void Awake()
         {
-            if (model == null)
+            ArtAdapter adapter = GetComponent<ArtAdapter>();
+            if (adapter != null)
             {
-                model = transform;
+                model = adapter.visualRoot;
+                if (model != null)
+                {
+                    model.localPosition = adapter.visualOffset;
+                    model.localRotation = Quaternion.Euler(adapter.visualRotation);
+                    model.localScale = adapter.visualScale;
+                }
+                unityAnimator = adapter.animatorReference;
+            }
+            else
+            {
+                if (model == null)
+                {
+                    model = transform;
+                }
+                unityAnimator = GetComponentInChildren<Animator>();
             }
 
-            baseLocalPos = model.localPosition;
-            baseScale = model.localScale;
-
-            unityAnimator = GetComponentInChildren<Animator>();
-
-            renderers = model.GetComponentsInChildren<Renderer>();
+            if (model != null)
+            {
+                baseLocalPos = model.localPosition;
+                baseScale = model.localScale;
+                renderers = model.GetComponentsInChildren<Renderer>();
+            }
+            else
+            {
+                renderers = new Renderer[0];
+            }
             baseColors = new Color[renderers.Length];
             for (int i = 0; i < renderers.Length; i++)
             {

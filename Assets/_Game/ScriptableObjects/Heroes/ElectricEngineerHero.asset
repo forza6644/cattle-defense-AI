@@ -15,7 +15,7 @@ MonoBehaviour:
   id: electric_engineer
   displayName: Electric Engineer
   icon: {fileID: 0}
-  heroPrefab: {fileID: 4116656074160059200, guid: 0f688c756a845b04d8354e8aa6578eaf, type: 3}
+  heroPrefab: {fileID: 8838393873966704414, guid: 0006d0c21c2996d4a86d4521ae2d8f9e, type: 3}
   weapon: {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120005, type: 2}
   baseDamage: 5
   baseFireRate: 1.2

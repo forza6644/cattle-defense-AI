@@ -15,7 +15,7 @@ MonoBehaviour:
   id: archer
   displayName: Archer
   icon: {fileID: 0}
-  heroPrefab: {fileID: 6915905045060221059, guid: 3301b09267b35934bbea50e56f138935, type: 3}
+  heroPrefab: {fileID: 3598100025654505538, guid: 928bc2cab04ed784abcfb6642652ae82, type: 3}
   weapon: {fileID: 11400000, guid: ef123126cd7268a429c81c3fc1f64ca9, type: 2}
   baseDamage: 10
   baseFireRate: 1.1

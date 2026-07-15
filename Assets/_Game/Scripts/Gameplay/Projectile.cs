@@ -95,7 +95,7 @@ namespace Stonehold
             impactColor = trailColor;
             isCrit = isCritical;
 
-            targetLastPosition = target != null ? target.transform.position : transform.position;
+            targetLastPosition = target != null ? GetTargetPosition(target) : transform.position;
             startPosition = transform.position;
             useArc = (damageSourceHeroId == "bombardier");
             if (useArc)
@@ -203,7 +203,7 @@ namespace Stonehold
         {
             if (target != null && target.gameObject.activeInHierarchy && !target.IsDead)
             {
-                targetLastPosition = target.transform.position;
+                targetLastPosition = GetTargetPosition(target);
             }
 
             Vector3 dest = targetLastPosition;
@@ -350,6 +350,17 @@ namespace Stonehold
             }
 
             pool.Enqueue(this);
+        }
+
+        private Vector3 GetTargetPosition(Enemy targetEnemy)
+        {
+            if (targetEnemy == null) return targetLastPosition;
+            ArtAdapter adapter = targetEnemy.GetComponent<ArtAdapter>();
+            if (adapter != null && adapter.impactPoint != null)
+            {
+                return adapter.impactPoint.position;
+            }
+            return targetEnemy.transform.position;
         }
     }
 }

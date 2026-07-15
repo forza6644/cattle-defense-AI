@@ -57,9 +57,11 @@ namespace Stonehold
 
             GameObject instance = Instantiate(hero.heroPrefab, transform.position, transform.rotation, transform);
             instance.name = hero.displayName + " Hero";
-            // The portrait camera is pulled back to show the complete battlefield.
-            // Compensate here so each defender still reads clearly above the wall.
-            instance.transform.localScale = Vector3.one * 1.65f;
+            // Legacy placeholders were authored much smaller than the art-adapter prefabs.
+            // Keep the old compensation only for legacy visuals; normalize imported characters.
+            instance.transform.localScale = instance.GetComponent<ArtAdapter>() != null
+                ? Vector3.one * 0.95f
+                : Vector3.one * 1.65f;
 
             Tower[] legacyTowers = instance.GetComponentsInChildren<Tower>();
             for (int i = 0; i < legacyTowers.Length; i++)

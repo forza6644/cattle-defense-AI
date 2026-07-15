@@ -15,7 +15,7 @@ MonoBehaviour:
   id: frost_mage
   displayName: Frost Mage
   icon: {fileID: 0}
-  heroPrefab: {fileID: 3138259749390184868, guid: aa7b0bd9416d43a4bbbde1d7c9905adf, type: 3}
+  heroPrefab: {fileID: 1726440750871718265, guid: 4d83f859357d50e48b2c82bdd7439718, type: 3}
   weapon: {fileID: 11400000, guid: 3a44b142e14b46c44b6d6edf1b80ead4, type: 2}
   baseDamage: 4
   baseFireRate: 0.9

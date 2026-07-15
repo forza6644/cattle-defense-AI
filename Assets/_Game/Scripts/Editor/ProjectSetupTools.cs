@@ -30,6 +30,9 @@ namespace Stonehold
             // 3. Upgrade Enemy Prefabs
             UpgradeEnemyPrefabs();
 
+            // 3b. Setup Hero Visual Adapters
+            SetupHeroAdapters();
+
             // 4. Tune Hero ScriptableObject Ranges
             TuneHeroRanges();
 
@@ -298,11 +301,33 @@ namespace Stonehold
             anim.runtimeAnimatorController = controller;
             anim.applyRootMotion = false;
 
+            // Add/Get ArtAdapter
+            ArtAdapter adapter = root.GetComponent<ArtAdapter>();
+            if (adapter == null)
+            {
+                adapter = root.AddComponent<ArtAdapter>();
+            }
+            adapter.visualRoot = modelGroup;
+            adapter.visualScale = Vector3.one * scaleMultiplier;
+            adapter.visualRotation = Vector3.zero;
+            adapter.visualOffset = Vector3.zero;
+            adapter.animatorReference = anim;
+
+            // Find or create ImpactPoint
+            Transform impactPoint = root.transform.Find("ImpactPoint");
+            if (impactPoint == null)
+            {
+                GameObject ipGo = new GameObject("ImpactPoint");
+                ipGo.transform.SetParent(root.transform, false);
+                ipGo.transform.localPosition = new Vector3(0f, scaleMultiplier * 0.8f, 0f);
+                impactPoint = ipGo.transform;
+            }
+            adapter.impactPoint = impactPoint;
+
             // Make sure the main ProceduralAnimator script on root points to ModelGroup
             ProceduralAnimator procAnim = root.GetComponent<ProceduralAnimator>();
             if (procAnim != null)
             {
-                // We will modify the field using serialized properties
                 SerializedObject so = new SerializedObject(procAnim);
                 SerializedProperty modelProp = so.FindProperty("model");
                 if (modelProp != null)
@@ -443,6 +468,144 @@ namespace Stonehold
             else
             {
                 Debug.LogError("[ProjectSetupTools] MainMenuUI not found in MainMenu.unity scene!");
+            }
+        }
+
+        private static string GetHeroAssetName(string heroId)
+        {
+            switch (heroId)
+            {
+                case "archer": return "ArcherHero.asset";
+                case "bombardier": return "BombardierHero.asset";
+                case "frost_mage": return "FrostMageHero.asset";
+                case "fire_mage": return "FireMageHero.asset";
+                case "electric_engineer": return "ElectricEngineerHero.asset";
+                case "sniper": return "SniperHero.asset";
+                default: return heroId + "Hero.asset";
+            }
+        }
+
+        public static void SetupHeroAdapters()
+        {
+            string adaptersFolder = "Assets/_Game/Prefabs/ArtAdapters/";
+            if (!AssetDatabase.IsValidFolder(adaptersFolder))
+            {
+                AssetDatabase.CreateFolder("Assets/_Game/Prefabs", "ArtAdapters");
+            }
+
+            var heroMappings = new[]
+            {
+                new { id = "archer", fbx = "Ranger.fbx", controller = "Ranger_Idle.controller", scale = 1.0f },
+                new { id = "bombardier", fbx = "Warrior.fbx", controller = "Warrior_Idle.controller", scale = 1.05f },
+                new { id = "frost_mage", fbx = "Cleric.fbx", controller = "Cleric_Idle.controller", scale = 1.0f },
+                new { id = "fire_mage", fbx = "Wizard.fbx", controller = "Wizard_Idle.controller", scale = 1.0f },
+                new { id = "electric_engineer", fbx = "Monk.fbx", controller = "Monk_Idle.controller", scale = 1.0f },
+                new { id = "sniper", fbx = "Rogue.fbx", controller = "Rogue_Idle.controller", scale = 0.85f }
+            };
+
+            foreach (var mapping in heroMappings)
+            {
+                GameObject root = new GameObject(mapping.id + "_Adapter");
+                var procAnim = root.AddComponent<ProceduralAnimator>();
+                var adapter = root.AddComponent<ArtAdapter>();
+
+                GameObject visRoot = new GameObject("VisualRoot");
+                visRoot.transform.SetParent(root.transform, false);
+                adapter.visualRoot = visRoot.transform;
+
+                string fbxPath = ModelsFolder + mapping.fbx;
+                GameObject fbxModel = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
+                if (fbxModel == null)
+                {
+                    Debug.LogError("FBX not found: " + fbxPath);
+                    UnityEngine.Object.DestroyImmediate(root);
+                    continue;
+                }
+
+                GameObject modelInstance = UnityEngine.Object.Instantiate(fbxModel, visRoot.transform);
+                modelInstance.name = mapping.fbx.Replace(".fbx", "_Model");
+                modelInstance.transform.localPosition = Vector3.zero;
+                modelInstance.transform.localRotation = Quaternion.identity;
+                modelInstance.transform.localScale = Vector3.one;
+
+                Animator animator = modelInstance.GetComponent<Animator>();
+                if (animator == null) animator = modelInstance.AddComponent<Animator>();
+                animator.runtimeAnimatorController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllersFolder + mapping.controller);
+                animator.applyRootMotion = false;
+                adapter.animatorReference = animator;
+
+                adapter.visualScale = Vector3.one * mapping.scale;
+                adapter.visualRotation = Vector3.zero;
+                adapter.visualOffset = Vector3.zero;
+
+                GameObject muzzle = new GameObject("Muzzle");
+                muzzle.transform.SetParent(root.transform, false);
+                muzzle.transform.localPosition = new Vector3(0f, 0.85f, 0.25f);
+                adapter.muzzleTransform = muzzle.transform;
+
+                GameObject abilityOrigin = new GameObject("AbilityOrigin");
+                abilityOrigin.transform.SetParent(root.transform, false);
+                abilityOrigin.transform.localPosition = new Vector3(0f, 0.85f, 0.25f);
+                adapter.abilityOrigin = abilityOrigin.transform;
+
+                GameObject impact = new GameObject("ImpactPoint");
+                impact.transform.SetParent(root.transform, false);
+                impact.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+                adapter.impactPoint = impact.transform;
+
+                // Load base materials and assign
+                string modelName = mapping.fbx.Replace(".fbx", string.Empty);
+                Material bodySource = AssetDatabase.LoadAssetAtPath<Material>(MaterialsFolder + modelName + "_Body.mat");
+                Material weaponSource = AssetDatabase.LoadAssetAtPath<Material>(MaterialsFolder + modelName + "_Weapon.mat");
+                Renderer[] renderers = modelInstance.GetComponentsInChildren<Renderer>();
+                foreach (var rend in renderers)
+                {
+                    bool isWeapon = rend.name.IndexOf("Weapon", StringComparison.OrdinalIgnoreCase) >= 0
+                        || rend.name.IndexOf("Sword", StringComparison.OrdinalIgnoreCase) >= 0
+                        || rend.name.IndexOf("Dagger", StringComparison.OrdinalIgnoreCase) >= 0
+                        || rend.name.IndexOf("Staff", StringComparison.OrdinalIgnoreCase) >= 0
+                        || rend.name.IndexOf("Bow", StringComparison.OrdinalIgnoreCase) >= 0;
+                    Material assigned = isWeapon && weaponSource != null ? weaponSource : bodySource;
+                    if (assigned != null)
+                    {
+                        rend.sharedMaterial = assigned;
+                    }
+                }
+
+                // If Bombardier, disable default sword
+                if (mapping.id == "bombardier")
+                {
+                    Transform sword = FindTransformRecursive(modelInstance.transform, "Warrior_Sword");
+                    if (sword != null) sword.gameObject.SetActive(false);
+                }
+                // If Sniper, disable default dagger
+                else if (mapping.id == "sniper")
+                {
+                    Transform dagger = FindTransformRecursive(modelInstance.transform, "Rogue_Dagger");
+                    if (dagger != null) dagger.gameObject.SetActive(false);
+                }
+
+                // Assign VisualRoot to ProceduralAnimator model property using SerializedObject
+                SerializedObject so = new SerializedObject(procAnim);
+                SerializedProperty modelProp = so.FindProperty("model");
+                if (modelProp != null)
+                {
+                    modelProp.objectReferenceValue = visRoot.transform;
+                }
+                so.ApplyModifiedProperties();
+
+                string prefabPath = adaptersFolder + mapping.id + "_Adapter.prefab";
+                PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+                UnityEngine.Object.DestroyImmediate(root);
+
+                string soPath = HeroSOFolder + GetHeroAssetName(mapping.id);
+                var heroSO = AssetDatabase.LoadAssetAtPath<HeroDefinition>(soPath);
+                if (heroSO != null)
+                {
+                    heroSO.heroPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+                    EditorUtility.SetDirty(heroSO);
+                    Debug.Log($"Assigned adapter prefab to {soPath}");
+                }
             }
         }
     }

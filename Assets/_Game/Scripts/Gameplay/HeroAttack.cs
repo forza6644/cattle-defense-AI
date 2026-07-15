@@ -232,7 +232,7 @@ namespace Stonehold
 
             if (VfxManager.Instance != null)
             {
-                VfxManager.Instance.PlayHeroAbilityCast(transform.position + projectileLaunchOffset, definition.id);
+                VfxManager.Instance.PlayHeroAbilityCast(GetAbilityOriginPosition(), definition.id);
             }
 
             if (AudioManager.Instance != null)
@@ -306,7 +306,7 @@ namespace Stonehold
 
         private void UsePowerShotAbility(Enemy primaryTarget, float damage)
         {
-            Vector3 start = transform.position + projectileLaunchOffset;
+            Vector3 start = GetAbilityOriginPosition();
             Vector3 direction = (primaryTarget.transform.position - start).normalized;
             direction.y = 0f;
             Vector3 end = start + direction * GetModifiedRange();
@@ -351,7 +351,7 @@ namespace Stonehold
             WeaponDefinition weapon = definition.weapon;
             if (weapon != null && weapon.projectilePrefab != null)
             {
-                Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, transform.position + projectileLaunchOffset);
+                Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, GetAbilityOriginPosition());
                 if (projectile != null)
                 {
                     projectile.transform.localScale = Vector3.one * 2.2f;
@@ -395,7 +395,7 @@ namespace Stonehold
             {
                 foreach (Enemy targetEnemy in targetList)
                 {
-                    Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, transform.position + projectileLaunchOffset);
+                    Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, GetMuzzlePosition());
                     if (projectile != null)
                     {
                         projectile.InitWithStatusEffect(
@@ -416,7 +416,7 @@ namespace Stonehold
 
         private void UseChainLightningAbility(Enemy primaryTarget, float damage, int bounceCount)
         {
-            Vector3 startSource = transform.position + projectileLaunchOffset;
+            Vector3 startSource = GetAbilityOriginPosition();
             Enemy current = primaryTarget;
             List<Enemy> hitList = new List<Enemy>();
 
@@ -444,7 +444,7 @@ namespace Stonehold
 
         private void UseChainLightningBasic(Enemy primaryTarget, float damage)
         {
-            Vector3 startSource = transform.position + projectileLaunchOffset;
+            Vector3 startSource = GetMuzzlePosition();
             Enemy current = primaryTarget;
             List<Enemy> hitList = new List<Enemy>();
 
@@ -548,7 +548,7 @@ namespace Stonehold
                 }
                 if (VfxManager.Instance != null)
                 {
-                    VfxManager.Instance.PlayHeroMuzzle(transform.position + projectileLaunchOffset, definition.id);
+                    VfxManager.Instance.PlayHeroMuzzle(GetMuzzlePosition(), definition.id);
                 }
                 bool isCritVolley = Random.value < GetModifiedCritChance();
                 float arrowDamage = GetModifiedDamage();
@@ -568,7 +568,7 @@ namespace Stonehold
                 }
                 if (VfxManager.Instance != null)
                 {
-                    VfxManager.Instance.PlayHeroMuzzle(transform.position + projectileLaunchOffset, definition.id);
+                    VfxManager.Instance.PlayHeroMuzzle(GetMuzzlePosition(), definition.id);
                 }
                 UseChainLightningBasic(target, GetModifiedDamage());
                 return;
@@ -582,7 +582,7 @@ namespace Stonehold
 
             if (VfxManager.Instance != null)
             {
-                VfxManager.Instance.PlayHeroMuzzle(transform.position + projectileLaunchOffset, definition.id);
+                VfxManager.Instance.PlayHeroMuzzle(GetMuzzlePosition(), definition.id);
             }
 
             float splashRadius = weapon.attackType == AttackType.Splash ? weapon.splashRadius : 0f;
@@ -642,7 +642,7 @@ namespace Stonehold
 
             if (weapon.projectilePrefab != null)
             {
-                Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, transform.position + projectileLaunchOffset);
+                Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, GetMuzzlePosition());
                 if (projectile != null)
                 {
                     projectile.InitWithStatusEffect(
@@ -689,6 +689,26 @@ namespace Stonehold
                     if (heroId == "archer") return new Color(0.45f, 0.95f, 0.3f, 1f);
                     return new Color(1f, 0.88f, 0.4f, 1f);
             }
+        }
+
+        private Vector3 GetMuzzlePosition()
+        {
+            ArtAdapter adapter = GetComponent<ArtAdapter>();
+            if (adapter != null && adapter.muzzleTransform != null)
+            {
+                return adapter.muzzleTransform.position;
+            }
+            return transform.position + projectileLaunchOffset;
+        }
+
+        private Vector3 GetAbilityOriginPosition()
+        {
+            ArtAdapter adapter = GetComponent<ArtAdapter>();
+            if (adapter != null && adapter.abilityOrigin != null)
+            {
+                return adapter.abilityOrigin.position;
+            }
+            return transform.position + projectileLaunchOffset;
         }
     }
 }
