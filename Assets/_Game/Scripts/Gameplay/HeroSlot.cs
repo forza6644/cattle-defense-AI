@@ -59,7 +59,7 @@ namespace Stonehold
             instance.name = hero.displayName + " Hero";
             // The portrait camera is pulled back to show the complete battlefield.
             // Compensate here so each defender still reads clearly above the wall.
-            instance.transform.localScale = Vector3.one * 2.1f;
+            instance.transform.localScale = Vector3.one * 1.65f;
 
             Tower[] legacyTowers = instance.GetComponentsInChildren<Tower>();
             for (int i = 0; i < legacyTowers.Length; i++)
@@ -290,7 +290,7 @@ namespace Stonehold
             prop.transform.SetParent(propParent);
             prop.transform.localPosition = localPos;
             prop.transform.localRotation = localRot;
-            prop.transform.localScale = localScale;
+            prop.transform.localScale = CompensateMountedScale(localScale, parent, propParent);
 
             // Remove collider from prop so it doesn't interfere with gameplay
             Collider propCollider = prop.GetComponent<Collider>();
@@ -306,6 +306,21 @@ namespace Stonehold
                 mpb.SetColor(Shader.PropertyToID("_BaseColor"), propColor);
                 propRenderer.SetPropertyBlock(mpb);
             }
+        }
+
+        private static Vector3 CompensateMountedScale(Vector3 desiredRootScale, Transform visualRoot, Transform mount)
+        {
+            Vector3 rootScale = visualRoot.lossyScale;
+            Vector3 mountScale = mount.lossyScale;
+            return new Vector3(
+                desiredRootScale.x * SafeScaleRatio(rootScale.x, mountScale.x),
+                desiredRootScale.y * SafeScaleRatio(rootScale.y, mountScale.y),
+                desiredRootScale.z * SafeScaleRatio(rootScale.z, mountScale.z));
+        }
+
+        private static float SafeScaleRatio(float rootScale, float mountScale)
+        {
+            return Mathf.Abs(mountScale) > 0.0001f ? Mathf.Abs(rootScale / mountScale) : 1f;
         }
 
         private static Transform FindTransformRecursive(Transform parent, string name)

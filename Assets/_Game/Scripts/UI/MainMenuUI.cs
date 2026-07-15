@@ -1176,7 +1176,7 @@ namespace Stonehold
             prop.transform.SetParent(propParent);
             prop.transform.localPosition = localPos;
             prop.transform.localRotation = localRot;
-            prop.transform.localScale = localScale;
+            prop.transform.localScale = CompensatePreviewMountedScale(localScale, parent, propParent);
 
             Collider propCollider = prop.GetComponent<Collider>();
             if (propCollider != null) Destroy(propCollider);
@@ -1189,6 +1189,21 @@ namespace Stonehold
                 mpb.SetColor(Shader.PropertyToID("_BaseColor"), propColor);
                 propRenderer.SetPropertyBlock(mpb);
             }
+        }
+
+        private static Vector3 CompensatePreviewMountedScale(Vector3 desiredRootScale, Transform visualRoot, Transform mount)
+        {
+            Vector3 rootScale = visualRoot.lossyScale;
+            Vector3 mountScale = mount.lossyScale;
+            return new Vector3(
+                desiredRootScale.x * SafePreviewScaleRatio(rootScale.x, mountScale.x),
+                desiredRootScale.y * SafePreviewScaleRatio(rootScale.y, mountScale.y),
+                desiredRootScale.z * SafePreviewScaleRatio(rootScale.z, mountScale.z));
+        }
+
+        private static float SafePreviewScaleRatio(float rootScale, float mountScale)
+        {
+            return Mathf.Abs(mountScale) > 0.0001f ? Mathf.Abs(rootScale / mountScale) : 1f;
         }
     }
 }
