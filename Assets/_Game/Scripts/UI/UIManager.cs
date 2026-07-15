@@ -316,7 +316,7 @@ namespace Stonehold
 
             ShowPanel(waveControlGroup, true);
 
-            if (number == 12)
+            if (waves != null && number == waves.TotalWaves)
             {
                 bannerText.color = new Color(1f, 0.5f, 0.2f); // Orange warning for Boss Countdown
                 ShowBanner("Boss Preparing...");
@@ -929,6 +929,11 @@ namespace Stonehold
                 return;
             }
 
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayLevelUp();
+            }
+
             for (int i = 0; i < 3; i++)
             {
                 int index = i;
@@ -1014,6 +1019,10 @@ namespace Stonehold
                     cardButtons[i].onClick.RemoveAllListeners();
                     cardButtons[i].onClick.AddListener(() =>
                     {
+                        if (AudioManager.Instance != null)
+                        {
+                            AudioManager.Instance.PlayUpgrade();
+                        }
                         if (progression != null)
                         {
                             progression.ApplyChoice(choices[index]);
@@ -1302,6 +1311,7 @@ namespace Stonehold
                 // Title
                 cardTitleTexts[i] = CreateText(contentRoot, "Title", "Card Title", 26, new Color(1f, 0.85f, 0.2f), isPortrait ? TextAnchor.MiddleLeft : TextAnchor.UpperCenter);
                 cardTitleTexts[i].fontStyle = FontStyle.Bold;
+                cardTitleTexts[i].horizontalOverflow = HorizontalWrapMode.Wrap;
 
                 // Description
                 cardDescriptionTexts[i] = CreateText(contentRoot, "Description", "Card description...", 19, new Color(0.85f, 0.85f, 0.9f), isPortrait ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter);

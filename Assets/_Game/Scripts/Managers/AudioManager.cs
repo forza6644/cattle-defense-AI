@@ -226,6 +226,42 @@ namespace Stonehold
             }
         }
 
+        public void PlayAbilityCast(string heroId)
+        {
+            if (library == null) return;
+            float pitch = Random.Range(0.95f, 1.05f);
+            switch (heroId)
+            {
+                case "fire_mage":
+                    PlaySfx(library.cannonExplosion, 0.7f, pitch * 1.5f);
+                    break;
+                case "frost_mage":
+                    PlaySfx(library.frostHit, 0.8f, pitch * 0.9f);
+                    break;
+                case "electric_engineer":
+                    PlaySfx(library.upgrade, 0.6f, pitch * 1.4f);
+                    break;
+                case "bombardier":
+                    PlaySfx(library.cannonExplosion, 0.5f, pitch * 0.7f);
+                    break;
+                case "sniper":
+                    PlaySfx(library.upgrade, 0.7f, pitch * 1.8f);
+                    break;
+                case "archer":
+                    PlaySfx(library.arrowHit, 0.8f, pitch * 1.3f);
+                    break;
+            }
+        }
+
+        public void PlayLevelUp()
+        {
+            if (library != null)
+            {
+                PlaySfx(library.upgrade, 1.0f, 0.95f);
+                PlaySfx(library.gold, 0.8f, 1.15f);
+            }
+        }
+
         public void PlayImpact(bool splash, bool frost)
         {
             if (library == null)
@@ -334,8 +370,17 @@ namespace Stonehold
         {
             if (library != null)
             {
-                AudioClip clip = library.waveStart != null ? library.waveStart : library.upgrade;
-                PlaySfx(clip, 1.0f);
+                if (hookedWaves != null && waveNumber == hookedWaves.TotalWaves)
+                {
+                    // Boss wave started! Deep bass rumble SFX (low-pitched explosion/damage sounds)
+                    PlaySfx(library.cannonExplosion, 1.0f, 0.45f);
+                    PlaySfx(library.castleDamage, 0.8f, 0.55f);
+                }
+                else
+                {
+                    AudioClip clip = library.waveStart != null ? library.waveStart : library.upgrade;
+                    PlaySfx(clip, 1.0f);
+                }
             }
         }
 

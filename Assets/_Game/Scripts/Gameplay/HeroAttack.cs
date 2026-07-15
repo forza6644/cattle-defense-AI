@@ -162,6 +162,7 @@ namespace Stonehold
 
             if (AudioManager.Instance != null)
             {
+                AudioManager.Instance.PlayAbilityCast(definition.id);
                 AudioManager.Instance.PlayHeroImpact(definition.id, true);
             }
 
