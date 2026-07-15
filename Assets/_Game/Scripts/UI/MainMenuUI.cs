@@ -47,6 +47,7 @@ namespace Stonehold
         private Button upgradeDefenderBtn;
         private Text upgradeDefenderBtnLabel;
         private int currentDefenderIndex = 0;
+        private GameObject activePreviewInstance;
 
         private Text[] metaUpgradeNameTexts = new Text[5];
         private Button[] metaUpgradeButtons = new Button[5];
@@ -54,12 +55,30 @@ namespace Stonehold
 
         private void Awake()
         {
+            CleanupGeneratedMenuObjects();
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (FindAnyObjectByType<MetaUpgradeManager>() == null)
             {
                 GameObject managerGo = new GameObject("MetaUpgradeManager", typeof(MetaUpgradeManager));
                 DontDestroyOnLoad(managerGo);
             }
+
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = new Color(0.07f, 0.09f, 0.14f);
+            }
+        }
+
+        private void Start()
+        {
+            StartCoroutine(BuildMenuDelayed());
+        }
+
+        private System.Collections.IEnumerator BuildMenuDelayed()
+        {
+            yield return null;
             BuildMenu();
         }
 
@@ -125,6 +144,7 @@ namespace Stonehold
             }
 
             GameObject canvasObject = new GameObject("MenuCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            canvasObject.transform.SetParent(transform, false);
             Canvas canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasRect = canvas.GetComponent<RectTransform>();
@@ -144,7 +164,7 @@ namespace Stonehold
             scaler.matchWidthOrHeight = 0.5f;
 
             // Background
-            Image background = CreateImage(canvasRect, "Background", new Color(0.07f, 0.09f, 0.14f));
+            Image background = CreateImage(canvasRect, "Background", new Color(0.07f, 0.09f, 0.14f, 0f));
             Stretch(background.rectTransform);
 
             // Safe Area
@@ -178,9 +198,17 @@ namespace Stonehold
             Place(profileLevel.rectTransform, new Vector2(0f, 0.5f), new Vector2(250f, -14f), new Vector2(240f, 24f));
 
             // Currencies (Top-Right Area)
-            currencyText = CreateText(headerBar.rectTransform, "Currencies", "", 22, new Color(0.9f, 0.9f, 0.95f));
-            currencyText.alignment = TextAnchor.MiddleRight;
-            Place(currencyText.rectTransform, new Vector2(1f, 0.5f), new Vector2(-480f, 0f), new Vector2(500f, 40f));
+            currencyText = CreateText(headerBar.rectTransform, "Currencies", "", isPortrait ? 15 : 22, new Color(0.9f, 0.9f, 0.95f));
+            if (isPortrait)
+            {
+                Place(currencyText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(320f, 40f));
+                currencyText.alignment = TextAnchor.MiddleCenter;
+            }
+            else
+            {
+                Place(currencyText.rectTransform, new Vector2(1f, 0.5f), new Vector2(-480f, 0f), new Vector2(500f, 40f));
+                currencyText.alignment = TextAnchor.MiddleRight;
+            }
             RefreshCurrencies();
 
             // Settings & Quit Buttons in Top Bar
@@ -794,6 +822,8 @@ namespace Stonehold
                     $"Dmg: <b>{hd.baseDamage}</b> | Speed: <b>{hd.baseFireRate}/s</b> | Range: <b>{hd.baseRange}</b>\n" +
                     $"Ability: <color=#ffd759><b>{abilityName}</b></color> - {abilityDesc}";
             }
+
+            UpdateHeroPreview();
         }
 
         private void RefreshCurrencies()
@@ -963,6 +993,201 @@ namespace Stonehold
 
                 RefreshCurrencies();
                 RefreshMetaUpgradeUI();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (activePreviewInstance != null)
+            {
+                Destroy(activePreviewInstance);
+            }
+        }
+
+        private void UpdateHeroPreview()
+        {
+            if (activePreviewInstance != null)
+            {
+                Destroy(activePreviewInstance);
+                activePreviewInstance = null;
+            }
+
+            if (heroDefinitions == null || currentDefenderIndex < 0 || currentDefenderIndex >= heroDefinitions.Length)
+            {
+                return;
+            }
+
+            HeroDefinition hd = heroDefinitions[currentDefenderIndex];
+            if (hd == null || hd.heroPrefab == null)
+            {
+                return;
+            }
+
+            activePreviewInstance = Instantiate(hd.heroPrefab, transform);
+            activePreviewInstance.name = "HeroPreview_" + hd.id;
+            activePreviewInstance.transform.position = new Vector3(0f, -0.6f, -6.5f);
+            activePreviewInstance.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            activePreviewInstance.transform.localScale = Vector3.one * 1.8f;
+
+            Collider[] colliders = activePreviewInstance.GetComponentsInChildren<Collider>(true);
+            foreach (var col in colliders)
+            {
+                Destroy(col);
+            }
+
+            if (hd.id == "bombardier")
+            {
+                Transform sword = FindTransformRecursiveInPreview(activePreviewInstance.transform, "Warrior_Sword");
+                if (sword != null) sword.gameObject.SetActive(false);
+            }
+            else if (hd.id == "sniper")
+            {
+                Transform dagger = FindTransformRecursiveInPreview(activePreviewInstance.transform, "Rogue_Dagger");
+                if (dagger != null) dagger.gameObject.SetActive(false);
+            }
+
+            Color accentColor = GetHeroAccentColor(hd.id);
+            CreatePreviewWeaponProp(hd.id, activePreviewInstance.transform, accentColor);
+        }
+
+        private void CleanupGeneratedMenuObjects()
+        {
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (child.name == "MenuCanvas" || child.name.StartsWith("HeroPreview_"))
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+
+            GameObject staleCanvas = GameObject.Find("MenuCanvas");
+            if (staleCanvas != null && staleCanvas.transform.parent != transform)
+            {
+                Destroy(staleCanvas);
+            }
+
+            Transform[] sceneTransforms = FindObjectsByType<Transform>(FindObjectsSortMode.None);
+            foreach (Transform sceneTransform in sceneTransforms)
+            {
+                if (sceneTransform.parent == null && sceneTransform.name.StartsWith("HeroPreview_"))
+                {
+                    Destroy(sceneTransform.gameObject);
+                }
+            }
+        }
+
+        private static Transform FindTransformRecursiveInPreview(Transform parent, string name)
+        {
+            if (parent.name.IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return parent;
+            }
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform found = FindTransformRecursiveInPreview(parent.GetChild(i), name);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        private static Color GetHeroAccentColor(string heroId)
+        {
+            switch (heroId)
+            {
+                case "archer": return new Color(0.5f, 0.35f, 0.2f);
+                case "bombardier": return new Color(0.9f, 0.5f, 0.15f);
+                case "frost_mage": return new Color(0.85f, 0.92f, 1f);
+                case "fire_mage": return new Color(1f, 0.5f, 0.1f);
+                case "electric_engineer": return new Color(0.3f, 0.3f, 0.35f);
+                case "sniper": return new Color(0.7f, 0.5f, 0.85f);
+                default: return Color.white;
+            }
+        }
+
+        private void CreatePreviewWeaponProp(string heroId, Transform parent, Color color)
+        {
+            PrimitiveType shape;
+            Vector3 localPos;
+            Vector3 localScale;
+            Quaternion localRot = Quaternion.identity;
+
+            switch (heroId)
+            {
+                case "archer":
+                    shape = PrimitiveType.Cylinder;
+                    localPos = new Vector3(-0.25f, 0.35f, -0.15f);
+                    localScale = new Vector3(0.08f, 0.25f, 0.08f);
+                    localRot = Quaternion.Euler(0f, 0f, 15f);
+                    break;
+                case "bombardier":
+                    shape = PrimitiveType.Sphere;
+                    localPos = new Vector3(0.3f, 0.1f, 0f);
+                    localScale = new Vector3(0.22f, 0.22f, 0.22f);
+                    break;
+                case "frost_mage":
+                    shape = PrimitiveType.Cube;
+                    localPos = new Vector3(0.25f, 0.4f, 0f);
+                    localScale = new Vector3(0.1f, 0.15f, 0.1f);
+                    localRot = Quaternion.Euler(0f, 45f, 45f);
+                    break;
+                case "fire_mage":
+                    shape = PrimitiveType.Sphere;
+                    localPos = new Vector3(0.25f, 0.45f, 0f);
+                    localScale = new Vector3(0.14f, 0.14f, 0.14f);
+                    break;
+                case "electric_engineer":
+                    shape = PrimitiveType.Cylinder;
+                    localPos = new Vector3(0f, 0.65f, 0f);
+                    localScale = new Vector3(0.06f, 0.18f, 0.06f);
+                    break;
+                case "sniper":
+                    shape = PrimitiveType.Cylinder;
+                    localPos = new Vector3(0.35f, 0.3f, 0f);
+                    localScale = new Vector3(0.04f, 0.3f, 0.04f);
+                    localRot = Quaternion.Euler(0f, 0f, 90f);
+                    break;
+                default:
+                    return;
+            }
+
+            Transform propParent = parent;
+            if (heroId == "bombardier" || heroId == "sniper")
+            {
+                Transform weaponMount = FindTransformRecursiveInPreview(parent, "Weapon.R");
+                if (weaponMount != null)
+                {
+                    propParent = weaponMount;
+                    if (heroId == "bombardier")
+                    {
+                        localPos = new Vector3(0f, 0f, 0f);
+                    }
+                    else if (heroId == "sniper")
+                    {
+                        localPos = new Vector3(0f, 0.15f, 0f);
+                        localRot = Quaternion.Euler(0f, 0f, 90f);
+                        localScale = new Vector3(0.04f, 0.35f, 0.04f);
+                    }
+                }
+            }
+
+            GameObject prop = GameObject.CreatePrimitive(shape);
+            prop.name = "WeaponProp";
+            prop.transform.SetParent(propParent);
+            prop.transform.localPosition = localPos;
+            prop.transform.localRotation = localRot;
+            prop.transform.localScale = localScale;
+
+            Collider propCollider = prop.GetComponent<Collider>();
+            if (propCollider != null) Destroy(propCollider);
+
+            Renderer propRenderer = prop.GetComponent<Renderer>();
+            if (propRenderer != null)
+            {
+                Color propColor = heroId == "fire_mage" ? new Color(1f, 0.45f, 0.08f) : color;
+                MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+                mpb.SetColor(Shader.PropertyToID("_BaseColor"), propColor);
+                propRenderer.SetPropertyBlock(mpb);
             }
         }
     }

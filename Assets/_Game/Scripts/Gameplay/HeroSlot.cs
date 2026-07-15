@@ -9,7 +9,7 @@ namespace Stonehold
 
         // How strongly hero identity color mixes over the prefab's own material colors
         // (1 = flat identity color, 0 = untouched prefab materials).
-        private const float BodyTintBlend = 0.65f;
+        private const float BodyTintBlend = 0.0f;
 
         private HeroAttack currentHero;
 
@@ -203,6 +203,18 @@ namespace Stonehold
                 }
             }
 
+            // Hide default weapon meshes for Bombardier and Sniper
+            if (hero.id == "bombardier")
+            {
+                Transform sword = FindTransformRecursive(instance.transform, "Warrior_Sword");
+                if (sword != null) sword.gameObject.SetActive(false);
+            }
+            else if (hero.id == "sniper")
+            {
+                Transform dagger = FindTransformRecursive(instance.transform, "Rogue_Dagger");
+                if (dagger != null) dagger.gameObject.SetActive(false);
+            }
+
             // Add a small weapon prop for visual identification
             CreateWeaponProp(hero.id, instance.transform, accentColor);
         }
@@ -253,9 +265,29 @@ namespace Stonehold
                     return;
             }
 
+            Transform propParent = parent;
+            if (heroId == "bombardier" || heroId == "sniper")
+            {
+                Transform weaponMount = FindTransformRecursive(parent, "Weapon.R");
+                if (weaponMount != null)
+                {
+                    propParent = weaponMount;
+                    if (heroId == "bombardier")
+                    {
+                        localPos = new Vector3(0f, 0f, 0f);
+                    }
+                    else if (heroId == "sniper")
+                    {
+                        localPos = new Vector3(0f, 0.15f, 0f);
+                        localRot = Quaternion.Euler(0f, 0f, 90f);
+                        localScale = new Vector3(0.04f, 0.35f, 0.04f);
+                    }
+                }
+            }
+
             GameObject prop = GameObject.CreatePrimitive(shape);
             prop.name = "WeaponProp";
-            prop.transform.SetParent(parent);
+            prop.transform.SetParent(propParent);
             prop.transform.localPosition = localPos;
             prop.transform.localRotation = localRot;
             prop.transform.localScale = localScale;
@@ -274,6 +306,20 @@ namespace Stonehold
                 mpb.SetColor(Shader.PropertyToID("_BaseColor"), propColor);
                 propRenderer.SetPropertyBlock(mpb);
             }
+        }
+
+        private static Transform FindTransformRecursive(Transform parent, string name)
+        {
+            if (parent.name.IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return parent;
+            }
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                Transform found = FindTransformRecursive(parent.GetChild(i), name);
+                if (found != null) return found;
+            }
+            return null;
         }
     }
 

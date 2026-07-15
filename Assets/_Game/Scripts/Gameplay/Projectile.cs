@@ -84,6 +84,7 @@ namespace Stonehold
 
         public void Init(Enemy targetEnemy, float damageAmount, float splash, float slowMult, float slowDur, Color trailColor, string damageSourceHeroId)
         {
+            speed = (damageSourceHeroId == "sniper") ? 60f : 12f;
             target = targetEnemy;
             damage = damageAmount;
             splashRadius = splash;
@@ -144,6 +145,7 @@ namespace Stonehold
             float effectValue,
             float effectDuration)
         {
+            speed = (damageSourceHeroId == "sniper") ? 60f : 12f;
             target = targetEnemy;
             damage = damageAmount;
             splashRadius = splash;

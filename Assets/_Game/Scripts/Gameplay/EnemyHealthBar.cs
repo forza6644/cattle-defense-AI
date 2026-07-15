@@ -53,6 +53,12 @@ namespace Stonehold
         {
             EnsureMaterials();
 
+            Transform existing = transform.Find("HealthBar");
+            if (existing != null)
+            {
+                Destroy(existing.gameObject);
+            }
+
             barRoot = new GameObject("HealthBar").transform;
             barRoot.SetParent(transform, false);
             barRoot.localPosition = Vector3.up * (isBoss ? 2.65f : 2.05f);

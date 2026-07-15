@@ -165,6 +165,11 @@ namespace Stonehold
                 attackTimer -= Time.deltaTime;
                 float k = Mathf.Clamp01(attackTimer / AttackDuration);
                 scale *= 1f + 0.18f * k; // strong attack punch
+
+                if (gameObject.name.ToLower().Contains("sniper"))
+                {
+                    model.localPosition -= Vector3.forward * (0.35f * k);
+                }
             }
 
             model.localScale = scale;

@@ -162,9 +162,9 @@ namespace Stonehold
         {
             UpgradeEnemyPrefab("Grunt.prefab", "Monk.fbx", "Enemy_Grunt.controller", 0.52f, new Color(0.35f, 0.72f, 0.3f));
             UpgradeEnemyPrefab("RunnerEnemy.prefab", "Rogue.fbx", "Enemy_Runner.controller", 0.42f, new Color(0.9f, 0.3f, 0.25f));
-            UpgradeEnemyPrefab("Brute.prefab", "Warrior.fbx", "Enemy_Brute.controller", 0.8f, new Color(0.3f, 0.42f, 0.75f));
-            UpgradeEnemyPrefab("ArmoredEnemy.prefab", "Warrior.fbx", "Enemy_Shield.controller", 0.6f, new Color(0.58f, 0.63f, 0.7f), addShield: true);
-            UpgradeEnemyPrefab("BossEnemy.prefab", "Wizard.fbx", "Enemy_Boss.controller", 0.65f, new Color(0.52f, 0.18f, 0.68f));
+            UpgradeEnemyPrefab("Brute.prefab", "Warrior.fbx", "Enemy_Brute.controller", 0.85f, new Color(0.3f, 0.42f, 0.75f));
+            UpgradeEnemyPrefab("ArmoredEnemy.prefab", "Warrior.fbx", "Enemy_Shield.controller", 0.65f, new Color(0.58f, 0.63f, 0.7f), addShield: true);
+            UpgradeEnemyPrefab("BossEnemy.prefab", "Wizard.fbx", "Enemy_Boss.controller", 1.15f, new Color(0.52f, 0.18f, 0.68f));
         }
 
         private static void UpgradeEnemyPrefab(string prefabName, string fbxName, string controllerName, float scaleMultiplier, Color tintColor, bool addShield = false)
