@@ -29,12 +29,25 @@ namespace Stonehold
         private float statusEffectValue;
         private float statusEffectDuration;
 
+        private Vector3 baseScale;
+        private Vector3 targetLastPosition;
+        private Vector3 startPosition;
+        private float travelTime;
+        private float elapsedTravelTime;
+        private bool useArc;
+
         private static readonly Dictionary<GameObject, Queue<Projectile>> pools = new Dictionary<GameObject, Queue<Projectile>>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             pools.Clear();
+        }
+
+        private void Awake()
+        {
+            baseScale = transform.localScale;
+            trail = GetComponent<TrailRenderer>();
         }
 
         /// <summary>Gets a pooled projectile (or instantiates one) at the position.</summary>
@@ -51,10 +64,12 @@ namespace Stonehold
                 GameObject go = Instantiate(prefab, position, Quaternion.identity);
                 projectile = go.GetComponent<Projectile>();
                 projectile.sourcePrefab = prefab;
+                projectile.baseScale = go.transform.localScale;
             }
             else
             {
                 projectile.transform.position = position;
+                projectile.transform.localScale = projectile.baseScale;
                 projectile.gameObject.SetActive(true);
             }
 
@@ -76,6 +91,16 @@ namespace Stonehold
             slowDuration = slowDur;
             sourceHeroId = damageSourceHeroId;
             impactColor = trailColor;
+
+            targetLastPosition = target != null ? target.transform.position : transform.position;
+            startPosition = transform.position;
+            useArc = (damageSourceHeroId == "bombardier");
+            if (useArc)
+            {
+                float distance = Vector3.Distance(startPosition, targetLastPosition);
+                travelTime = Mathf.Max(0.1f, distance / speed);
+                elapsedTravelTime = 0f;
+            }
 
             if (slowMult < 1f)
             {
@@ -128,6 +153,16 @@ namespace Stonehold
             statusEffectDuration = effectDuration;
             impactColor = trailColor;
 
+            targetLastPosition = target != null ? target.transform.position : transform.position;
+            startPosition = transform.position;
+            useArc = (damageSourceHeroId == "bombardier");
+            if (useArc)
+            {
+                float distance = Vector3.Distance(startPosition, targetLastPosition);
+                travelTime = Mathf.Max(0.1f, distance / speed);
+                elapsedTravelTime = 0f;
+            }
+
             if (effectType == StatusEffectType.Slow)
             {
                 slowMultiplier = effectValue;
@@ -160,28 +195,48 @@ namespace Stonehold
 
         private void Update()
         {
-            if (target == null || !target.gameObject.activeInHierarchy)
+            if (target != null && target.gameObject.activeInHierarchy && !target.IsDead)
             {
-                Return();
-                return;
+                targetLastPosition = target.transform.position;
             }
 
-            transform.position = Vector3.MoveTowards(
-                transform.position,
-                target.transform.position,
-                speed * Time.deltaTime);
+            Vector3 dest = targetLastPosition;
 
-            if (Vector3.Distance(transform.position, target.transform.position) <= hitDistance)
+            if (useArc)
             {
-                Impact();
-                Return();
+                elapsedTravelTime += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedTravelTime / travelTime);
+
+                Vector3 currentPos = Vector3.Lerp(startPosition, dest, t);
+                float arcHeight = 2.4f;
+                float height = Mathf.Sin(t * Mathf.PI) * arcHeight;
+                currentPos.y += height;
+
+                transform.position = currentPos;
+
+                if (t >= 1.0f)
+                {
+                    Impact(dest);
+                    Return();
+                }
+            }
+            else
+            {
+                transform.position = Vector3.MoveTowards(
+                    transform.position,
+                    dest,
+                    speed * Time.deltaTime);
+
+                if (Vector3.Distance(transform.position, dest) <= hitDistance)
+                {
+                    Impact(dest);
+                    Return();
+                }
             }
         }
 
-        private void Impact()
+        private void Impact(Vector3 impactPoint)
         {
-            Vector3 impactPoint = target.transform.position;
-
             if (VfxManager.Instance != null)
             {
                 if (splashRadius > 0f)
@@ -234,7 +289,10 @@ namespace Stonehold
             }
             else
             {
-                HitEnemy(target);
+                if (target != null && target.gameObject.activeInHierarchy && !target.IsDead)
+                {
+                    HitEnemy(target);
+                }
             }
         }
 
@@ -250,6 +308,7 @@ namespace Stonehold
 
         private void HitEnemy(Enemy enemy)
         {
+            if (enemy == null || enemy.IsDead) return;
             float appliedDamage = enemy.TakeDamage(damage);
             DamageTracker.RecordDamage(sourceHeroId, appliedDamage);
 

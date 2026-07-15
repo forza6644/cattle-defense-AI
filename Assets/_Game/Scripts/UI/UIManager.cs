@@ -669,6 +669,19 @@ namespace Stonehold
             }
         }
 
+        private static string GetTargetingModeDisplayName(TargetingMode mode)
+        {
+            switch (mode)
+            {
+                case TargetingMode.ClosestToGoal: return "First";
+                case TargetingMode.FirstInRange: return "First In Range";
+                case TargetingMode.LastInRange: return "Last";
+                case TargetingMode.Strongest: return "Strongest";
+                case TargetingMode.Weakest: return "Weakest";
+                default: return mode.ToString();
+            }
+        }
+
         private void RefreshTowerPanel()
         {
             if (selectedHero != null)
@@ -676,7 +689,7 @@ namespace Stonehold
                 HeroDefinition hero = selectedHero.Definition;
                 towerPanelTitle.text = (hero != null ? hero.displayName : "Hero")
                     + "  -  Range " + selectedHero.GetModifiedRange().ToString("0.#");
-                targetButtonLabel.text = "Target:\n" + selectedHero.CurrentTargetingMode + " >";
+                targetButtonLabel.text = "Target:\n" + GetTargetingModeDisplayName(selectedHero.CurrentTargetingMode) + " >";
                 targetButtonLabel.fontSize = 20;
                 return;
             }
@@ -713,7 +726,7 @@ namespace Stonehold
 
             if (targetButtonLabel != null)
             {
-                targetButtonLabel.text = "Target:\n" + selectedTower.CurrentTargetingMode.ToString() + " >";
+                targetButtonLabel.text = "Target:\n" + GetTargetingModeDisplayName(selectedTower.CurrentTargetingMode) + " >";
                 targetButtonLabel.fontSize = 20;
             }
         }

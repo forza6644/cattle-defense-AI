@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Stonehold
 {
@@ -101,6 +102,11 @@ namespace Stonehold
 
         private void Update()
         {
+            if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+            {
+                return;
+            }
+
             if (definition == null || definition.weapon == null)
             {
                 return;
@@ -146,7 +152,7 @@ namespace Stonehold
         {
             if (animator != null)
             {
-                animator.PlayAttack();
+                animator.PlayAbility();
             }
 
             if (VfxManager.Instance != null)
@@ -158,36 +164,202 @@ namespace Stonehold
             switch (definition.abilityType)
             {
                 case HeroAbilityType.PowerShot:
-                    if (VfxManager.Instance != null)
-                    {
-                        VfxManager.Instance.PlayAbilityTrace(
-                            transform.position + projectileLaunchOffset,
-                            primaryTarget.transform.position + Vector3.up * 0.25f,
-                            definition.id,
-                            0.16f);
-                        VfxManager.Instance.PlaySniperImpact(primaryTarget.transform.position);
-                    }
-                    ApplyAbilityHit(primaryTarget, abilityDamage, StatusEffectType.None, 0f, 0f);
+                    UsePowerShotAbility(primaryTarget, abilityDamage);
                     break;
                 case HeroAbilityType.FrostNova:
-                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Slow, 0.25f, 3.5f);
+                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Slow, 0.2f, 4f);
                     if (VfxManager.Instance != null) VfxManager.Instance.PlayFrost(primaryTarget.transform.position);
                     break;
                 case HeroAbilityType.FlameWave:
-                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Burn, abilityDamage * 0.2f, 4f);
+                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Burn, abilityDamage * 0.22f, 4f);
                     if (VfxManager.Instance != null) VfxManager.Instance.PlayFireImpact(primaryTarget.transform.position);
                     break;
                 case HeroAbilityType.ArtilleryBarrage:
-                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.None, 0f, 0f);
-                    if (VfxManager.Instance != null) VfxManager.Instance.PlayExplosion(primaryTarget.transform.position);
+                    FireArtilleryBarrageBomb(primaryTarget, abilityDamage);
                     break;
                 case HeroAbilityType.MultiShot:
+                    FireMultiShotVolley(abilityDamage);
+                    break;
                 case HeroAbilityType.ChainStorm:
-                    HitMultipleEnemies(
-                        abilityDamage,
-                        definition.abilityType == HeroAbilityType.ChainStorm ? StatusEffectType.Shock : StatusEffectType.None);
+                    UseChainLightningAbility(primaryTarget, abilityDamage, definition.abilityTargetCount);
                     break;
             }
+        }
+
+        private void UsePowerShotAbility(Enemy primaryTarget, float damage)
+        {
+            Vector3 start = transform.position + projectileLaunchOffset;
+            Vector3 direction = (primaryTarget.transform.position - start).normalized;
+            direction.y = 0f;
+            Vector3 end = start + direction * GetModifiedRange();
+
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayAbilityTrace(start, end, definition.id, 0.18f);
+            }
+
+            var all = EnemyManager.All;
+            for (int i = all.Count - 1; i >= 0; i--)
+            {
+                Enemy enemy = all[i];
+                if (enemy == null || enemy.IsDead) continue;
+
+                float distToLine = DistanceToLineSegment(enemy.transform.position, start, end);
+                if (distToLine <= 1.2f)
+                {
+                    ApplyAbilityHit(enemy, damage, StatusEffectType.None, 0f, 0f);
+                    if (VfxManager.Instance != null)
+                    {
+                        VfxManager.Instance.PlaySniperImpact(enemy.transform.position);
+                    }
+                }
+            }
+        }
+
+        private static float DistanceToLineSegment(Vector3 point, Vector3 start, Vector3 end)
+        {
+            Vector3 lineVec = end - start;
+            Vector3 pointVec = point - start;
+            float lineLenSqr = lineVec.sqrMagnitude;
+            if (lineLenSqr < 0.0001f) return Vector3.Distance(point, start);
+
+            float t = Mathf.Clamp01(Vector3.Dot(pointVec, lineVec) / lineLenSqr);
+            Vector3 projection = start + t * lineVec;
+            return Vector3.Distance(point, projection);
+        }
+
+        private void FireArtilleryBarrageBomb(Enemy target, float damage)
+        {
+            WeaponDefinition weapon = definition.weapon;
+            if (weapon != null && weapon.projectilePrefab != null)
+            {
+                Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, transform.position + projectileLaunchOffset);
+                if (projectile != null)
+                {
+                    projectile.transform.localScale = Vector3.one * 2.2f;
+                    projectile.InitWithStatusEffect(
+                        target,
+                        damage,
+                        definition.abilityRadius,
+                        new Color(1f, 0.45f, 0.1f, 1f),
+                        definition.id,
+                        StatusEffectType.None,
+                        0f,
+                        0f
+                    );
+                }
+            }
+        }
+
+        private void FireMultiShotVolley(float damage)
+        {
+            int targetsCount = Mathf.Max(1, definition.abilityTargetCount);
+            float rangeSqr = GetModifiedRange() * GetModifiedRange();
+            var enemies = EnemyManager.All;
+            List<Enemy> targetList = new List<Enemy>();
+
+            for (int i = 0; i < enemies.Count && targetList.Count < targetsCount; i++)
+            {
+                Enemy enemy = enemies[i];
+                if (enemy != null && !enemy.IsDead && (enemy.transform.position - transform.position).sqrMagnitude <= rangeSqr)
+                {
+                    targetList.Add(enemy);
+                }
+            }
+
+            WeaponDefinition weapon = definition.weapon;
+            if (weapon != null && weapon.projectilePrefab != null)
+            {
+                foreach (Enemy targetEnemy in targetList)
+                {
+                    Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, transform.position + projectileLaunchOffset);
+                    if (projectile != null)
+                    {
+                        projectile.InitWithStatusEffect(
+                            targetEnemy,
+                            damage,
+                            0f,
+                            GetTrailColor(weapon, StatusEffectType.None, definition.id),
+                            definition.id,
+                            StatusEffectType.None,
+                            0f,
+                            0f
+                        );
+                    }
+                }
+            }
+        }
+
+        private void UseChainLightningAbility(Enemy primaryTarget, float damage, int bounceCount)
+        {
+            Vector3 startSource = transform.position + projectileLaunchOffset;
+            Enemy current = primaryTarget;
+            List<Enemy> hitList = new List<Enemy>();
+
+            for (int b = 0; b < bounceCount && current != null; b++)
+            {
+                hitList.Add(current);
+                ApplyAbilityHit(current, damage, StatusEffectType.Shock, 1f, 4f);
+
+                Vector3 endPos = current.transform.position + Vector3.up * 0.25f;
+                if (VfxManager.Instance != null)
+                {
+                    VfxManager.Instance.PlayAbilityTrace(startSource, endPos, "electric_engineer", 0.12f);
+                    VfxManager.Instance.PlayShockImpact(current.transform.position);
+                }
+
+                startSource = endPos;
+                current = FindNextChainTarget(current.transform.position, hitList, 5.0f);
+            }
+        }
+
+        private void UseChainLightningBasic(Enemy primaryTarget, float damage)
+        {
+            Vector3 startSource = transform.position + projectileLaunchOffset;
+            Enemy current = primaryTarget;
+            List<Enemy> hitList = new List<Enemy>();
+
+            // Bounces up to 2 times (primary + 1 extra)
+            for (int b = 0; b < 2 && current != null; b++)
+            {
+                hitList.Add(current);
+                float appliedDamage = current.TakeDamage(damage);
+                DamageTracker.RecordDamage(definition.id, appliedDamage);
+
+                Vector3 endPos = current.transform.position + Vector3.up * 0.25f;
+                if (VfxManager.Instance != null)
+                {
+                    VfxManager.Instance.PlayAbilityTrace(startSource, endPos, "electric_engineer", 0.08f);
+                    VfxManager.Instance.PlayShockImpact(current.transform.position);
+                }
+
+                if (!current.IsDead)
+                {
+                    current.ApplyStatusEffect(new StatusEffect(StatusEffectType.Shock, 1f, 2.5f, definition.id));
+                }
+
+                startSource = endPos;
+                current = FindNextChainTarget(current.transform.position, hitList, 4.5f);
+            }
+        }
+
+        private Enemy FindNextChainTarget(Vector3 sourcePos, List<Enemy> hitList, float bounceRange)
+        {
+            Enemy best = null;
+            float bestDistSqr = bounceRange * bounceRange;
+            var all = EnemyManager.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                Enemy enemy = all[i];
+                if (enemy == null || enemy.IsDead || hitList.Contains(enemy)) continue;
+                float distSqr = (enemy.transform.position - sourcePos).sqrMagnitude;
+                if (distSqr <= bestDistSqr)
+                {
+                    bestDistSqr = distSqr;
+                    best = enemy;
+                }
+            }
+            return best;
         }
 
         private void HitEnemiesInRadius(Vector3 center, float damage, StatusEffectType effectType, float effectValue, float effectDuration)
@@ -201,40 +373,6 @@ namespace Stonehold
                 {
                     ApplyAbilityHit(enemy, damage, effectType, effectValue, effectDuration);
                 }
-            }
-        }
-
-        private void HitMultipleEnemies(float damage, StatusEffectType effectType)
-        {
-            int hitsRemaining = Mathf.Max(1, definition.abilityTargetCount);
-            float rangeSqr = GetModifiedRange() * GetModifiedRange();
-            var enemies = EnemyManager.All;
-            for (int i = 0; i < enemies.Count && hitsRemaining > 0; i++)
-            {
-                Enemy enemy = enemies[i];
-                if (enemy == null || enemy.IsDead || (enemy.transform.position - transform.position).sqrMagnitude > rangeSqr)
-                {
-                    continue;
-                }
-
-                ApplyAbilityHit(enemy, damage, effectType, effectType == StatusEffectType.Shock ? 1f : 0f, effectType == StatusEffectType.Shock ? 3f : 0f);
-                if (VfxManager.Instance != null)
-                {
-                    VfxManager.Instance.PlayAbilityTrace(
-                        transform.position + projectileLaunchOffset,
-                        enemy.transform.position + Vector3.up * 0.25f,
-                        definition.id,
-                        effectType == StatusEffectType.Shock ? 0.11f : 0.07f);
-                    if (effectType == StatusEffectType.Shock)
-                    {
-                        VfxManager.Instance.PlayShockImpact(enemy.transform.position);
-                    }
-                    else
-                    {
-                        VfxManager.Instance.PlayHit(enemy.transform.position, VfxManager.GetHeroColor(definition.id));
-                    }
-                }
-                hitsRemaining--;
             }
         }
 
@@ -255,6 +393,20 @@ namespace Stonehold
 
         private void Fire(Enemy target)
         {
+            if (definition.id == "electric_engineer")
+            {
+                if (animator != null)
+                {
+                    animator.PlayAttack();
+                }
+                if (VfxManager.Instance != null)
+                {
+                    VfxManager.Instance.PlayHeroMuzzle(transform.position + projectileLaunchOffset, definition.id);
+                }
+                UseChainLightningBasic(target, GetModifiedDamage());
+                return;
+            }
+
             WeaponDefinition weapon = definition.weapon;
             if (animator != null)
             {

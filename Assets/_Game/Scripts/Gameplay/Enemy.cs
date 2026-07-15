@@ -233,6 +233,11 @@ namespace Stonehold
 
         private void Update()
         {
+            if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+            {
+                return;
+            }
+
             if (pathPoints == null || pathPoints.Length == 0 || isDead)
             {
                 return;
@@ -242,6 +247,16 @@ namespace Stonehold
             {
                 AttackCastle();
                 return;
+            }
+
+            if (targetCastle != null)
+            {
+                float distToCastle = Vector3.Distance(transform.position, targetCastle.transform.position);
+                if (distToCastle <= 2.2f)
+                {
+                    ReachCastle();
+                    return;
+                }
             }
 
             if (GetComponent<StatusEffectController>() == null)

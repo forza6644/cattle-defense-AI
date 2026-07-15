@@ -29,6 +29,7 @@ namespace Stonehold
         private float attackTimer;
         private float flashTimer;
         private bool dead;
+        private Animator unityAnimator;
 
         private Renderer[] renderers;
         private Color[] baseColors;
@@ -51,6 +52,8 @@ namespace Stonehold
             baseLocalPos = model.localPosition;
             baseScale = model.localScale;
 
+            unityAnimator = GetComponentInChildren<Animator>();
+
             renderers = model.GetComponentsInChildren<Renderer>();
             baseColors = new Color[renderers.Length];
             for (int i = 0; i < renderers.Length; i++)
@@ -64,7 +67,24 @@ namespace Stonehold
 
         public void SetMoving(bool value) => moving = value;
         public void PlayHit() { hitTimer = HitDuration; flashTimer = FlashDuration; }
-        public void PlayAttack() => attackTimer = AttackDuration;
+
+        public void PlayAttack()
+        {
+            attackTimer = AttackDuration;
+            if (unityAnimator != null)
+            {
+                unityAnimator.Play("Attack", 0, 0f);
+            }
+        }
+
+        public void PlayAbility()
+        {
+            attackTimer = AttackDuration;
+            if (unityAnimator != null)
+            {
+                unityAnimator.Play("Ability", 0, 0f);
+            }
+        }
 
         public void PlayDeath(Action onComplete)
         {
@@ -75,7 +95,21 @@ namespace Stonehold
             }
 
             dead = true;
-            StartCoroutine(DeathRoutine(onComplete));
+            if (unityAnimator != null)
+            {
+                unityAnimator.Play("Death", 0, 0f);
+                StartCoroutine(WaitAndComplete(0.9f, onComplete));
+            }
+            else
+            {
+                StartCoroutine(DeathRoutine(onComplete));
+            }
+        }
+
+        private IEnumerator WaitAndComplete(float duration, Action onComplete)
+        {
+            yield return new WaitForSeconds(duration);
+            onComplete?.Invoke();
         }
 
         private void Update()
@@ -85,15 +119,34 @@ namespace Stonehold
                 return;
             }
 
-            float amp = moving ? walkBobAmp : idleBobAmp;
-            float speed = moving ? walkBobSpeed : idleBobSpeed;
-            float phase = Time.time * speed;
+            if (unityAnimator != null)
+            {
+                model.localPosition = baseLocalPos;
+                model.localRotation = Quaternion.identity;
 
-            float bob = Mathf.Abs(Mathf.Sin(phase)) * amp;
-            model.localPosition = baseLocalPos + Vector3.up * bob;
+                var stateInfo = unityAnimator.GetCurrentAnimatorStateInfo(0);
+                bool isAttacking = stateInfo.IsName("Attack") || stateInfo.IsName("Ability");
+                if (!isAttacking || stateInfo.normalizedTime >= 0.95f)
+                {
+                    string targetState = moving ? "Walk" : "Idle";
+                    if (!stateInfo.IsName(targetState))
+                    {
+                        unityAnimator.Play(targetState);
+                    }
+                }
+            }
+            else
+            {
+                float amp = moving ? walkBobAmp : idleBobAmp;
+                float speed = moving ? walkBobSpeed : idleBobSpeed;
+                float phase = Time.time * speed;
 
-            float tilt = moving ? Mathf.Sin(phase) * waddleDegrees : 0f;
-            model.localRotation = Quaternion.Euler(0f, 0f, tilt);
+                float bob = Mathf.Abs(Mathf.Sin(phase)) * amp;
+                model.localPosition = baseLocalPos + Vector3.up * bob;
+
+                float tilt = moving ? Mathf.Sin(phase) * waddleDegrees : 0f;
+                model.localRotation = Quaternion.Euler(0f, 0f, tilt);
+            }
 
             // Subtle idle breathe cycle
             float breathe = 1f + Mathf.Sin(Time.time * BreatheCycleSpeed) * BreatheScale;
