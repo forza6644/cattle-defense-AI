@@ -21,15 +21,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a203b083d7c5ee04185017e607525b7e, type: 2}
   - {fileID: 11400000, guid: 6ea2866d790b06e43a4d7b69db60a8d8, type: 2}
   - {fileID: 11400000, guid: 3c07c5b2db61bc645a32bff61e9a64db, type: 2}
-  - {fileID: 11400000, guid: 8cf9d0e1aaff47b1b4a7701884bf6612, type: 2}
+  - {fileID: 11400000, guid: 1bd04918942a2ce48820922df5e56559, type: 2}
   - {fileID: 11400000, guid: 31995248dd544eefb654f92efd58f6db, type: 2}
-  - {fileID: 11400000, guid: e3df568a28da4fc0a3a1481e3f3705b1, type: 2}
+  - {fileID: 11400000, guid: 8cf9d0e1aaff47b1b4a7701884bf6612, type: 2}
   - {fileID: 11400000, guid: ad54c4adcaa748b7872efe454c6835f0, type: 2}
+  - {fileID: 11400000, guid: e3df568a28da4fc0a3a1481e3f3705b1, type: 2}
   - {fileID: 11400000, guid: 6195b8b8541e43f3864bcec178dd8a8d, type: 2}
-  - {fileID: 11400000, guid: 8861dfaa72ef470bb7856f4e5e2a1cb2, type: 2}
   - {fileID: 11400000, guid: 04def31d071444c180015196452e626e, type: 2}
   enemyCountMultiplier: 1
-  spawnIntervalMultiplier: 0.96
+  spawnIntervalMultiplier: 1
   expectedEnemyTypes:
   - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
   - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
