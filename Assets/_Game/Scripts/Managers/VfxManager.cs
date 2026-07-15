@@ -50,6 +50,11 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
         private Transform castle;
         private Material abilityTraceMaterial;
 
+        private Renderer[] castleRenderers;
+        private Color[] castleBaseColors;
+        private Coroutine castleFlashRoutine;
+        private readonly Dictionary<StatusEffectType, Queue<ParticleSystem>> statusParticlePools = new Dictionary<StatusEffectType, Queue<ParticleSystem>>();
+
         private void Awake()
         {
             Instance = this;
@@ -70,6 +75,12 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             {
                 GameManager.Instance.StateChanged += OnStateChanged;
             }
+
+            WaveManager waveManager = FindFirstObjectByType<WaveManager>();
+            if (waveManager != null)
+            {
+                waveManager.WaveStarted += OnWaveStarted;
+            }
         }
 
         private void OnDestroy()
@@ -86,6 +97,12 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
                 GameManager.Instance.StateChanged -= OnStateChanged;
             }
 
+            WaveManager waveManager = FindFirstObjectByType<WaveManager>();
+            if (waveManager != null)
+            {
+                waveManager.WaveStarted -= OnWaveStarted;
+            }
+
             if (Instance == this)
             {
                 Instance = null;
@@ -100,14 +117,15 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
         // -------------------------------------------------------- Public Play API
 
 
-        public void PlayExplosion(Vector3 pos)
+        public void PlayExplosion(Vector3 pos) => PlayExplosion(pos, false);
+        public void PlayExplosion(Vector3 pos, bool shakeCamera)
         {
             Color color = new Color(1f, 0.48f, 0.08f, 1f);
             Play(explosionPrefab, pos, color, 1.25f);
             PlayImpactRing(pos, color, 1.15f, 0.28f, 0.14f);
-            if (CameraRig.Instance != null)
+            if (shakeCamera && CameraRig.Instance != null)
             {
-                CameraRig.Instance.Shake(0.4f);
+                CameraRig.Instance.Shake(0.45f);
             }
         }
 
@@ -125,15 +143,27 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
         public void PlayPlace(Vector3 pos) => Play(placePrefab, pos);
         public void PlayUpgrade(Vector3 pos) => Play(upgradePrefab, pos);
 
+        public void PlayCriticalImpact(Vector3 pos)
+        {
+            Color goldColor = new Color(1f, 0.85f, 0.2f, 1f);
+            Play(hitPrefab, pos, goldColor, 1.4f);
+            PlayImpactRing(pos, goldColor, 0.8f, 0.22f, 0.12f);
+        }
 
-        public void PlayFireImpact(Vector3 pos)
+        public void PlayCastleRegenFeedback(Vector3 pos)
+        {
+            Play(upgradePrefab, pos, new Color(0.3f, 1f, 0.3f, 1f), 1.5f);
+        }
+
+        public void PlayFireImpact(Vector3 pos) => PlayFireImpact(pos, false);
+        public void PlayFireImpact(Vector3 pos, bool shakeCamera)
         {
             Color color = new Color(1f, 0.3f, 0.03f, 1f);
             Play(explosionPrefab, pos, color, 0.9f);
             PlayImpactRing(pos, color, 0.95f, 0.26f, 0.12f);
-            if (CameraRig.Instance != null)
+            if (shakeCamera && CameraRig.Instance != null)
             {
-                CameraRig.Instance.Shake(0.2f);
+                CameraRig.Instance.Shake(0.25f);
             }
         }
 
@@ -250,9 +280,15 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
                 Play(castleHitPrefab, castle.position + Vector3.up * 1f);
             }
 
+            if (castleFlashRoutine != null)
+            {
+                StopCoroutine(castleFlashRoutine);
+            }
+            castleFlashRoutine = StartCoroutine(FlashCastleWall());
+
             if (CameraRig.Instance != null)
             {
-                CameraRig.Instance.Shake(0.5f);
+                CameraRig.Instance.Shake(0.4f);
             }
         }
 
@@ -261,13 +297,244 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             Vector3 pos = castle != null ? castle.position + Vector3.up * 3f : Vector3.up * 3f;
             if (state == GameState.Victory)
             {
-                Play(victoryPrefab, pos);
+                StartCoroutine(PlayVictorySequence(pos));
             }
             else if (state == GameState.Defeat)
             {
-                Play(defeatPrefab, pos);
+                StartCoroutine(PlayDefeatSequence(pos));
             }
         }
+
+        private void OnWaveStarted(int waveNumber, WaveData wave)
+        {
+            WaveManager waveManager = FindFirstObjectByType<WaveManager>();
+            if (waveManager != null && waveNumber == waveManager.TotalWaves)
+            {
+                // Boss wave started! Play dramatic entrance presentation
+                GameObject spawnPoint = GameObject.Find("SpawnPoint");
+                Vector3 spawnPos = spawnPoint != null ? spawnPoint.transform.position : new Vector3(0f, 0f, 15f);
+
+                Play(explosionPrefab, spawnPos, new Color(0.9f, 0.15f, 0.15f, 1f), 2.5f);
+                PlayImpactRing(spawnPos, new Color(0.9f, 0.15f, 0.15f, 1f), 4.5f, 0.8f, 0.4f);
+
+                if (CameraRig.Instance != null)
+                {
+                    CameraRig.Instance.Shake(0.8f);
+                }
+            }
+        }
+
+        private IEnumerator FlashCastleWall()
+        {
+            if (castleRenderers == null)
+            {
+                GameObject wall = GameObject.Find("CastleWall") ?? GameObject.Find("CastleWall_Stone");
+                GameObject gate = GameObject.Find("CastleGate_Wood");
+                List<Renderer> rendList = new List<Renderer>();
+                if (wall != null) rendList.AddRange(wall.GetComponentsInChildren<Renderer>());
+                if (gate != null) rendList.AddRange(gate.GetComponentsInChildren<Renderer>());
+                
+                castleRenderers = rendList.ToArray();
+                castleBaseColors = new Color[castleRenderers.Length];
+                for (int i = 0; i < castleRenderers.Length; i++)
+                {
+                    Material shared = castleRenderers[i].sharedMaterial;
+                    castleBaseColors[i] = shared != null && shared.HasProperty("_BaseColor")
+                        ? shared.GetColor("_BaseColor")
+                        : Color.white;
+                }
+            }
+
+            if (castleRenderers == null || castleRenderers.Length == 0)
+            {
+                yield break;
+            }
+
+            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+            float duration = 0.25f;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float f = Mathf.Clamp01(1f - (elapsed / duration));
+                for (int i = 0; i < castleRenderers.Length; i++)
+                {
+                    if (castleRenderers[i] == null) continue;
+                    castleRenderers[i].GetPropertyBlock(mpb);
+                    mpb.SetColor("_BaseColor", Color.Lerp(castleBaseColors[i], new Color(1f, 0.2f, 0.2f, 1f), f * 0.55f));
+                    castleRenderers[i].SetPropertyBlock(mpb);
+                }
+                yield return null;
+            }
+
+            // Restore base colors
+            for (int i = 0; i < castleRenderers.Length; i++)
+            {
+                if (castleRenderers[i] == null) continue;
+                castleRenderers[i].SetPropertyBlock(null);
+            }
+        }
+
+        private IEnumerator PlayVictorySequence(Vector3 center)
+        {
+            // Spawn initial victory flag/ring
+            Play(victoryPrefab, center);
+            
+            // Multiple celebratory fireworks sequences
+            for (int i = 0; i < 5; i++)
+            {
+                Vector3 offset = new Vector3(Random.Range(-5f, 5f), Random.Range(1f, 4f), Random.Range(-2f, 2f));
+                Color fwColor = GetHeroColor(i == 0 ? "archer" : i == 1 ? "fire_mage" : i == 2 ? "frost_mage" : i == 3 ? "electric_engineer" : "sniper");
+                Play(victoryPrefab, center + offset, fwColor * Random.Range(0.8f, 1.2f), Random.Range(1f, 1.5f));
+                yield return new WaitForSeconds(0.45f);
+            }
+        }
+
+        private IEnumerator PlayDefeatSequence(Vector3 center)
+        {
+            if (CameraRig.Instance != null)
+            {
+                CameraRig.Instance.Shake(0.9f);
+            }
+
+            // Play consecutive heavy dark explosions along the castle wall
+            float[] wallX = { -5.5f, -3.3f, -1.1f, 1.1f, 3.3f, 5.5f };
+            foreach (float x in wallX)
+            {
+                Vector3 pos = new Vector3(x, 1f, -4.5f);
+                Play(defeatPrefab, pos, new Color(0.18f, 0.18f, 0.18f, 1f), 1.6f);
+                yield return new WaitForSeconds(0.15f);
+            }
+        }
+
+        // ------------------------------------------------------ Status Effects Pooling
+
+        public ParticleSystem GetStatusEffectParticle(StatusEffectType type, Transform parent, bool isFreeze)
+        {
+            if (!statusParticlePools.TryGetValue(type, out Queue<ParticleSystem> pool))
+            {
+                pool = new Queue<ParticleSystem>();
+                statusParticlePools[type] = pool;
+            }
+
+            ParticleSystem ps = null;
+            while (pool.Count > 0)
+            {
+                ps = pool.Dequeue();
+                if (ps != null)
+                {
+                    break;
+                }
+            }
+
+            if (ps == null)
+            {
+                GameObject prefab = null;
+                switch (type)
+                {
+                    case StatusEffectType.Slow:
+                        prefab = frostPrefab;
+                        break;
+                    case StatusEffectType.Burn:
+                        prefab = explosionPrefab;
+                        break;
+                    case StatusEffectType.Shock:
+                        prefab = hitPrefab;
+                        break;
+                    case StatusEffectType.Stun:
+                        prefab = hitPrefab;
+                        break;
+                    default:
+                        prefab = hitPrefab;
+                        break;
+                }
+
+                if (prefab == null)
+                {
+                    return null;
+                }
+
+                GameObject go = Instantiate(prefab, transform);
+                ps = go.GetComponent<ParticleSystem>();
+                if (!prefabDefaults.ContainsKey(prefab))
+                {
+                    prefabDefaults[prefab] = new EffectDefaults
+                    {
+                        startColor = ps.main.startColor,
+                        scale = go.transform.localScale
+                    };
+                }
+            }
+
+            ps.transform.SetParent(parent, false);
+            ps.transform.localPosition = new Vector3(0f, type == StatusEffectType.Stun ? 1.5f : 0.5f, 0f);
+            ps.transform.localRotation = Quaternion.identity;
+            ps.transform.localScale = Vector3.one * (type == StatusEffectType.Stun ? 0.35f : 0.5f);
+            ps.gameObject.SetActive(true);
+
+            ConfigureStatusParticleSystem(ps, type, isFreeze);
+            ps.Play();
+            return ps;
+        }
+
+        public void ReturnStatusEffectParticle(StatusEffectType type, ParticleSystem ps)
+        {
+            if (ps == null) return;
+            ps.Stop();
+            ps.transform.SetParent(transform, false);
+            ps.gameObject.SetActive(false);
+
+            if (!statusParticlePools.TryGetValue(type, out Queue<ParticleSystem> pool))
+            {
+                pool = new Queue<ParticleSystem>();
+                statusParticlePools[type] = pool;
+            }
+            pool.Enqueue(ps);
+        }
+
+        private void ConfigureStatusParticleSystem(ParticleSystem ps, StatusEffectType type, bool isFreeze)
+        {
+            var main = ps.main;
+            main.loop = true;
+            main.playOnAwake = false;
+            main.startSize = type == StatusEffectType.Stun ? 0.16f : 0.22f;
+            main.startLifetime = type == StatusEffectType.Stun ? 0.9f : 0.7f;
+            
+            var emission = ps.emission;
+            emission.rateOverTime = type == StatusEffectType.Stun ? 5f : isFreeze ? 9f : 4f;
+
+            var shape = ps.shape;
+            shape.enabled = true;
+            shape.shapeType = type == StatusEffectType.Stun ? ParticleSystemShapeType.Circle : ParticleSystemShapeType.Box;
+            if (type == StatusEffectType.Stun)
+            {
+                shape.radius = 0.35f;
+                shape.arc = 360f;
+            }
+            else
+            {
+                shape.scale = new Vector3(0.5f, 0.8f, 0.5f);
+            }
+
+            switch (type)
+            {
+                case StatusEffectType.Slow:
+                    main.startColor = isFreeze 
+                        ? new ParticleSystem.MinMaxGradient(new Color(0.12f, 0.68f, 1f, 0.85f)) 
+                        : new ParticleSystem.MinMaxGradient(new Color(0.42f, 0.88f, 1f, 0.72f));
+                    break;
+                case StatusEffectType.Burn:
+                    main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.34f, 0.04f, 0.82f));
+                    break;
+                case StatusEffectType.Shock:
+                    main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.94f, 0.16f, 0.85f));
+                    break;
+                case StatusEffectType.Stun:
+                    main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.92f, 0.92f, 0.68f, 0.65f));
+                    break;
+            }
+        }
+
 
         // -------------------------------------------------------------- Pooling
 

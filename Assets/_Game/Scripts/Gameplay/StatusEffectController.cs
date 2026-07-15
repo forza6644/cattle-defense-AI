@@ -11,6 +11,7 @@ namespace Stonehold
     {
         private Enemy enemy;
         private readonly List<StatusEffect> activeEffects = new List<StatusEffect>();
+        private readonly Dictionary<StatusEffectType, ParticleSystem> activeParticles = new Dictionary<StatusEffectType, ParticleSystem>();
 
         private Renderer[] renderers;
         private Color[] baseColors;
@@ -30,6 +31,39 @@ namespace Stonehold
         {
             enemy = GetComponent<Enemy>();
             CacheRenderers();
+        }
+
+        private void OnEnable()
+        {
+            ResetController();
+        }
+
+        private void OnDisable()
+        {
+            ResetController();
+        }
+
+        public void ResetController()
+        {
+            foreach (var kvp in activeParticles)
+            {
+                if (kvp.Value != null)
+                {
+                    VfxManager.Instance?.ReturnStatusEffectParticle(kvp.Key, kvp.Value);
+                }
+            }
+            activeParticles.Clear();
+            activeEffects.Clear();
+
+            if (renderers != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] == null) continue;
+                    renderers[i].SetPropertyBlock(null);
+                }
+            }
+            tintApplied = false;
         }
 
         private void CacheRenderers()
@@ -145,6 +179,7 @@ namespace Stonehold
         {
             if (enemy == null || enemy.IsDead)
             {
+                ResetController();
                 return;
             }
 
@@ -186,7 +221,49 @@ namespace Stonehold
             }
 
             UpdateVisualTint();
+            UpdateStatusParticles();
         }
+
+        private void UpdateStatusParticles()
+        {
+            StatusEffectType[] typesToCheck = { StatusEffectType.Slow, StatusEffectType.Burn, StatusEffectType.Shock, StatusEffectType.Stun };
+
+            foreach (var type in typesToCheck)
+            {
+                bool hasEffect = activeEffects.Exists(e => e.EffectType == type);
+                
+                bool isFreeze = false;
+                if (type == StatusEffectType.Slow && hasEffect)
+                {
+                    var slowEffect = activeEffects.Find(e => e.EffectType == StatusEffectType.Slow);
+                    if (slowEffect != null && slowEffect.Value <= 0.05f)
+                    {
+                        isFreeze = true;
+                    }
+                }
+
+                if (hasEffect)
+                {
+                    if (!activeParticles.ContainsKey(type))
+                    {
+                        ParticleSystem ps = VfxManager.Instance?.GetStatusEffectParticle(type, transform, isFreeze);
+                        if (ps != null)
+                        {
+                            activeParticles[type] = ps;
+                        }
+                    }
+                }
+                else
+                {
+                    if (activeParticles.TryGetValue(type, out ParticleSystem ps))
+                    {
+                        VfxManager.Instance?.ReturnStatusEffectParticle(type, ps);
+                        activeParticles.Remove(type);
+                    }
+                }
+            }
+        }
+
 
         private void UpdateVisualTint()
         {

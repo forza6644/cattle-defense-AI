@@ -25,6 +25,7 @@ namespace Stonehold
         private GameObject sourcePrefab;
         private Color impactColor = Color.white;
         private bool isCrit;
+        public bool IsAbility { get; set; }
 
         private StatusEffectType statusEffectType = StatusEffectType.None;
         private float statusEffectValue;
@@ -74,6 +75,7 @@ namespace Stonehold
                 projectile.gameObject.SetActive(true);
             }
 
+            projectile.IsAbility = false;
             return projectile;
         }
 
@@ -245,9 +247,13 @@ namespace Stonehold
         {
             if (VfxManager.Instance != null)
             {
-                if (splashRadius > 0f)
+                if (isCrit)
                 {
-                    VfxManager.Instance.PlayExplosion(impactPoint);
+                    VfxManager.Instance.PlayCriticalImpact(impactPoint);
+                }
+                else if (splashRadius > 0f)
+                {
+                    VfxManager.Instance.PlayExplosion(impactPoint, IsAbility);
                 }
                 else if (statusEffectType == StatusEffectType.Slow)
                 {
@@ -255,7 +261,7 @@ namespace Stonehold
                 }
                 else if (statusEffectType == StatusEffectType.Burn)
                 {
-                    VfxManager.Instance.PlayFireImpact(impactPoint);
+                    VfxManager.Instance.PlayFireImpact(impactPoint, IsAbility);
                 }
                 else if (statusEffectType == StatusEffectType.Shock)
                 {
@@ -273,7 +279,7 @@ namespace Stonehold
 
             if (AudioManager.Instance != null)
             {
-                AudioManager.Instance.PlayHeroImpact(sourceHeroId, false);
+                AudioManager.Instance.PlayHeroImpact(sourceHeroId, isCrit || IsAbility);
             }
 
             if (splashRadius > 0f)

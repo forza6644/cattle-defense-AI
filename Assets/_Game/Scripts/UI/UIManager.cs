@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -280,6 +280,9 @@ namespace Stonehold
             RefreshTowerPanel();
         }
 
+        private int lastCastleHealth = -1;
+        private Coroutine castleHpFlashRoutine;
+
         private void RefreshCastleHealth()
         {
             if (castle == null)
@@ -287,10 +290,51 @@ namespace Stonehold
                 return;
             }
 
-            float pct = castle.MaxHealth > 0 ? (float)castle.CurrentHealth / castle.MaxHealth : 0f;
+            int currentHp = castle.CurrentHealth;
+            int maxHp = castle.MaxHealth;
+            float pct = maxHp > 0 ? (float)currentHp / maxHp : 0f;
             castleHpFill.localScale = new Vector3(pct, 1f, 1f);
-            castleHpFillImage.color = Color.Lerp(new Color(0.85f, 0.2f, 0.2f), new Color(0.25f, 0.8f, 0.3f), pct);
-            castleHpText.text = "CASTLE  " + castle.CurrentHealth + " / " + castle.MaxHealth;
+            castleHpText.text = "CASTLE  " + currentHp + " / " + maxHp;
+
+            if (lastCastleHealth != -1 && currentHp != lastCastleHealth)
+            {
+                if (currentHp < lastCastleHealth)
+                {
+                    if (castleHpFlashRoutine != null) StopCoroutine(castleHpFlashRoutine);
+                    castleHpFlashRoutine = StartCoroutine(FlashCastleHpBar(new Color(1f, 0.2f, 0.2f), pct));
+                }
+                else
+                {
+                    if (castleHpFlashRoutine != null) StopCoroutine(castleHpFlashRoutine);
+                    castleHpFlashRoutine = StartCoroutine(FlashCastleHpBar(new Color(0.35f, 1f, 0.35f), pct));
+
+                    if (VfxManager.Instance != null)
+                    {
+                        VfxManager.Instance.PlayCastleRegenFeedback(castle.transform.position + Vector3.up * 1f);
+                    }
+                }
+            }
+            else
+            {
+                castleHpFillImage.color = Color.Lerp(new Color(0.85f, 0.2f, 0.2f), new Color(0.25f, 0.8f, 0.3f), pct);
+            }
+
+            lastCastleHealth = currentHp;
+        }
+
+        private IEnumerator FlashCastleHpBar(Color flashColor, float finalPct)
+        {
+            float elapsed = 0f;
+            float duration = 0.3f;
+            Color baseColor = Color.Lerp(new Color(0.85f, 0.2f, 0.2f), new Color(0.25f, 0.8f, 0.3f), finalPct);
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.PingPong(elapsed * 2.5f, 0.5f) / 0.5f;
+                castleHpFillImage.color = Color.Lerp(baseColor, flashColor, t);
+                yield return null;
+            }
+            castleHpFillImage.color = baseColor;
         }
 
         private void OnWaveStarted(int number, WaveData wave)

@@ -172,6 +172,52 @@ namespace Stonehold
             }
         }
 
+        public void PlayHeroShot(string heroId)
+        {
+            if (library == null) return;
+            float pitch = Random.Range(0.9f, 1.1f);
+            switch (heroId)
+            {
+                case "archer":
+                    if (library.arrowHit != null)
+                    {
+                        PlaySfx(library.arrowHit, 0.35f, pitch * 1.35f);
+                    }
+                    break;
+                case "bombardier":
+                    if (library.cannonExplosion != null)
+                    {
+                        PlaySfx(library.cannonExplosion, 0.42f, pitch * 0.75f);
+                    }
+                    break;
+                case "frost_mage":
+                    if (library.frostHit != null)
+                    {
+                        PlaySfx(library.frostHit, 0.38f, pitch * 1.4f);
+                    }
+                    break;
+                case "fire_mage":
+                    if (library.cannonExplosion != null)
+                    {
+                        PlaySfx(library.cannonExplosion, 0.32f, pitch * 1.6f);
+                    }
+                    break;
+                case "electric_engineer":
+                    if (library.button != null)
+                    {
+                        PlaySfx(library.button, 0.35f, pitch * 1.8f);
+                    }
+                    break;
+                case "sniper":
+                    if (library.arrowHit != null)
+                    {
+                        PlaySfx(library.arrowHit, 0.75f, pitch * 0.65f);
+                    }
+                    break;
+            }
+        }
+
+
         public void PlayHeroImpact(string heroId, bool isAbility = false)
         {
             if (library == null) return;

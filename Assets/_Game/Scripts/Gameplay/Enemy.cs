@@ -104,7 +104,15 @@ namespace Stonehold
             if (data != null)
             {
                 EnemyManager.Register(this);
+                currentHealth = data.health;
             }
+
+            slowMultiplier = 1f;
+            slowTimer = 0f;
+            isDead = false;
+            isAttackingCastle = false;
+            castleAttackTimer = 0f;
+            currentWaypointIndex = 0;
         }
 
         private void OnDestroy()

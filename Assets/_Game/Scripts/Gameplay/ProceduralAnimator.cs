@@ -203,6 +203,7 @@ namespace Stonehold
                 scale = Vector3.Scale(baseScale, new Vector3(1f + 0.35f * k, 1f - 0.3f * k, 1f + 0.35f * k));
             }
 
+            Vector3 recoilOffset = Vector3.zero;
             if (attackTimer > 0f)
             {
                 attackTimer -= Time.deltaTime;
@@ -211,11 +212,17 @@ namespace Stonehold
 
                 if (gameObject.name.ToLower().Contains("sniper"))
                 {
-                    model.localPosition -= Vector3.forward * (0.35f * k);
+                    recoilOffset = -Vector3.forward * (0.35f * k);
+                }
+                else if (gameObject.name.ToLower().Contains("bombardier") || gameObject.name.ToLower().Contains("cannon"))
+                {
+                    recoilOffset = -Vector3.forward * (0.45f * k);
                 }
             }
 
+            model.localPosition += recoilOffset;
             model.localScale = scale;
+
 
             UpdateFlash();
         }
