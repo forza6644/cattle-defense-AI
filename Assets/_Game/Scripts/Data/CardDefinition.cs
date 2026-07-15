@@ -23,7 +23,15 @@ namespace Stonehold
         RangeMultiplier,
         BurnDamageAdd,
         SlowStrengthAdd,
-        ShockEnable
+        ShockEnable,
+        AbilityCooldownReduction,
+        AbilityDamageMultiplier,
+        AbilityRadiusMultiplier,
+        AbilityExtraProjOrChain,
+        BurnDurationAdd,
+        SlowDurationAdd,
+        CritChanceAdd,
+        CritMultiplierAdd
     }
 
     public enum CardCategory

@@ -13,6 +13,7 @@ namespace Stonehold
         private float targetRefreshTimer;
         private float fireCooldown;
         private float abilityCooldown;
+        private float abilityBuffTimer; // Tracks Archer rapid multishot buff duration
         private ProceduralAnimator animator;
         private TargetingMode currentTargetingMode;
 
@@ -28,7 +29,7 @@ namespace Stonehold
                     return 0f;
                 }
 
-                float duration = Mathf.Max(1f, definition.abilityCooldown);
+                float duration = Mathf.Max(1f, GetModifiedAbilityCooldown());
                 return 1f - Mathf.Clamp01(abilityCooldown / duration);
             }
         }
@@ -54,8 +55,74 @@ namespace Stonehold
             currentTargetingMode = definition != null
                 ? definition.defaultTargetingMode
                 : TargetingMode.ClosestToGoal;
-            abilityCooldown = definition != null ? definition.abilityCooldown * 0.5f : 0f;
+            abilityCooldown = definition != null ? GetModifiedAbilityCooldown() * 0.5f : 0f;
+            abilityBuffTimer = 0f;
             enabled = definition != null && definition.weapon != null;
+        }
+
+        public float GetAbilityCooldownRemaining()
+        {
+            return Mathf.Max(0f, abilityCooldown);
+        }
+
+        public float GetModifiedAbilityCooldown()
+        {
+            float cd = definition != null ? definition.abilityCooldown : 10f;
+            if (RunModifierManager.Instance != null && definition != null)
+            {
+                cd *= RunModifierManager.Instance.GetAbilityCooldownMultiplier(definition.id);
+            }
+            return cd;
+        }
+
+        public float GetModifiedAbilityRadius()
+        {
+            float radius = definition != null ? definition.abilityRadius : 3f;
+            if (RunModifierManager.Instance != null && definition != null)
+            {
+                radius *= RunModifierManager.Instance.GetAbilityRadiusMultiplier(definition.id);
+            }
+            return radius;
+        }
+
+        public float GetModifiedBurnDuration()
+        {
+            float dur = 4f;
+            if (RunModifierManager.Instance != null && definition != null)
+            {
+                dur += RunModifierManager.Instance.GetBurnDurationAdd(definition.id);
+            }
+            return dur;
+        }
+
+        public float GetModifiedSlowDuration()
+        {
+            float dur = 4f;
+            if (RunModifierManager.Instance != null && definition != null)
+            {
+                dur += RunModifierManager.Instance.GetSlowDurationAdd(definition.id);
+            }
+            return dur;
+        }
+
+        public float GetModifiedCritChance()
+        {
+            float chance = (definition != null && definition.id == "sniper") ? 0.20f : 0.05f;
+            if (RunModifierManager.Instance != null && definition != null)
+            {
+                chance += RunModifierManager.Instance.GetCritChanceAdd(definition.id);
+            }
+            return Mathf.Clamp01(chance);
+        }
+
+        public float GetModifiedCritMultiplier()
+        {
+            float mult = 2.0f;
+            if (RunModifierManager.Instance != null && definition != null)
+            {
+                mult += RunModifierManager.Instance.GetCritMultiplierAdd(definition.id);
+            }
+            return mult;
         }
 
         public float GetModifiedDamage()
@@ -82,6 +149,10 @@ namespace Stonehold
             if (RunModifierManager.Instance != null && definition != null)
             {
                 fireRate *= RunModifierManager.Instance.GetFireRateMultiplier(definition.id);
+            }
+            if (definition != null && definition.id == "archer" && abilityBuffTimer > 0f)
+            {
+                fireRate *= 3.0f; // Triple fire rate during rapid multishot
             }
             return fireRate;
         }
@@ -115,6 +186,10 @@ namespace Stonehold
             targetRefreshTimer -= Time.deltaTime;
             fireCooldown -= Time.deltaTime;
             abilityCooldown -= Time.deltaTime;
+            if (abilityBuffTimer > 0f)
+            {
+                abilityBuffTimer -= Time.deltaTime;
+            }
 
             if (targetRefreshTimer <= 0f)
             {
@@ -130,7 +205,7 @@ namespace Stonehold
             if (definition.abilityType != HeroAbilityType.None && abilityCooldown <= 0f)
             {
                 UseSignatureAbility(currentTarget);
-                abilityCooldown = Mathf.Max(1f, definition.abilityCooldown);
+                abilityCooldown = GetModifiedAbilityCooldown();
             }
 
             Vector3 direction = currentTarget.transform.position - transform.position;
@@ -167,28 +242,65 @@ namespace Stonehold
             }
 
             float abilityDamage = GetModifiedDamage() * Mathf.Max(1f, definition.abilityPowerMultiplier);
+            if (RunModifierManager.Instance != null)
+            {
+                abilityDamage *= RunModifierManager.Instance.GetAbilityDamageMultiplier(definition.id);
+            }
+
+            int extraProjOrChain = 0;
+            if (RunModifierManager.Instance != null)
+            {
+                extraProjOrChain = RunModifierManager.Instance.GetAbilityExtraProjOrChain(definition.id);
+            }
+
             switch (definition.abilityType)
             {
                 case HeroAbilityType.PowerShot:
                     UsePowerShotAbility(primaryTarget, abilityDamage);
                     break;
                 case HeroAbilityType.FrostNova:
-                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Slow, 0.2f, 4f);
-                    if (VfxManager.Instance != null) VfxManager.Instance.PlayFrost(primaryTarget.transform.position);
+                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Slow, 0.0f, GetModifiedSlowDuration(), false);
+                    if (VfxManager.Instance != null)
+                    {
+                        VfxManager.Instance.PlayFrost(primaryTarget.transform.position, GetModifiedAbilityRadius() * 0.55f);
+                    }
                     break;
                 case HeroAbilityType.FlameWave:
-                    HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Burn, abilityDamage * 0.22f, 4f);
-                    if (VfxManager.Instance != null) VfxManager.Instance.PlayFireImpact(primaryTarget.transform.position);
+                    SpawnMeteor(primaryTarget, abilityDamage);
                     break;
                 case HeroAbilityType.ArtilleryBarrage:
                     FireArtilleryBarrageBomb(primaryTarget, abilityDamage);
                     break;
                 case HeroAbilityType.MultiShot:
-                    FireMultiShotVolley(abilityDamage);
+                    abilityBuffTimer = 5f; // Activate rapid multishot buff for 5 seconds
                     break;
                 case HeroAbilityType.ChainStorm:
-                    UseChainLightningAbility(primaryTarget, abilityDamage, definition.abilityTargetCount);
+                    UseChainLightningAbility(primaryTarget, abilityDamage, definition.abilityTargetCount + extraProjOrChain);
                     break;
+            }
+        }
+
+        private void SpawnMeteor(Enemy target, float damage)
+        {
+            WeaponDefinition weapon = definition.weapon;
+            if (weapon != null && weapon.projectilePrefab != null)
+            {
+                Vector3 spawnPos = target.transform.position + new Vector3(-4f, 12f, 0f);
+                Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, spawnPos);
+                if (projectile != null)
+                {
+                    projectile.transform.localScale = Vector3.one * 2.5f;
+                    projectile.InitWithStatusEffect(
+                        target,
+                        damage,
+                        GetModifiedAbilityRadius(),
+                        new Color(1f, 0.25f, 0.05f, 1f),
+                        definition.id,
+                        StatusEffectType.Burn,
+                        damage * 0.35f,
+                        GetModifiedBurnDuration()
+                    );
+                }
             }
         }
 
@@ -213,7 +325,7 @@ namespace Stonehold
                 float distToLine = DistanceToLineSegment(enemy.transform.position, start, end);
                 if (distToLine <= 1.2f)
                 {
-                    ApplyAbilityHit(enemy, damage, StatusEffectType.None, 0f, 0f);
+                    ApplyAbilityHit(enemy, damage, StatusEffectType.None, 0f, 0f, true); // Ignore armor
                     if (VfxManager.Instance != null)
                     {
                         VfxManager.Instance.PlaySniperImpact(enemy.transform.position);
@@ -246,20 +358,25 @@ namespace Stonehold
                     projectile.InitWithStatusEffect(
                         target,
                         damage,
-                        definition.abilityRadius,
+                        GetModifiedAbilityRadius(),
                         new Color(1f, 0.45f, 0.1f, 1f),
                         definition.id,
-                        StatusEffectType.None,
+                        StatusEffectType.Stun,
                         0f,
-                        0f
+                        1.5f
                     );
                 }
             }
         }
 
-        private void FireMultiShotVolley(float damage)
+        private void FireMultiShotVolley(float damage, bool isCritical = false)
         {
-            int targetsCount = Mathf.Max(1, definition.abilityTargetCount);
+            int extraProjOrChain = 0;
+            if (RunModifierManager.Instance != null)
+            {
+                extraProjOrChain = RunModifierManager.Instance.GetAbilityExtraProjOrChain(definition.id);
+            }
+            int targetsCount = Mathf.Max(1, definition.abilityTargetCount + extraProjOrChain);
             float rangeSqr = GetModifiedRange() * GetModifiedRange();
             var enemies = EnemyManager.All;
             List<Enemy> targetList = new List<Enemy>();
@@ -289,7 +406,8 @@ namespace Stonehold
                             definition.id,
                             StatusEffectType.None,
                             0f,
-                            0f
+                            0f,
+                            isCritical
                         );
                     }
                 }
@@ -305,7 +423,7 @@ namespace Stonehold
             for (int b = 0; b < bounceCount && current != null; b++)
             {
                 hitList.Add(current);
-                ApplyAbilityHit(current, damage, StatusEffectType.Shock, 1f, 4f);
+                ApplyAbilityHit(current, damage, StatusEffectType.Shock, 1f, 4f, false);
 
                 Vector3 endPos = current.transform.position + Vector3.up * 0.25f;
                 if (VfxManager.Instance != null)
@@ -334,7 +452,12 @@ namespace Stonehold
             for (int b = 0; b < 2 && current != null; b++)
             {
                 hitList.Add(current);
-                float appliedDamage = current.TakeDamage(damage);
+
+                bool isCrit = Random.value < GetModifiedCritChance();
+                float finalDamage = damage;
+                if (isCrit) finalDamage *= GetModifiedCritMultiplier();
+
+                float appliedDamage = current.TakeDamage(finalDamage, false, isCrit);
                 DamageTracker.RecordDamage(definition.id, appliedDamage);
 
                 Vector3 endPos = current.transform.position + Vector3.up * 0.25f;
@@ -378,28 +501,36 @@ namespace Stonehold
             return best;
         }
 
-        private void HitEnemiesInRadius(Vector3 center, float damage, StatusEffectType effectType, float effectValue, float effectDuration)
+        private void HitEnemiesInRadius(Vector3 center, float damage, StatusEffectType effectType, float effectValue, float effectDuration, bool ignoreArmor = false)
         {
-            float radiusSqr = definition.abilityRadius * definition.abilityRadius;
+            float radius = GetModifiedAbilityRadius();
+            float radiusSqr = radius * radius;
             var enemies = EnemyManager.All;
             for (int i = enemies.Count - 1; i >= 0; i--)
             {
                 Enemy enemy = enemies[i];
                 if (enemy != null && !enemy.IsDead && (enemy.transform.position - center).sqrMagnitude <= radiusSqr)
                 {
-                    ApplyAbilityHit(enemy, damage, effectType, effectValue, effectDuration);
+                    ApplyAbilityHit(enemy, damage, effectType, effectValue, effectDuration, ignoreArmor);
                 }
             }
         }
 
-        private void ApplyAbilityHit(Enemy enemy, float damage, StatusEffectType effectType, float effectValue, float effectDuration)
+        private void ApplyAbilityHit(Enemy enemy, float damage, StatusEffectType effectType, float effectValue, float effectDuration, bool ignoreArmor = false)
         {
             if (enemy == null || enemy.IsDead)
             {
                 return;
             }
 
-            float appliedDamage = enemy.TakeDamage(damage);
+            bool isCrit = Random.value < GetModifiedCritChance();
+            float finalDamage = damage;
+            if (isCrit)
+            {
+                finalDamage *= GetModifiedCritMultiplier();
+            }
+
+            float appliedDamage = enemy.TakeDamage(finalDamage, ignoreArmor, isCrit);
             DamageTracker.RecordDamage(definition.id, appliedDamage);
             if (effectType != StatusEffectType.None && effectDuration > 0f && !enemy.IsDead)
             {
@@ -409,7 +540,27 @@ namespace Stonehold
 
         private void Fire(Enemy target)
         {
-            if (definition.id == "electric_engineer")
+            if (definition != null && definition.id == "archer" && abilityBuffTimer > 0f)
+            {
+                if (animator != null)
+                {
+                    animator.PlayAttack();
+                }
+                if (VfxManager.Instance != null)
+                {
+                    VfxManager.Instance.PlayHeroMuzzle(transform.position + projectileLaunchOffset, definition.id);
+                }
+                bool isCritVolley = Random.value < GetModifiedCritChance();
+                float arrowDamage = GetModifiedDamage();
+                if (isCritVolley)
+                {
+                    arrowDamage *= GetModifiedCritMultiplier();
+                }
+                FireMultiShotVolley(arrowDamage, isCritVolley);
+                return;
+            }
+
+            if (definition != null && definition.id == "electric_engineer")
             {
                 if (animator != null)
                 {
@@ -442,24 +593,26 @@ namespace Stonehold
 
             if (appliedEffectType == StatusEffectType.Slow)
             {
-                if (RunModifierManager.Instance != null)
+                if (RunModifierManager.Instance != null && definition != null)
                 {
                     float slowStrength = RunModifierManager.Instance.GetSlowStrengthAdd(definition.id);
                     appliedEffectValue = Mathf.Clamp(appliedEffectValue - slowStrength, 0.05f, 0.95f);
+                    appliedEffectDuration += RunModifierManager.Instance.GetSlowDurationAdd(definition.id);
                 }
             }
 
             if (appliedEffectType == StatusEffectType.Burn)
             {
-                if (RunModifierManager.Instance != null)
+                if (RunModifierManager.Instance != null && definition != null)
                 {
                     appliedEffectValue += RunModifierManager.Instance.GetBurnDamageAdd(definition.id);
+                    appliedEffectDuration += RunModifierManager.Instance.GetBurnDurationAdd(definition.id);
                 }
             }
 
             if (appliedEffectType == StatusEffectType.None)
             {
-                if (RunModifierManager.Instance != null)
+                if (RunModifierManager.Instance != null && definition != null)
                 {
                     if (RunModifierManager.Instance.IsShockEnabled(definition.id))
                     {
@@ -474,10 +627,17 @@ namespace Stonehold
                         {
                             appliedEffectType = StatusEffectType.Burn;
                             appliedEffectValue = burnAdd;
-                            appliedEffectDuration = 3f;
+                            appliedEffectDuration = 3f + RunModifierManager.Instance.GetBurnDurationAdd(definition.id);
                         }
                     }
                 }
+            }
+
+            bool isCrit = Random.value < GetModifiedCritChance();
+            float finalDamage = GetModifiedDamage();
+            if (isCrit)
+            {
+                finalDamage *= GetModifiedCritMultiplier();
             }
 
             if (weapon.projectilePrefab != null)
@@ -487,19 +647,20 @@ namespace Stonehold
                 {
                     projectile.InitWithStatusEffect(
                         target,
-                        GetModifiedDamage(),
+                        finalDamage,
                         splashRadius,
                         GetTrailColor(weapon, appliedEffectType, definition.id),
                         definition.id,
                         appliedEffectType,
                         appliedEffectValue,
-                        appliedEffectDuration
+                        appliedEffectDuration,
+                        isCrit
                     );
                 }
                 return;
             }
 
-            float appliedDamage = target.TakeDamage(GetModifiedDamage());
+            float appliedDamage = target.TakeDamage(finalDamage, false, isCrit);
             DamageTracker.RecordDamage(definition.id, appliedDamage);
 
             if (appliedEffectType != StatusEffectType.None && appliedEffectDuration > 0f)
@@ -524,9 +685,9 @@ namespace Stonehold
                 case StatusEffectType.Shock:
                     return new Color(1f, 0.95f, 0.15f, 1f);
                 default:
-                    return heroId == "sniper"
-                        ? new Color(0.85f, 0.3f, 1f, 1f)
-                        : new Color(1f, 0.88f, 0.4f, 1f);
+                    if (heroId == "sniper") return new Color(0.85f, 0.3f, 1f, 1f);
+                    if (heroId == "archer") return new Color(0.45f, 0.95f, 0.3f, 1f);
+                    return new Color(1f, 0.88f, 0.4f, 1f);
             }
         }
     }

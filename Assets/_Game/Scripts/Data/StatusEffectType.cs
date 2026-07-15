@@ -5,6 +5,7 @@ namespace Stonehold
         None,
         Slow,
         Burn,
-        Shock
+        Shock,
+        Stun
     }
 }

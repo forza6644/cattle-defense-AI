@@ -20,7 +20,7 @@ MonoBehaviour:
   baseDamage: 22
   baseFireRate: 0.5
   baseRange: 12
-  defaultTargetingMode: 1
+  defaultTargetingMode: 6
   abilityType: 2
   abilityCooldown: 11
   abilityPowerMultiplier: 2.2

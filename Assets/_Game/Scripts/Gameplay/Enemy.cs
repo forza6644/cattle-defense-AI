@@ -14,6 +14,9 @@ namespace Stonehold
         /// <summary>Raised whenever any enemy takes damage: (enemy, amount).</summary>
         public static event Action<Enemy, float> AnyDamaged;
 
+        /// <summary>Raised whenever any enemy takes damage: (enemy, amount, isCrit).</summary>
+        public static event Action<Enemy, float, bool> AnyDamagedDetailed;
+
         /// <summary>Raised when any enemy dies to a tower: (enemy, gold awarded).</summary>
         public static event Action<Enemy, int> AnyKilled;
 
@@ -147,7 +150,7 @@ namespace Stonehold
         }
 
         /// <summary>Called by projectiles. Kills the enemy (awarding gold) at 0 HP.</summary>
-        public float TakeDamage(float amount)
+        public float TakeDamage(float amount, bool ignoreArmor = false, bool isCrit = false)
         {
             if (isDead)
             {
@@ -155,7 +158,7 @@ namespace Stonehold
             }
 
             float reducedAmount = amount;
-            if (data != null && data.armor > 0f)
+            if (!ignoreArmor && data != null && data.armor > 0f)
             {
                 reducedAmount = Mathf.Max(1f, amount - data.armor);
             }
@@ -171,6 +174,7 @@ namespace Stonehold
 
             currentHealth -= reducedAmount;
             AnyDamaged?.Invoke(this, reducedAmount);
+            AnyDamagedDetailed?.Invoke(this, reducedAmount, isCrit);
 
             if (currentHealth <= 0f)
             {

@@ -194,6 +194,50 @@ namespace Stonehold
             return weakest;
         }
 
+        /// <summary>Target in range with the highest density of nearby enemies within radius.</summary>
+        public static Enemy FindClusteredTarget(Vector3 position, float maxRange, float clusterRadius)
+        {
+            Enemy bestTarget = null;
+            int maxNeighbors = -1;
+            float maxRangeSqr = maxRange * maxRange;
+            float clusterRadiusSqr = clusterRadius * clusterRadius;
+
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                Enemy candidate = enemies[i];
+                if (candidate == null || candidate.IsDead) continue;
+
+                float rangeSqr = (candidate.transform.position - position).sqrMagnitude;
+                if (rangeSqr > maxRangeSqr) continue;
+
+                int neighbors = 0;
+                for (int j = 0; j < enemies.Count; j++)
+                {
+                    Enemy other = enemies[j];
+                    if (other == null || other.IsDead) continue;
+                    if ((other.transform.position - candidate.transform.position).sqrMagnitude <= clusterRadiusSqr)
+                    {
+                        neighbors++;
+                    }
+                }
+
+                if (neighbors > maxNeighbors)
+                {
+                    maxNeighbors = neighbors;
+                    bestTarget = candidate;
+                }
+                else if (neighbors == maxNeighbors && bestTarget != null)
+                {
+                    if (candidate.RemainingDistanceToTarget < bestTarget.RemainingDistanceToTarget)
+                    {
+                        bestTarget = candidate;
+                    }
+                }
+            }
+
+            return bestTarget;
+        }
+
         /// <summary>General query supporting all targeting modes.</summary>
         public static Enemy FindTarget(Vector3 position, float maxRange, TargetingMode mode)
         {
@@ -209,6 +253,10 @@ namespace Stonehold
                     return FindStrongest(position, maxRange);
                 case TargetingMode.Weakest:
                     return FindWeakest(position, maxRange);
+                case TargetingMode.Nearest:
+                    return FindNearest(position, maxRange);
+                case TargetingMode.Clustered:
+                    return FindClusteredTarget(position, maxRange, 3.0f);
                 default:
                     return FindClosestToGoal(position, maxRange);
             }

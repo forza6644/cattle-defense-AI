@@ -85,6 +85,20 @@ namespace Stonehold
         private float hintTimer;
         private bool hasShownTargetingHint;
 
+        // Cooldown HUD
+        private class AbilityCooldownUIItem
+        {
+            public GameObject Root;
+            public Image Background;
+            public Image Icon;
+            public Image Fill;
+            public Text LevelText;
+            public Text TimerText;
+            public string HeroId;
+        }
+        private RectTransform abilityHudContainer;
+        private readonly List<AbilityCooldownUIItem> abilityUiItems = new List<AbilityCooldownUIItem>();
+
         // Floating combat text
         private RectTransform floatingRoot;
         private RectTransform safeAreaRect;
@@ -201,7 +215,7 @@ namespace Stonehold
                 unlocks.TowerUnlocked += OnTowerUnlocked;
             }
 
-            Enemy.AnyDamaged += OnEnemyDamaged;
+            Enemy.AnyDamagedDetailed += OnEnemyDamagedDetailed;
             Enemy.AnyKilled += OnEnemyKilled;
 
             RefreshGold();
@@ -248,7 +262,7 @@ namespace Stonehold
                 unlocks.TowerUnlocked -= OnTowerUnlocked;
             }
 
-            Enemy.AnyDamaged -= OnEnemyDamaged;
+            Enemy.AnyDamagedDetailed -= OnEnemyDamagedDetailed;
             Enemy.AnyKilled -= OnEnemyKilled;
 
             if (Instance == this)
@@ -423,10 +437,18 @@ namespace Stonehold
 
         // ------------------------------------------------- Damage numbers / gold
 
-        private void OnEnemyDamaged(Enemy enemy, float amount)
+        private void OnEnemyDamagedDetailed(Enemy enemy, float amount, bool isCrit)
         {
-            SpawnFloatingText("-" + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 0.8f,
-                new Color(1f, 0.55f, 0.2f), 30);
+            if (isCrit)
+            {
+                SpawnFloatingText("CRIT\n-" + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 1.0f,
+                    new Color(1f, 0.15f, 0.15f), 38);
+            }
+            else
+            {
+                SpawnFloatingText("-" + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 0.8f,
+                    new Color(1f, 0.55f, 0.2f), 30);
+            }
         }
 
         private void OnEnemyKilled(Enemy enemy, int gold)
@@ -678,6 +700,8 @@ namespace Stonehold
                 case TargetingMode.LastInRange: return "Last";
                 case TargetingMode.Strongest: return "Strongest";
                 case TargetingMode.Weakest: return "Weakest";
+                case TargetingMode.Nearest: return "Nearest";
+                case TargetingMode.Clustered: return "Clustered";
                 default: return mode.ToString();
             }
         }
@@ -863,6 +887,10 @@ namespace Stonehold
         {
             HideSelectionPanels();
             ShowPanel(pauseGroup, state == GameState.Paused);
+            if (abilityHudContainer != null)
+            {
+                abilityHudContainer.gameObject.SetActive(state == GameState.Playing);
+            }
 
             if (state == GameState.Victory || state == GameState.Defeat)
             {
@@ -1061,6 +1089,17 @@ namespace Stonehold
                     hintBg.gameObject.SetActive(false);
                 }
             }
+
+            bool showAbilityHud = GameManager.Instance != null && GameManager.Instance.State == GameState.Playing;
+            if (abilityHudContainer != null && abilityHudContainer.gameObject.activeSelf != showAbilityHud)
+            {
+                abilityHudContainer.gameObject.SetActive(showAbilityHud);
+            }
+
+            if (showAbilityHud)
+            {
+                UpdateAbilityCooldownHUD();
+            }
         }
 
         private void ShowPanel(CanvasGroup group, bool visible)
@@ -1250,6 +1289,7 @@ namespace Stonehold
                     ("Main Menu", () => { if (game != null) game.LoadMainMenu(); }) });
 
             BuildLevelUpPanel();
+            BuildAbilityCooldownHUD();
             BuildBattleResultPanel();
         }
 
@@ -1932,6 +1972,147 @@ namespace Stonehold
                 rt.anchorMax = new Vector2((safeArea.x + safeArea.width) / sw, (safeArea.y + safeArea.height) / sh);
             }
             return rt;
+        }
+
+        private void BuildAbilityCooldownHUD()
+        {
+            GameObject containerObj = new GameObject("AbilityCooldownHUD", typeof(RectTransform));
+            abilityHudContainer = containerObj.GetComponent<RectTransform>();
+            abilityHudContainer.SetParent(safeAreaRect, false);
+            SetAnchored(abilityHudContainer, new Vector2(1f, 1f), new Vector2(-60f, -145f), new Vector2(90f, 600f));
+        }
+
+        private void CreateAbilityCooldownUIItem()
+        {
+            GameObject rootObj = new GameObject("Slot_" + abilityUiItems.Count, typeof(RectTransform));
+            RectTransform rootRt = rootObj.GetComponent<RectTransform>();
+            rootRt.SetParent(abilityHudContainer, false);
+            SetAnchored(rootRt, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(70f, 70f));
+
+            Image bg = CreateImage(rootRt, "Border", new Color(0.12f, 0.15f, 0.2f, 0.9f));
+            bg.rectTransform.anchorMin = Vector2.zero;
+            bg.rectTransform.anchorMax = Vector2.one;
+            bg.rectTransform.offsetMin = Vector2.zero;
+            bg.rectTransform.offsetMax = Vector2.zero;
+
+            Image icon = CreateImage(rootRt, "Icon", Color.white);
+            icon.rectTransform.anchorMin = Vector2.zero;
+            icon.rectTransform.anchorMax = Vector2.one;
+            icon.rectTransform.offsetMin = new Vector2(4f, 4f);
+            icon.rectTransform.offsetMax = new Vector2(-4f, -4f);
+
+            Image fill = CreateImage(rootRt, "FillOverlay", new Color(0f, 0f, 0f, 0.65f));
+            fill.type = Image.Type.Filled;
+            fill.fillMethod = Image.FillMethod.Radial360;
+            fill.fillOrigin = (int)Image.Origin360.Top;
+            fill.fillClockwise = false;
+            fill.rectTransform.anchorMin = Vector2.zero;
+            fill.rectTransform.anchorMax = Vector2.one;
+            fill.rectTransform.offsetMin = new Vector2(4f, 4f);
+            fill.rectTransform.offsetMax = new Vector2(-4f, -4f);
+
+            Text timerText = CreateText(rootRt, "TimerText", "READY", 14, new Color(0.3f, 1f, 0.3f), TextAnchor.MiddleCenter);
+            timerText.fontStyle = FontStyle.Bold;
+            timerText.rectTransform.anchorMin = Vector2.zero;
+            timerText.rectTransform.anchorMax = Vector2.one;
+            timerText.rectTransform.offsetMin = Vector2.zero;
+            timerText.rectTransform.offsetMax = Vector2.zero;
+
+            Text lvlText = CreateText(rootRt, "LevelText", "Lv.1", 12, Color.white, TextAnchor.LowerCenter);
+            lvlText.fontStyle = FontStyle.Bold;
+            lvlText.rectTransform.anchorMin = new Vector2(0f, 0f);
+            lvlText.rectTransform.anchorMax = new Vector2(1f, 0f);
+            lvlText.rectTransform.anchoredPosition = new Vector2(0f, -12f);
+            lvlText.rectTransform.sizeDelta = new Vector2(70f, 18f);
+
+            AbilityCooldownUIItem item = new AbilityCooldownUIItem
+            {
+                Root = rootObj,
+                Background = bg,
+                Icon = icon,
+                Fill = fill,
+                LevelText = lvlText,
+                TimerText = timerText,
+                HeroId = ""
+            };
+
+            abilityUiItems.Add(item);
+        }
+
+        private void UpdateAbilityCooldownHUD()
+        {
+            if (HeroRosterManager.Instance == null) return;
+
+            var slots = HeroRosterManager.Instance.Slots;
+            int activeSlotCount = 0;
+
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i];
+                if (slot == null || !slot.IsOccupied || slot.CurrentHero == null)
+                {
+                    continue;
+                }
+
+                HeroAttack hero = slot.CurrentHero;
+                if (!hero.HasSignatureAbility)
+                {
+                    continue;
+                }
+
+                if (activeSlotCount >= abilityUiItems.Count)
+                {
+                    CreateAbilityCooldownUIItem();
+                }
+
+                var uiItem = abilityUiItems[activeSlotCount];
+                uiItem.Root.SetActive(true);
+                uiItem.HeroId = hero.Definition.id;
+                uiItem.Icon.color = GetHeroColor(hero.Definition.id);
+
+                int metaLevel = SaveManager.GetMetaLevel(hero.Definition.id);
+                uiItem.LevelText.text = "Lv." + metaLevel;
+
+                float cdRemaining = hero.GetAbilityCooldownRemaining();
+                float cdTotal = hero.GetModifiedAbilityCooldown();
+
+                if (cdRemaining > 0f)
+                {
+                    uiItem.Fill.fillAmount = cdRemaining / cdTotal;
+                    uiItem.TimerText.text = Mathf.CeilToInt(cdRemaining).ToString();
+                    uiItem.TimerText.color = new Color(1f, 0.4f, 0.4f);
+                }
+                else
+                {
+                    uiItem.Fill.fillAmount = 0f;
+                    uiItem.TimerText.text = "READY";
+                    uiItem.TimerText.color = new Color(0.3f, 1f, 0.3f);
+                }
+
+                RectTransform rt = uiItem.Root.GetComponent<RectTransform>();
+                rt.anchoredPosition = new Vector2(0f, -activeSlotCount * 78f);
+
+                activeSlotCount++;
+            }
+
+            for (int i = activeSlotCount; i < abilityUiItems.Count; i++)
+            {
+                abilityUiItems[i].Root.SetActive(false);
+            }
+        }
+
+        private Color GetHeroColor(string heroId)
+        {
+            switch (heroId)
+            {
+                case "archer": return new Color(0.35f, 0.85f, 0.25f);
+                case "bombardier": return new Color(1f, 0.5f, 0.12f);
+                case "frost_mage": return new Color(0.25f, 0.85f, 1f);
+                case "fire_mage": return new Color(1f, 0.22f, 0.08f);
+                case "electric_engineer": return new Color(0.2f, 0.85f, 1f);
+                case "sniper": return new Color(0.75f, 0.4f, 1f);
+                default: return Color.white;
+            }
         }
     }
 

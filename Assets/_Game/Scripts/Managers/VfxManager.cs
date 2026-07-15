@@ -112,11 +112,11 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
         }
 
 
-        public void PlayFrost(Vector3 pos)
+        public void PlayFrost(Vector3 pos, float scale = 1.1f)
         {
             Color color = new Color(0.25f, 0.86f, 1f, 1f);
-            Play(frostPrefab, pos, color, 1.1f);
-            PlayImpactRing(pos, color, 0.85f, 0.24f, 0.1f);
+            Play(frostPrefab, pos, color, scale);
+            PlayImpactRing(pos, color, 0.85f * (scale / 1.1f), 0.24f * (scale / 1.1f), 0.1f * (scale / 1.1f));
         }
         public void PlayBurn(Vector3 pos) => Play(explosionPrefab, pos, new Color(1f, 0.18f, 0.03f, 1f));
         public void PlayShock(Vector3 pos) => Play(hitPrefab, pos, new Color(1f, 0.95f, 0.1f, 1f));
@@ -187,8 +187,35 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             trace.endColor = endColor;
             trace.startWidth = width;
             trace.endWidth = width * 0.45f;
-            trace.SetPosition(0, start);
-            trace.SetPosition(1, end);
+
+            if (heroId == "electric_engineer")
+            {
+                int segments = 5;
+                trace.positionCount = segments + 1;
+                trace.SetPosition(0, start);
+                Vector3 dir = end - start;
+                Vector3 normal = Vector3.Cross(dir, Vector3.up).normalized;
+                if (normal.sqrMagnitude < 0.01f) normal = Vector3.up;
+
+                for (int i = 1; i < segments; i++)
+                {
+                    float t = (float)i / segments;
+                    Vector3 point = Vector3.Lerp(start, end, t);
+                    float offsetScale = 0.25f;
+                    float offset = Random.Range(-offsetScale, offsetScale);
+                    Vector3 perpendicular = (i % 2 == 0 ? 1f : -1f) * normal * offset;
+                    perpendicular += Vector3.up * Random.Range(-0.1f, 0.1f);
+                    trace.SetPosition(i, point + perpendicular);
+                }
+                trace.SetPosition(segments, end);
+            }
+            else
+            {
+                trace.positionCount = 2;
+                trace.SetPosition(0, start);
+                trace.SetPosition(1, end);
+            }
+
             trace.enabled = true;
             StartCoroutine(ReturnAbilityTrace(trace));
         }

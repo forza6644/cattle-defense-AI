@@ -21,6 +21,7 @@ namespace Stonehold
         private static readonly Color SlowTint = new Color(0.4f, 0.8f, 1f, 1f);
         private static readonly Color BurnTint = new Color(1f, 0.45f, 0.15f, 1f);
         private static readonly Color ShockTint = new Color(1f, 0.95f, 0.3f, 1f);
+        private static readonly Color StunTint = new Color(0.7f, 0.7f, 0.7f, 1f);
         private const float TintStrength = 0.45f;
 
         public IReadOnlyList<StatusEffect> ActiveEffects => activeEffects;
@@ -66,6 +67,9 @@ namespace Stonehold
                     break;
                 case StatusEffectType.Shock:
                     HandleApplyShock(effect);
+                    break;
+                case StatusEffectType.Stun:
+                    HandleApplyStun(effect);
                     break;
             }
         }
@@ -122,6 +126,21 @@ namespace Stonehold
             }
         }
 
+        private void HandleApplyStun(StatusEffect newEffect)
+        {
+            StatusEffect existingStun = activeEffects.Find(e => e.EffectType == StatusEffectType.Stun);
+            if (existingStun != null)
+            {
+                existingStun.Duration = newEffect.Duration;
+                existingStun.RemainingTime = newEffect.Duration;
+            }
+            else
+            {
+                activeEffects.Add(newEffect);
+            }
+            UpdateEnemySlowMultiplier();
+        }
+
         private void Update()
         {
             if (enemy == null || enemy.IsDead)
@@ -138,7 +157,7 @@ namespace Stonehold
 
                 if (effect.RemainingTime <= 0f)
                 {
-                    if (effect.EffectType == StatusEffectType.Slow)
+                    if (effect.EffectType == StatusEffectType.Slow || effect.EffectType == StatusEffectType.Stun)
                     {
                         slowChanged = true;
                     }
@@ -177,11 +196,16 @@ namespace Stonehold
                 if (renderers == null) return;
             }
 
-            // Priority: Shock > Burn > Slow
+            // Priority: Stun > Shock > Burn > Slow
             Color targetTint = Color.white;
             bool hasTint = false;
 
-            if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Shock))
+            if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Stun))
+            {
+                targetTint = StunTint;
+                hasTint = true;
+            }
+            else if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Shock))
             {
                 targetTint = ShockTint;
                 hasTint = true;
@@ -193,7 +217,16 @@ namespace Stonehold
             }
             else if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Slow))
             {
-                targetTint = SlowTint;
+                var slow = activeEffects.Find(e => e.EffectType == StatusEffectType.Slow);
+                if (slow != null && slow.Value <= 0.05f)
+                {
+                    // Freeze feedback: icy cyan tint
+                    targetTint = new Color(0.2f, 0.7f, 1f, 1f);
+                }
+                else
+                {
+                    targetTint = SlowTint;
+                }
                 hasTint = true;
             }
 
@@ -226,7 +259,13 @@ namespace Stonehold
             if (enemy == null) return;
 
             StatusEffect activeSlow = activeEffects.Find(e => e.EffectType == StatusEffectType.Slow);
-            if (activeSlow != null)
+            StatusEffect activeStun = activeEffects.Find(e => e.EffectType == StatusEffectType.Stun);
+            if (activeStun != null)
+            {
+                enemy.SlowMultiplier = 0f;
+                enemy.SlowTimer = activeStun.RemainingTime;
+            }
+            else if (activeSlow != null)
             {
                 enemy.SlowMultiplier = activeSlow.Value;
                 enemy.SlowTimer = activeSlow.RemainingTime;

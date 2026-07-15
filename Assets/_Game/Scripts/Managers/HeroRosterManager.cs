@@ -21,6 +21,7 @@ namespace Stonehold
 
         public IReadOnlyCollection<string> OwnedHeroIds => ownedHeroIds;
         public int EmptySlotCount => CountEmptySlots();
+        public IReadOnlyList<HeroSlot> Slots => slots;
 
         private void Awake()
         {

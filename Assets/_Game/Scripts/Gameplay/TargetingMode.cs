@@ -9,6 +9,8 @@ namespace Stonehold
         FirstInRange,
         LastInRange,
         Strongest,
-        Weakest
+        Weakest,
+        Nearest,
+        Clustered
     }
 }

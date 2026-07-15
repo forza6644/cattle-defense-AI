@@ -24,6 +24,7 @@ namespace Stonehold
         private TrailRenderer trail;
         private GameObject sourcePrefab;
         private Color impactColor = Color.white;
+        private bool isCrit;
 
         private StatusEffectType statusEffectType = StatusEffectType.None;
         private float statusEffectValue;
@@ -79,10 +80,10 @@ namespace Stonehold
         /// <summary>Called by the tower right after this projectile is spawned.</summary>
         public void Init(Enemy targetEnemy, float damageAmount, float splash, float slowMult, float slowDur, Color trailColor)
         {
-            Init(targetEnemy, damageAmount, splash, slowMult, slowDur, trailColor, null);
+            Init(targetEnemy, damageAmount, splash, slowMult, slowDur, trailColor, null, false);
         }
 
-        public void Init(Enemy targetEnemy, float damageAmount, float splash, float slowMult, float slowDur, Color trailColor, string damageSourceHeroId)
+        public void Init(Enemy targetEnemy, float damageAmount, float splash, float slowMult, float slowDur, Color trailColor, string damageSourceHeroId, bool isCritical = false)
         {
             speed = (damageSourceHeroId == "sniper") ? 60f : 12f;
             target = targetEnemy;
@@ -92,6 +93,7 @@ namespace Stonehold
             slowDuration = slowDur;
             sourceHeroId = damageSourceHeroId;
             impactColor = trailColor;
+            isCrit = isCritical;
 
             targetLastPosition = target != null ? target.transform.position : transform.position;
             startPosition = transform.position;
@@ -143,7 +145,8 @@ namespace Stonehold
             string damageSourceHeroId,
             StatusEffectType effectType,
             float effectValue,
-            float effectDuration)
+            float effectDuration,
+            bool isCritical = false)
         {
             speed = (damageSourceHeroId == "sniper") ? 60f : 12f;
             target = targetEnemy;
@@ -154,6 +157,7 @@ namespace Stonehold
             statusEffectValue = effectValue;
             statusEffectDuration = effectDuration;
             impactColor = trailColor;
+            isCrit = isCritical;
 
             targetLastPosition = target != null ? target.transform.position : transform.position;
             startPosition = transform.position;
@@ -311,7 +315,7 @@ namespace Stonehold
         private void HitEnemy(Enemy enemy)
         {
             if (enemy == null || enemy.IsDead) return;
-            float appliedDamage = enemy.TakeDamage(damage);
+            float appliedDamage = enemy.TakeDamage(damage, false, isCrit);
             DamageTracker.RecordDamage(sourceHeroId, appliedDamage);
 
             if (statusEffectType != StatusEffectType.None && statusEffectDuration > 0f)

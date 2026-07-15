@@ -767,6 +767,8 @@ namespace Stonehold
                 case TargetingMode.LastInRange: return "Last";
                 case TargetingMode.Strongest: return "Strongest";
                 case TargetingMode.Weakest: return "Weakest";
+                case TargetingMode.Nearest: return "Nearest";
+                case TargetingMode.Clustered: return "Clustered";
                 default: return mode.ToString();
             }
         }

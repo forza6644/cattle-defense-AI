@@ -136,6 +136,134 @@ namespace Stonehold
             return false;
         }
 
+        public float GetAbilityCooldownMultiplier(string heroId)
+        {
+            float mult = 1.0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.AbilityCooldownReduction)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        mult -= card.modifierValue;
+                    }
+                }
+            }
+            return Mathf.Max(0.1f, mult);
+        }
+
+        public float GetAbilityDamageMultiplier(string heroId)
+        {
+            float mult = 1.0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.AbilityDamageMultiplier)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        mult += card.modifierValue;
+                    }
+                }
+            }
+            return mult;
+        }
+
+        public float GetAbilityRadiusMultiplier(string heroId)
+        {
+            float mult = 1.0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.AbilityRadiusMultiplier)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        mult += card.modifierValue;
+                    }
+                }
+            }
+            return mult;
+        }
+
+        public int GetAbilityExtraProjOrChain(string heroId)
+        {
+            int add = 0;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.AbilityExtraProjOrChain)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        add += Mathf.RoundToInt(card.modifierValue);
+                    }
+                }
+            }
+            return add;
+        }
+
+        public float GetBurnDurationAdd(string heroId)
+        {
+            float add = 0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.BurnDurationAdd)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.DoT))
+                    {
+                        add += card.modifierValue;
+                    }
+                }
+            }
+            return add;
+        }
+
+        public float GetSlowDurationAdd(string heroId)
+        {
+            float add = 0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.SlowDurationAdd)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.Slow))
+                    {
+                        add += card.modifierValue;
+                    }
+                }
+            }
+            return add;
+        }
+
+        public float GetCritChanceAdd(string heroId)
+        {
+            float add = 0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.CritChanceAdd)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        add += card.modifierValue;
+                    }
+                }
+            }
+            return add;
+        }
+
+        public float GetCritMultiplierAdd(string heroId)
+        {
+            float add = 0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.CritMultiplierAdd)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        add += card.modifierValue;
+                    }
+                }
+            }
+            return add;
+        }
+
         private bool IsTargetMatch(CardDefinition card, string heroId, AttackType actionAttackType)
         {
             switch (card.targetType)
