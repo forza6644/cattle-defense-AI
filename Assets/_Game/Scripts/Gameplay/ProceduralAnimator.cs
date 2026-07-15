@@ -23,6 +23,7 @@ namespace Stonehold
         [SerializeField] private float waddleDegrees = 6f;
 
         private Vector3 baseLocalPos;
+        private Quaternion baseLocalRotation;
         private Vector3 baseScale;
         private bool moving;
         private float hitTimer;
@@ -68,6 +69,7 @@ namespace Stonehold
             if (model != null)
             {
                 baseLocalPos = model.localPosition;
+                baseLocalRotation = model.localRotation;
                 baseScale = model.localScale;
                 renderers = model.GetComponentsInChildren<Renderer>();
             }
@@ -86,23 +88,26 @@ namespace Stonehold
         }
 
         public void SetMoving(bool value) => moving = value;
-        public void PlayHit() { hitTimer = HitDuration; flashTimer = FlashDuration; }
+
+        public void PlayHit()
+        {
+            hitTimer = HitDuration;
+            flashTimer = FlashDuration;
+            TryPlayState("Hit");
+        }
 
         public void PlayAttack()
         {
             attackTimer = AttackDuration;
-            if (unityAnimator != null)
-            {
-                unityAnimator.Play("Attack", 0, 0f);
-            }
+            TryPlayState("Attack");
         }
 
         public void PlayAbility()
         {
             attackTimer = AttackDuration;
-            if (unityAnimator != null)
+            if (!TryPlayState("Ability"))
             {
-                unityAnimator.Play("Ability", 0, 0f);
+                TryPlayState("Attack");
             }
         }
 
@@ -115,9 +120,8 @@ namespace Stonehold
             }
 
             dead = true;
-            if (unityAnimator != null)
+            if (TryPlayState("Death"))
             {
-                unityAnimator.Play("Death", 0, 0f);
                 StartCoroutine(WaitAndComplete(0.9f, onComplete));
             }
             else
@@ -125,6 +129,25 @@ namespace Stonehold
                 StartCoroutine(DeathRoutine(onComplete));
             }
         }
+
+        private bool TryPlayState(string stateName)
+        {
+            if (unityAnimator == null)
+            {
+                return false;
+            }
+
+            int shortHash = Animator.StringToHash(stateName);
+            int fullHash = Animator.StringToHash("Base Layer." + stateName);
+            if (!unityAnimator.HasState(0, shortHash) && !unityAnimator.HasState(0, fullHash))
+            {
+                return false;
+            }
+
+            unityAnimator.Play(stateName, 0, 0f);
+            return true;
+        }
+
 
         private IEnumerator WaitAndComplete(float duration, Action onComplete)
         {
@@ -142,11 +165,11 @@ namespace Stonehold
             if (unityAnimator != null)
             {
                 model.localPosition = baseLocalPos;
-                model.localRotation = Quaternion.identity;
+                model.localRotation = baseLocalRotation;
 
                 var stateInfo = unityAnimator.GetCurrentAnimatorStateInfo(0);
-                bool isAttacking = stateInfo.IsName("Attack") || stateInfo.IsName("Ability");
-                if (!isAttacking || stateInfo.normalizedTime >= 0.95f)
+                bool isTransient = attackTimer > 0f || hitTimer > 0f;
+                if (!isTransient || stateInfo.normalizedTime >= 0.95f)
                 {
                     string targetState = moving ? "Walk" : "Idle";
                     if (!stateInfo.IsName(targetState))
