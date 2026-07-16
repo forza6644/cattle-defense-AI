@@ -373,7 +373,7 @@ namespace Stonehold
             hookedCastle = FindFirstObjectByType<Castle>();
             if (hookedCastle != null)
             {
-                hookedCastle.HealthChanged += OnCastleDamaged;
+                hookedCastle.DamageTaken += OnCastleDamaged;
             }
 
             hookedGame = FindFirstObjectByType<GameManager>();
@@ -394,7 +394,7 @@ namespace Stonehold
         {
             if (hookedCastle != null)
             {
-                hookedCastle.HealthChanged -= OnCastleDamaged;
+                hookedCastle.DamageTaken -= OnCastleDamaged;
                 hookedCastle = null;
             }
 
@@ -450,7 +450,7 @@ namespace Stonehold
             PlaySfx(library.gold, 0.5f, Random.Range(1.0f, 1.12f));
         }
 
-        private void OnCastleDamaged()
+        private void OnCastleDamaged(int damage)
         {
             if (library != null)
             {

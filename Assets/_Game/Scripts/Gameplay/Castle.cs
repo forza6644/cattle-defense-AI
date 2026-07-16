@@ -18,6 +18,12 @@ namespace Stonehold
         /// <summary>Raised whenever HP changes.</summary>
         public event Action HealthChanged;
 
+        /// <summary>Raised after actual damage is applied. The argument is the applied amount.</summary>
+        public event Action<int> DamageTaken;
+
+        /// <summary>Raised after actual healing is applied. The argument is the applied amount.</summary>
+        public event Action<int> Healed;
+
         /// <summary>Raised once when HP reaches zero.</summary>
         public event Action Defeated;
 
@@ -76,13 +82,15 @@ namespace Stonehold
         /// <summary>Called by an enemy when it reaches the castle.</summary>
         public void TakeDamage(int amount)
         {
-            if (IsGameOver)
+            if (IsGameOver || amount <= 0)
             {
                 return;
             }
 
-            CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
+            int appliedDamage = Mathf.Min(CurrentHealth, amount);
+            CurrentHealth -= appliedDamage;
             Debug.Log("Castle hit! HP = " + CurrentHealth + " / " + MaxHealth);
+            DamageTaken?.Invoke(appliedDamage);
             HealthChanged?.Invoke();
 
             if (CurrentHealth == 0)
@@ -96,13 +104,21 @@ namespace Stonehold
         /// <summary>Repairs the castle by a specified amount, capped at max health.</summary>
         public void Repair(int amount)
         {
-            if (IsGameOver || CurrentHealth <= 0)
+            if (IsGameOver || CurrentHealth <= 0 || amount <= 0)
             {
                 return;
             }
 
+            int previousHealth = CurrentHealth;
             CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
+            int appliedHealing = CurrentHealth - previousHealth;
+            if (appliedHealing <= 0)
+            {
+                return;
+            }
+
             Debug.Log("Castle repaired! HP = " + CurrentHealth + " / " + MaxHealth);
+            Healed?.Invoke(appliedHealing);
             HealthChanged?.Invoke();
         }
     }

@@ -17,6 +17,13 @@ namespace Stonehold
         private Color[] baseColors;
         private MaterialPropertyBlock mpb;
         private bool tintApplied;
+        private bool hasSlow;
+        private bool hasBurn;
+        private bool hasShock;
+        private bool hasStun;
+        private bool slowIsFreeze;
+        private StatusEffect activeSlow;
+        private StatusEffect activeStun;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         private static readonly Color SlowTint = new Color(0.4f, 0.8f, 1f, 1f);
@@ -35,7 +42,11 @@ namespace Stonehold
 
         private void OnEnable()
         {
-            ResetController();
+            if (activeEffects.Count == 0)
+            {
+                ResetController();
+                enabled = false;
+            }
         }
 
         private void OnDisable()
@@ -54,6 +65,13 @@ namespace Stonehold
             }
             activeParticles.Clear();
             activeEffects.Clear();
+            hasSlow = false;
+            hasBurn = false;
+            hasShock = false;
+            hasStun = false;
+            slowIsFreeze = false;
+            activeSlow = null;
+            activeStun = null;
 
             if (renderers != null)
             {
@@ -106,6 +124,9 @@ namespace Stonehold
                     HandleApplyStun(effect);
                     break;
             }
+
+            RebuildActiveState(true);
+            enabled = activeEffects.Count > 0;
         }
 
         private void HandleApplySlow(StatusEffect newEffect)
@@ -177,93 +198,142 @@ namespace Stonehold
 
         private void Update()
         {
+            ProcessEffects(Time.deltaTime);
+        }
+
+        internal void ProcessEffects(float deltaTime)
+        {
             if (enemy == null || enemy.IsDead)
             {
                 ResetController();
+                enabled = false;
+                return;
+            }
+
+            if (activeEffects.Count == 0)
+            {
+                enabled = false;
                 return;
             }
 
             bool slowChanged = false;
+            bool stateChanged = false;
 
             for (int i = activeEffects.Count - 1; i >= 0; i--)
             {
                 StatusEffect effect = activeEffects[i];
-                effect.RemainingTime -= Time.deltaTime;
+                float activeDelta = Mathf.Min(Mathf.Max(0f, effect.RemainingTime), deltaTime);
 
-                if (effect.RemainingTime <= 0f)
+                if (effect.EffectType == StatusEffectType.Burn)
+                {
+                    effect.TickTimer -= activeDelta;
+                    int tickSafety = 0;
+                    while (effect.TickTimer <= 0f && tickSafety < 16)
+                    {
+                        float appliedDamage = enemy.TakeDamage(effect.Value);
+                        DamageTracker.RecordDamage(effect.SourceHeroId, appliedDamage);
+                        effect.TickTimer += 1f;
+                        tickSafety++;
+
+                        if (enemy.IsDead)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                effect.RemainingTime -= deltaTime;
+                if (effect.RemainingTime <= 0f || enemy.IsDead)
                 {
                     if (effect.EffectType == StatusEffectType.Slow || effect.EffectType == StatusEffectType.Stun)
                     {
                         slowChanged = true;
                     }
                     activeEffects.RemoveAt(i);
-                    continue;
-                }
-
-                // Handle Burn DoT tick (deals damage once per second)
-                if (effect.EffectType == StatusEffectType.Burn)
-                {
-                    effect.TickTimer -= Time.deltaTime;
-                    if (effect.TickTimer <= 0f)
-                    {
-                        effect.TickTimer = 1.0f; // Reset tick timer
-
-                        float damageAmount = effect.Value;
-                        float appliedDamage = enemy.TakeDamage(damageAmount);
-                        DamageTracker.RecordDamage(effect.SourceHeroId, appliedDamage);
-                    }
+                    stateChanged = true;
                 }
             }
 
-            if (slowChanged)
+            if (stateChanged)
             {
-                UpdateEnemySlowMultiplier();
+                RebuildActiveState(true);
+            }
+            else if (slowChanged)
+            {
+                RebuildActiveState(false);
             }
 
             UpdateVisualTint();
-            UpdateStatusParticles();
-        }
-
-        private void UpdateStatusParticles()
-        {
-            StatusEffectType[] typesToCheck = { StatusEffectType.Slow, StatusEffectType.Burn, StatusEffectType.Shock, StatusEffectType.Stun };
-
-            foreach (var type in typesToCheck)
+            if (activeEffects.Count == 0)
             {
-                bool hasEffect = activeEffects.Exists(e => e.EffectType == type);
-                
-                bool isFreeze = false;
-                if (type == StatusEffectType.Slow && hasEffect)
-                {
-                    var slowEffect = activeEffects.Find(e => e.EffectType == StatusEffectType.Slow);
-                    if (slowEffect != null && slowEffect.Value <= 0.05f)
-                    {
-                        isFreeze = true;
-                    }
-                }
-
-                if (hasEffect)
-                {
-                    if (!activeParticles.ContainsKey(type))
-                    {
-                        ParticleSystem ps = VfxManager.Instance?.GetStatusEffectParticle(type, transform, isFreeze);
-                        if (ps != null)
-                        {
-                            activeParticles[type] = ps;
-                        }
-                    }
-                }
-                else
-                {
-                    if (activeParticles.TryGetValue(type, out ParticleSystem ps))
-                    {
-                        VfxManager.Instance?.ReturnStatusEffectParticle(type, ps);
-                        activeParticles.Remove(type);
-                    }
-                }
+                enabled = false;
             }
         }
 
+        private void RebuildActiveState(bool refreshParticles)
+        {
+            hasSlow = false;
+            hasBurn = false;
+            hasShock = false;
+            hasStun = false;
+            slowIsFreeze = false;
+            activeSlow = null;
+            activeStun = null;
+
+            for (int i = 0; i < activeEffects.Count; i++)
+            {
+                StatusEffect effect = activeEffects[i];
+                switch (effect.EffectType)
+                {
+                    case StatusEffectType.Slow:
+                        hasSlow = true;
+                        activeSlow = effect;
+                        slowIsFreeze = effect.Value <= 0.05f;
+                        break;
+                    case StatusEffectType.Burn:
+                        hasBurn = true;
+                        break;
+                    case StatusEffectType.Shock:
+                        hasShock = true;
+                        break;
+                    case StatusEffectType.Stun:
+                        hasStun = true;
+                        activeStun = effect;
+                        break;
+                }
+            }
+
+            UpdateEnemySlowMultiplier();
+            if (refreshParticles)
+            {
+                SyncStatusParticle(StatusEffectType.Slow, hasSlow, slowIsFreeze);
+                SyncStatusParticle(StatusEffectType.Burn, hasBurn, false);
+                SyncStatusParticle(StatusEffectType.Shock, hasShock, false);
+                SyncStatusParticle(StatusEffectType.Stun, hasStun, false);
+            }
+        }
+
+        private void SyncStatusParticle(StatusEffectType type, bool isActive, bool isFreeze)
+        {
+            if (isActive)
+            {
+                if (!activeParticles.ContainsKey(type))
+                {
+                    ParticleSystem ps = VfxManager.Instance?.GetStatusEffectParticle(type, transform, isFreeze);
+                    if (ps != null)
+                    {
+                        activeParticles[type] = ps;
+                    }
+                }
+                return;
+            }
+
+            if (activeParticles.TryGetValue(type, out ParticleSystem activeParticle))
+            {
+                VfxManager.Instance?.ReturnStatusEffectParticle(type, activeParticle);
+                activeParticles.Remove(type);
+            }
+        }
 
         private void UpdateVisualTint()
         {
@@ -277,25 +347,24 @@ namespace Stonehold
             Color targetTint = Color.white;
             bool hasTint = false;
 
-            if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Stun))
+            if (hasStun)
             {
                 targetTint = StunTint;
                 hasTint = true;
             }
-            else if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Shock))
+            else if (hasShock)
             {
                 targetTint = ShockTint;
                 hasTint = true;
             }
-            else if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Burn))
+            else if (hasBurn)
             {
                 targetTint = BurnTint;
                 hasTint = true;
             }
-            else if (activeEffects.Exists(e => e.EffectType == StatusEffectType.Slow))
+            else if (hasSlow)
             {
-                var slow = activeEffects.Find(e => e.EffectType == StatusEffectType.Slow);
-                if (slow != null && slow.Value <= 0.05f)
+                if (slowIsFreeze)
                 {
                     // Freeze feedback: icy cyan tint
                     targetTint = new Color(0.2f, 0.7f, 1f, 1f);
@@ -335,8 +404,6 @@ namespace Stonehold
         {
             if (enemy == null) return;
 
-            StatusEffect activeSlow = activeEffects.Find(e => e.EffectType == StatusEffectType.Slow);
-            StatusEffect activeStun = activeEffects.Find(e => e.EffectType == StatusEffectType.Stun);
             if (activeStun != null)
             {
                 enemy.SlowMultiplier = 0f;
@@ -359,7 +426,7 @@ namespace Stonehold
         /// </summary>
         public bool IsShocked()
         {
-            return activeEffects.Exists(e => e.EffectType == StatusEffectType.Shock);
+            return hasShock;
         }
     }
 }

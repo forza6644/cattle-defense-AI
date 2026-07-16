@@ -1,0 +1,19 @@
+{
+  "name": "Stonehold.PlayModeTests",
+  "rootNamespace": "Stonehold.Tests",
+  "references": [
+    "Stonehold.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

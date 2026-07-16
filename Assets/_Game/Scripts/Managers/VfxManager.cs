@@ -46,8 +46,9 @@ namespace Stonehold
         private readonly Queue<LineRenderer> impactRingPool = new Queue<LineRenderer>();
         private const int MaxImpactRings = 12;
         private int activeImpactRings;
-private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>();
+        private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>();
         private Transform castle;
+        private Castle hookedCastle;
         private Material abilityTraceMaterial;
 
         private Renderer[] castleRenderers;
@@ -62,13 +63,13 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
 
         private void Start()
         {
-            Castle castleComponent = FindFirstObjectByType<Castle>();
-            castle = castleComponent != null ? castleComponent.transform : null;
+            hookedCastle = FindFirstObjectByType<Castle>();
+            castle = hookedCastle != null ? hookedCastle.transform : null;
 
             Enemy.AnyKilled += OnEnemyKilled;
-            if (castleComponent != null)
+            if (hookedCastle != null)
             {
-                castleComponent.HealthChanged += OnCastleHit;
+                hookedCastle.DamageTaken += OnCastleHit;
             }
 
             if (GameManager.Instance != null)
@@ -86,10 +87,10 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
         private void OnDestroy()
         {
             Enemy.AnyKilled -= OnEnemyKilled;
-            Castle castleComponent = FindFirstObjectByType<Castle>();
-            if (castleComponent != null)
+            if (hookedCastle != null)
             {
-                castleComponent.HealthChanged -= OnCastleHit;
+                hookedCastle.DamageTaken -= OnCastleHit;
+                hookedCastle = null;
             }
 
             if (GameManager.Instance != null)
@@ -273,7 +274,7 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             Play(goldPrefab, pos + Vector3.up * 0.5f);
         }
 
-        private void OnCastleHit()
+        private void OnCastleHit(int damage)
         {
             if (castle != null)
             {
@@ -333,7 +334,7 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
                 List<Renderer> rendList = new List<Renderer>();
                 if (wall != null) rendList.AddRange(wall.GetComponentsInChildren<Renderer>());
                 if (gate != null) rendList.AddRange(gate.GetComponentsInChildren<Renderer>());
-                
+
                 castleRenderers = rendList.ToArray();
                 castleBaseColors = new Color[castleRenderers.Length];
                 for (int i = 0; i < castleRenderers.Length; i++)
@@ -378,15 +379,15 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
         private IEnumerator PlayVictorySequence(Vector3 center)
         {
             // Spawn initial victory flag/ring
-            Play(victoryPrefab, center);
-            
+            Play(victoryPrefab, center, null, 1f, true);
+
             // Multiple celebratory fireworks sequences
             for (int i = 0; i < 5; i++)
             {
                 Vector3 offset = new Vector3(Random.Range(-5f, 5f), Random.Range(1f, 4f), Random.Range(-2f, 2f));
                 Color fwColor = GetHeroColor(i == 0 ? "archer" : i == 1 ? "fire_mage" : i == 2 ? "frost_mage" : i == 3 ? "electric_engineer" : "sniper");
-                Play(victoryPrefab, center + offset, fwColor * Random.Range(0.8f, 1.2f), Random.Range(1f, 1.5f));
-                yield return new WaitForSeconds(0.45f);
+                Play(victoryPrefab, center + offset, fwColor * Random.Range(0.8f, 1.2f), Random.Range(1f, 1.5f), true);
+                yield return new WaitForSecondsRealtime(0.45f);
             }
         }
 
@@ -402,8 +403,8 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             foreach (float x in wallX)
             {
                 Vector3 pos = new Vector3(x, 1f, -4.5f);
-                Play(defeatPrefab, pos, new Color(0.18f, 0.18f, 0.18f, 1f), 1.6f);
-                yield return new WaitForSeconds(0.15f);
+                Play(defeatPrefab, pos, new Color(0.18f, 0.18f, 0.18f, 1f), 1.6f, true);
+                yield return new WaitForSecondsRealtime(0.15f);
             }
         }
 
@@ -472,6 +473,8 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             ps.transform.localScale = Vector3.one * (type == StatusEffectType.Stun ? 0.35f : 0.5f);
             ps.gameObject.SetActive(true);
 
+            PooledParticleState poolState = PooledParticleState.GetOrCreate(ps);
+            poolState.PrepareForPlay(false);
             ConfigureStatusParticleSystem(ps, type, isFreeze);
             ps.Play();
             return ps;
@@ -480,9 +483,11 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
         public void ReturnStatusEffectParticle(StatusEffectType type, ParticleSystem ps)
         {
             if (ps == null) return;
-            ps.Stop();
-            ps.transform.SetParent(transform, false);
-            ps.gameObject.SetActive(false);
+            PooledParticleState poolState = PooledParticleState.GetOrCreate(ps);
+            if (!poolState.TryReturnCurrent(transform))
+            {
+                return;
+            }
 
             if (!statusParticlePools.TryGetValue(type, out Queue<ParticleSystem> pool))
             {
@@ -499,7 +504,7 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             main.playOnAwake = false;
             main.startSize = type == StatusEffectType.Stun ? 0.16f : 0.22f;
             main.startLifetime = type == StatusEffectType.Stun ? 0.9f : 0.7f;
-            
+
             var emission = ps.emission;
             emission.rateOverTime = type == StatusEffectType.Stun ? 5f : isFreeze ? 9f : 4f;
 
@@ -519,8 +524,8 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             switch (type)
             {
                 case StatusEffectType.Slow:
-                    main.startColor = isFreeze 
-                        ? new ParticleSystem.MinMaxGradient(new Color(0.12f, 0.68f, 1f, 0.85f)) 
+                    main.startColor = isFreeze
+                        ? new ParticleSystem.MinMaxGradient(new Color(0.12f, 0.68f, 1f, 0.85f))
                         : new ParticleSystem.MinMaxGradient(new Color(0.42f, 0.88f, 1f, 0.72f));
                     break;
                 case StatusEffectType.Burn:
@@ -550,6 +555,11 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
 
         private void Play(GameObject prefab, Vector3 position, Color? color, float scale)
         {
+            Play(prefab, position, color, scale, false);
+        }
+
+        private void Play(GameObject prefab, Vector3 position, Color? color, float scale, bool useUnscaledTime)
+        {
             if (prefab == null)
             {
                 return;
@@ -564,13 +574,14 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             instance.transform.position = position;
             instance.transform.localScale = defaults.scale * scale;
             instance.gameObject.SetActive(true);
-            instance.Clear();
+            PooledParticleState poolState = PooledParticleState.GetOrCreate(instance);
+            int activationId = poolState.PrepareForPlay(useUnscaledTime);
             ParticleSystem.MainModule main = instance.main;
             main.startColor = color.HasValue
                 ? new ParticleSystem.MinMaxGradient(color.Value)
                 : defaults.startColor;
             instance.Play();
-            StartCoroutine(ReturnWhenDone(prefab, instance));
+            StartCoroutine(ReturnWhenDone(prefab, instance, activationId, useUnscaledTime));
         }
 
         private ParticleSystem Get(GameObject prefab)
@@ -665,19 +676,29 @@ private readonly Queue<LineRenderer> abilityTracePool = new Queue<LineRenderer>(
             abilityTracePool.Enqueue(trace);
         }
 
-        private IEnumerator ReturnWhenDone(GameObject prefab, ParticleSystem instance)
+        private IEnumerator ReturnWhenDone(GameObject prefab, ParticleSystem instance, int activationId, bool useUnscaledTime)
         {
             ParticleSystem.MainModule main = instance.main;
             float life = main.duration + main.startLifetime.constantMax;
-            yield return new WaitForSeconds(life);
+            if (useUnscaledTime)
+            {
+                yield return new WaitForSecondsRealtime(life);
+            }
+            else
+            {
+                yield return new WaitForSeconds(life);
+            }
 
             if (instance == null)
             {
                 yield break;
             }
 
-            instance.Stop();
-            instance.gameObject.SetActive(false);
+            PooledParticleState poolState = PooledParticleState.GetOrCreate(instance);
+            if (!poolState.TryReturn(activationId, transform))
+            {
+                yield break;
+            }
 
             if (!pools.TryGetValue(prefab, out Queue<ParticleSystem> pool))
             {
