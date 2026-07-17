@@ -6,7 +6,7 @@ Date: 2026-07-17
 
 **QUALIFIED**
 
-The local Stonehold baseline compiles, all 13 automated tests pass, and the automated 10-wave regression reaches Victory with all six heroes contributing damage. Task 12B did not push anything.
+The local Stonehold baseline compiles, all 13 automated tests pass, and the automated 10-wave regression reaches Victory with all six heroes contributing damage. Task 12B performed local qualification only; Task 12C owns the remote handoff.
 
 This qualification applies to the current Unity Editor/batch baseline. It is not Android-device performance approval and not approval for the future 60-100 enemy density target.
 
@@ -27,7 +27,7 @@ Preserved initial local files:
 
 Safety patch:
 
-- `C:\Users\forza\OneDrive\Desktop\td castle defence\stonehold_pre_task12b_uncommitted.patch`
+- `stonehold_pre_task12b_uncommitted.patch`, stored outside the Unity project.
 
 ## Root Causes And Corrections
 
@@ -186,7 +186,7 @@ No mobile performance claim is made.
 - `ProjectSettings/ProjectSettings.asset` remains preserved and unstaged.
 - Unity log files and external safety patches are not included.
 - Unity-generated `TimeManager.asset` and solution-file changes from testing were removed before commit.
-- Nothing was pushed.
+- Task 12B itself did not push; remote handoff is handled separately by Task 12C.
 
 ## Exact Next Task
 

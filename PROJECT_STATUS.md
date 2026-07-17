@@ -9,11 +9,12 @@ Date: 2026-07-17
 - Remote baseline at qualification start: `d099439da47bfae171a8898d5a7306bf94015240`
 - Local presentation baseline: `9130af948f43d7a0c82dc82fc15771c3a0fd7e7d`
 - Local corrective code/test commit: `505a2c0e854b66ef53ab38466f789ddfd4fe9410`
+- Qualified baseline documentation commit: `c068fb5a6daf785e8150ef28f1b37d2a2fa7efa5`
 - Unity: `6000.5.2f1`
 - Current milestone: verified Hero Castle Defense baseline; Gameplay Expansion Vertical Slice is next.
 - Scenes: `MainMenu` and `GameScene`.
 
-Nothing from Task 12B has been pushed.
+Task 12B performed local qualification only; Task 12C owns the remote handoff.
 
 ## Current Game
 
@@ -75,6 +76,7 @@ Full-run batch evidence:
 - Peak recorded GC allocation in one sampled frame: 728,032 bytes. This includes scene/test harness and draft activity and is not a steady-state combat allocation measurement.
 
 Earlier interactive Editor observation was approximately 57-61 FPS. Neither result is mobile-device evidence.
+The Task 12A interactive Editor run also reached the end of the 10-wave stage; the Task 12B automated run supplied the final repeatable qualification evidence.
 
 ## Known Technical Debt
 
