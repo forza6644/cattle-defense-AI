@@ -27,7 +27,7 @@ namespace Stonehold
 
         public static void Register(Enemy enemy)
         {
-            if (enemy != null && !enemies.Contains(enemy))
+            if (IsTargetable(enemy) && !enemies.Contains(enemy))
             {
                 enemies.Add(enemy);
             }
@@ -43,7 +43,7 @@ namespace Stonehold
             int removed = 0;
             for (int i = enemies.Count - 1; i >= 0; i--)
             {
-                if (enemies[i] == null)
+                if (!IsTargetable(enemies[i]))
                 {
                     enemies.RemoveAt(i);
                     removed++;
@@ -62,7 +62,7 @@ namespace Stonehold
             for (int i = 0; i < enemies.Count; i++)
             {
                 Enemy enemy = enemies[i];
-                if (enemy == null)
+                if (!IsTargetable(enemy))
                 {
                     continue;
                 }
@@ -88,7 +88,7 @@ namespace Stonehold
             for (int i = 0; i < enemies.Count; i++)
             {
                 Enemy enemy = enemies[i];
-                if (enemy == null)
+                if (!IsTargetable(enemy))
                 {
                     continue;
                 }
@@ -117,7 +117,7 @@ namespace Stonehold
             for (int i = 0; i < enemies.Count; i++)
             {
                 Enemy enemy = enemies[i];
-                if (enemy == null) continue;
+                if (!IsTargetable(enemy)) continue;
 
                 float rangeSqr = (enemy.transform.position - position).sqrMagnitude;
                 if (rangeSqr <= maxRangeSqr)
@@ -135,7 +135,7 @@ namespace Stonehold
             for (int i = enemies.Count - 1; i >= 0; i--)
             {
                 Enemy enemy = enemies[i];
-                if (enemy == null) continue;
+                if (!IsTargetable(enemy)) continue;
 
                 float rangeSqr = (enemy.transform.position - position).sqrMagnitude;
                 if (rangeSqr <= maxRangeSqr)
@@ -156,7 +156,7 @@ namespace Stonehold
             for (int i = 0; i < enemies.Count; i++)
             {
                 Enemy enemy = enemies[i];
-                if (enemy == null) continue;
+                if (!IsTargetable(enemy)) continue;
 
                 float rangeSqr = (enemy.transform.position - position).sqrMagnitude;
                 if (rangeSqr > maxRangeSqr) continue;
@@ -180,7 +180,7 @@ namespace Stonehold
             for (int i = 0; i < enemies.Count; i++)
             {
                 Enemy enemy = enemies[i];
-                if (enemy == null) continue;
+                if (!IsTargetable(enemy)) continue;
 
                 float rangeSqr = (enemy.transform.position - position).sqrMagnitude;
                 if (rangeSqr > maxRangeSqr) continue;
@@ -205,7 +205,7 @@ namespace Stonehold
             for (int i = 0; i < enemies.Count; i++)
             {
                 Enemy candidate = enemies[i];
-                if (candidate == null || candidate.IsDead) continue;
+                if (!IsTargetable(candidate)) continue;
 
                 float rangeSqr = (candidate.transform.position - position).sqrMagnitude;
                 if (rangeSqr > maxRangeSqr) continue;
@@ -214,7 +214,7 @@ namespace Stonehold
                 for (int j = 0; j < enemies.Count; j++)
                 {
                     Enemy other = enemies[j];
-                    if (other == null || other.IsDead) continue;
+                    if (!IsTargetable(other)) continue;
                     if ((other.transform.position - candidate.transform.position).sqrMagnitude <= clusterRadiusSqr)
                     {
                         neighbors++;
@@ -260,6 +260,11 @@ namespace Stonehold
                 default:
                     return FindClosestToGoal(position, maxRange);
             }
+        }
+
+        private static bool IsTargetable(Enemy enemy)
+        {
+            return enemy != null && enemy.IsTargetable;
         }
     }
 }

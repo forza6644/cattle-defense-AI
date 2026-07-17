@@ -54,6 +54,7 @@ namespace Stonehold
         private WaypointPath waypointPath;
         private bool startNextWaveRequested;
         private int spawnSequence;
+        private EnemyPoolManager enemyPool;
 
         private bool IsGameOver => castleComponent != null && castleComponent.IsGameOver;
 
@@ -81,6 +82,16 @@ namespace Stonehold
             }
 
             castleComponent = castle.GetComponent<Castle>();
+            enemyPool = EnemyPoolManager.Instance != null
+                ? EnemyPoolManager.Instance
+                : FindFirstObjectByType<EnemyPoolManager>();
+            if (enemyPool == null)
+            {
+                Debug.LogError("WaveManager: EnemyPoolManager is required for enemy spawning.");
+                return;
+            }
+
+            PrewarmActiveEnemyPools();
 
             GameObject pathObj = GameObject.Find("Path");
             if (pathObj != null)
@@ -159,7 +170,9 @@ namespace Stonehold
                 float waitingForClearSeconds = 0f;
                 float nextRegistrySweepSeconds = 0f;
                 bool waitWarningLogged = false;
-                while (EnemyManager.AliveCount > 0)
+                // Dying enemies leave the targetable registry immediately, but their
+                // approved death presentation must finish before the wave clears.
+                while (enemyPool.ActiveCount > 0)
                 {
                     if (IsGameOver)
                     {
@@ -177,12 +190,17 @@ namespace Stonehold
                         {
                             Debug.LogWarning($"WaveManager: Removed {pruned} stale enemy registry entr{(pruned == 1 ? "y" : "ies")} while waiting for wave {CurrentWave} to clear.");
                         }
+                        int recovered = enemyPool.RecoverUnexpectedlyDisabledEnemies();
+                        if (recovered > 0)
+                        {
+                            Debug.LogWarning($"WaveManager: Recovered {recovered} unexpectedly disabled pooled enem{(recovered == 1 ? "y" : "ies")} while waiting for wave {CurrentWave} to clear.");
+                        }
                     }
 
                     if (!waitWarningLogged && waitingForClearSeconds >= WaveClearWaitWarningSeconds)
                     {
                         waitWarningLogged = true;
-                        Debug.LogWarning($"WaveManager: Wave {CurrentWave} has waited {WaveClearWaitWarningSeconds:0}s for {EnemyManager.AliveCount} registered enemies after spawning finished. Continuing to monitor and pruning stale/null entries only.");
+                        Debug.LogWarning($"WaveManager: Wave {CurrentWave} has waited {WaveClearWaitWarningSeconds:0}s for {enemyPool.ActiveCount} active pooled enemies ({EnemyManager.AliveCount} targetable) after spawning finished. Continuing to monitor lifecycle integrity.");
                     }
 
                     yield return null;
@@ -251,19 +269,46 @@ namespace Stonehold
                 return;
             }
 
-            GameObject spawned = Instantiate(enemyData.prefab, spawnPoint.transform.position, Quaternion.identity);
-
-            Enemy enemy = spawned.GetComponent<Enemy>();
-            if (enemy != null)
+            Vector3[] points;
+            if (waypointPath != null && waypointPath.Points != null && waypointPath.Points.Length > 0)
             {
-                if (waypointPath != null && waypointPath.Points != null && waypointPath.Points.Length > 0)
+                points = waypointPath.Points;
+            }
+            else
+            {
+                points = new Vector3[] { spawnPoint.transform.position, castle.transform.position };
+            }
+
+            Enemy enemy = enemyPool.Spawn(
+                enemyData,
+                spawnPoint.transform.position,
+                Quaternion.identity,
+                points,
+                castleComponent,
+                NextLaneOffset(),
+                NextDepthOffset());
+            if (enemy == null)
+            {
+                Debug.LogError($"WaveManager: failed to spawn pooled enemy '{enemyData.name}'.", enemyData);
+            }
+        }
+
+        private void PrewarmActiveEnemyPools()
+        {
+            if (activeWaves == null) return;
+
+            for (int waveIndex = 0; waveIndex < activeWaves.Length; waveIndex++)
+            {
+                WaveData wave = activeWaves[waveIndex];
+                if (wave == null || wave.spawns == null) continue;
+
+                for (int spawnIndex = 0; spawnIndex < wave.spawns.Length; spawnIndex++)
                 {
-                    enemy.SetPath(waypointPath.Points, castleComponent, NextLaneOffset(), NextDepthOffset());
-                }
-                else
-                {
-                    Vector3[] fallbackPoints = new Vector3[] { spawnPoint.transform.position, castle.transform.position };
-                    enemy.SetPath(fallbackPoints, castleComponent, NextLaneOffset(), NextDepthOffset());
+                    EnemyData enemyData = wave.spawns[spawnIndex].enemy;
+                    if (enemyData != null)
+                    {
+                        enemyPool.EnsurePool(enemyData);
+                    }
                 }
             }
         }

@@ -6,14 +6,15 @@ Date: 2026-07-17
 
 - Repository: `forza6644/cattle-defense-AI`
 - Qualified remote baseline: `7f7101dfdf822f6e1b6c55845f59772003d5625e`
-- Active branch: `feature/gameplay-expansion-foundation`
+- Task 13B source baseline: `21a10784dd4d7349534f90be8eebed82c8b81699`.
+- Active branch: `feature/enemy-pooling`
 - Task 13A local commit: this commit, `Gameplay expansion data contracts and validation` (exact hash is reported after creation).
 - Remote baseline at qualification start: `d099439da47bfae171a8898d5a7306bf94015240`
 - Local presentation baseline: `9130af948f43d7a0c82dc82fc15771c3a0fd7e7d`
 - Local corrective code/test commit: `505a2c0e854b66ef53ab38466f789ddfd4fe9410`
 - Qualified baseline documentation commit: `c068fb5a6daf785e8150ef28f1b37d2a2fa7efa5`
 - Unity: `6000.5.2f1`
-- Current milestone: Task 13A gameplay-expansion data contracts and validation foundation complete; Enemy Pooling is next.
+- Current milestone: Task 13B qualified Enemy Pooling lifecycle complete; four-hero behavior upgrades are next.
 - Scenes: `MainMenu` and `GameScene`.
 
 Task 12B performed local qualification only; Task 12C owns the remote handoff.
@@ -60,22 +61,22 @@ Current content:
 
 ## Automated Verification
 
-Unity discovered and passed 38 tests:
+Unity discovered and passed 58 tests:
 
 - EditMode: 34 passed, 0 failed, 0 skipped (9 previous and 25 new Task 13A tests).
-- PlayMode: 4 passed, 0 failed, 0 skipped.
-- Total: 38 passed, 0 failed, 0 skipped.
+- PlayMode: 24 passed, 0 failed, 0 skipped (4 previous and 20 new Task 13B tests).
+- Total: 58 passed, 0 failed, 0 skipped.
 
 The PlayMode suite verifies result VFX at `Time.timeScale == 0`, duplicate subscription prevention, particle pool cleanup, all six heroes recording damage, 1x/1.5x/2x speed, pause/resume, drafts, 10 waves, boss victory, one-time rewards, and a clean restart with one instance of each critical manager.
 
 Full-run batch evidence:
 
 - Waves: 10/10.
-- Draft choices applied: 8.
-- Peak enemies observed: 14.
-- Elapsed realtime: 76.3 seconds.
+- Draft choices applied: 9.
+- Peak targetable enemies observed: 13.
+- Elapsed realtime: 84.3 seconds.
 - Approximate batch rate: 60.0 frames/second.
-- Peak recorded GC allocation in one sampled frame: 698,710 bytes. This includes scene/test harness and draft activity and is not a steady-state combat allocation measurement.
+- Peak recorded GC allocation in one sampled frame: 687,451 bytes. This includes scene/test harness and draft activity and is not a steady-state combat allocation measurement.
 
 Earlier interactive Editor observation was approximately 57-61 FPS. Neither result is mobile-device evidence.
 The Task 12A interactive Editor run also reached the end of the 10-wave stage; the Task 12B automated run supplied the final repeatable qualification evidence.
@@ -103,11 +104,27 @@ Not implemented in Task 13A:
 
 - Runtime behavior-changing hero upgrades.
 - Functional traps, battlefield defenses, castle-upgrade cards, rerolls, shields, dodge, elemental resistance, or crowd-control resistance.
-- Sixth enemy, Elite content, Enemy Pooling, expanded card assets, UI changes, or balance changes.
+- Sixth enemy, Elite content, expanded card assets, UI changes, or balance changes.
+
+## Task 13B Enemy Pooling
+
+- Source baseline: `21a10784dd4d7349534f90be8eebed82c8b81699`.
+- Local commit: this commit, `Implement qualified enemy pooling lifecycle` (exact hash is reported after creation).
+- One scene-owned `EnemyPoolManager` maintains a pool per stable EnemyData ID under an inactive runtime root.
+- Current keys: `grunt`, `runner`, `brute`, `armored`, and `warlord_boss`.
+- Normal pools prewarm 3 instances; Boss pools prewarm 1. Pools expand on demand and record created, active, inactive, peak, expansion, reuse, and invalid-return counts.
+- `Enemy` now has explicit prepare, activate, and despawn phases. Health, death/reward flags, castle-arrival state, paths, status effects, visuals, animation state, colliders, rigidbodies, health bars, and registrations reset between activations.
+- Activation IDs protect reused enemies from stale projectiles and delayed death returns.
+- Combat death grants rewards once and returns after death presentation. Castle arrival damages once, grants no kill reward, and returns immediately.
+- `EnemyManager` contains only active targetable enemies. Result and restart boundaries despawn every active enemy.
+- The deterministic stress test completed 100 status-bearing spawn/despawn cycles without new instances after prewarm, expansions, invalid returns, registry mismatches, or exceptions.
+- Ten-wave pool diagnostics: Grunt peak 10/created 10, Runner peak 17/created 17, Brute peak 7/created 7, Armored peak 9/created 9, Warlord peak 2/created 2; all ended active 0 with invalid returns 0.
+- The observed 17 pooled Runner activations include enemies in death presentation; the active targetable registry peaked at 13.
+- This qualifies current content only. It does not qualify a real 60-100-enemy encounter, Android, or physical-device performance.
 
 ## Known Technical Debt
 
-- `WaveManager` still instantiates enemies; the 60-100 enemy target requires enemy pooling.
+- Dense 60-100 enemy gameplay still requires a separate production encounter and physical-device profile; Task 13B only qualifies lifecycle reuse.
 - Some hero ability paths allocate temporary lists.
 - First-time VFX creation instantiates objects before their pooled reuse.
 - Hero recruitment instantiates hero objects, which is acceptable outside the dense per-frame path.
@@ -127,4 +144,4 @@ The following pre-existing changes remain preserved and unstaged:
 
 ## Next Approved Task
 
-Task 13B: implement Enemy Pooling without changing the current ten-wave behavior or balance. Preserve Enemy registration, health/status reset, path assignment, castle attacks, rewards, death animation/VFX, boss victory, restart lifecycle, and current test coverage. Runtime hero-upgrade behavior follows after pooling is qualified.
+Implement behavior-changing upgrade branches for four active heroes using the Task 13A contracts. Preserve the qualified pooling lifecycle and current balance, then curate the 15-20 card test pool.

@@ -89,6 +89,45 @@ namespace Stonehold
 
         public void SetMoving(bool value) => moving = value;
 
+        public void ResetForReuse()
+        {
+            bool shouldRebindAnimator = dead;
+            StopAllCoroutines();
+            dead = false;
+            moving = true;
+            hitTimer = 0f;
+            attackTimer = 0f;
+            flashTimer = 0f;
+
+            if (model != null)
+            {
+                model.localPosition = baseLocalPos;
+                model.localRotation = baseLocalRotation;
+                model.localScale = baseScale;
+            }
+
+            if (renderers != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] != null)
+                    {
+                        renderers[i].SetPropertyBlock(null);
+                    }
+                }
+            }
+
+            if (unityAnimator != null)
+            {
+                if (shouldRebindAnimator)
+                {
+                    unityAnimator.Rebind();
+                    unityAnimator.Update(0f);
+                }
+                TryPlayState("Idle");
+            }
+        }
+
         public void PlayHit()
         {
             hitTimer = HitDuration;

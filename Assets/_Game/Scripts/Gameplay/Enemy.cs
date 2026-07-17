@@ -22,7 +22,6 @@ namespace Stonehold
 
         [SerializeField] private EnemyData data;
         [SerializeField] private float arriveDistance = 0.1f;
-        [SerializeField, Min(0.2f)] private float castleAttackInterval = 1.25f;
 
         private Vector3[] pathPoints;
         private int currentWaypointIndex;
@@ -33,7 +32,18 @@ namespace Stonehold
         private float slowTimer;
         private bool isDead;
         private bool isAttackingCastle;
-        private float castleAttackTimer;
+        private EnemyPoolManager poolOwner;
+        private string poolKey;
+        private int activationId;
+        private bool isActiveActivation;
+        private bool isRegistered;
+        private bool rewardClaimed;
+        private bool castleDamageApplied;
+        private StatusEffectController statusController;
+        private EnemyHealthBar healthBar;
+        private Collider[] colliders;
+        private Renderer[] renderers;
+        private Rigidbody[] rigidbodies;
 
         public EnemyData Data => data;
         public float CurrentHealth => currentHealth;
@@ -41,6 +51,10 @@ namespace Stonehold
         public bool IsSlowed => slowTimer > 0f;
         public bool IsDead => isDead;
         public bool IsAttackingCastle => isAttackingCastle;
+        public int ActivationId => activationId;
+        public bool IsActiveActivation => isActiveActivation;
+        public bool IsTargetable => isActiveActivation && !isDead && gameObject.activeInHierarchy;
+        public string PoolKey => poolKey;
 
         public float SlowMultiplier
         {
@@ -78,46 +92,124 @@ namespace Stonehold
 
         private void Awake()
         {
-            if (data == null)
-            {
-                Debug.LogWarning(name + ": EnemyData not assigned.");
-                enabled = false;
-                return;
-            }
+            CacheRuntimeComponents();
+        }
 
-            currentHealth = data.health;
-            EnemyHealthBar healthBar = GetComponent<EnemyHealthBar>();
+        private void CacheRuntimeComponents()
+        {
+            currentHealth = data != null ? data.health : 0f;
+            healthBar = GetComponent<EnemyHealthBar>();
             if (healthBar == null)
             {
                 healthBar = gameObject.AddComponent<EnemyHealthBar>();
             }
-            healthBar.Configure(this);
-            animator = GetComponent<ProceduralAnimator>();
-            if (animator != null)
+            if (data != null)
             {
-                animator.SetMoving(true);
+                healthBar.Configure(this);
             }
+            animator = GetComponent<ProceduralAnimator>();
+            statusController = GetComponent<StatusEffectController>();
+            if (colliders == null) colliders = GetComponentsInChildren<Collider>(true);
+            if (renderers == null) renderers = GetComponentsInChildren<Renderer>(true);
+            if (rigidbodies == null) rigidbodies = GetComponentsInChildren<Rigidbody>(true);
         }
 
         private void OnEnable()
         {
-            if (data != null)
+            // Registration is intentionally owned by ActivateFromPool. Prewarmed
+            // instances may briefly enable while Unity constructs them.
+            if (poolOwner == null && data != null && !isActiveActivation)
             {
-                EnemyManager.Register(this);
+                activationId = activationId == int.MaxValue ? 1 : activationId + 1;
+                isActiveActivation = true;
                 currentHealth = data.health;
+                rewardClaimed = false;
+                castleDamageApplied = false;
+                slowMultiplier = 1f;
+                slowTimer = 0f;
+                isDead = false;
+                healthBar?.Configure(this);
+                RegisterOnce();
             }
+        }
 
-            slowMultiplier = 1f;
-            slowTimer = 0f;
-            isDead = false;
-            isAttackingCastle = false;
-            castleAttackTimer = 0f;
-            currentWaypointIndex = 0;
+        private void OnDisable()
+        {
+            UnregisterOnce();
+            isActiveActivation = false;
         }
 
         private void OnDestroy()
         {
-            EnemyManager.Unregister(this);
+            UnregisterOnce();
+        }
+
+        internal void BindPool(EnemyPoolManager owner, string key)
+        {
+            if (poolOwner != null && poolOwner != owner)
+            {
+                Debug.LogError($"{name}: cannot move an enemy between pools.", this);
+                return;
+            }
+            poolOwner = owner;
+            poolKey = key;
+        }
+
+        public void PrepareForSpawn(EnemyData spawnData, Vector3 position, Quaternion rotation)
+        {
+            data = spawnData;
+            CacheRuntimeComponents();
+            transform.SetPositionAndRotation(position, rotation);
+            currentHealth = data != null ? data.health : 0f;
+            slowMultiplier = 1f;
+            slowTimer = 0f;
+            isDead = false;
+            isAttackingCastle = false;
+            currentWaypointIndex = 0;
+            rewardClaimed = false;
+            castleDamageApplied = false;
+            pathPoints = null;
+            targetCastle = null;
+
+            statusController?.ResetController();
+            animator?.ResetForReuse();
+            SetRuntimeComponentsActive(true);
+            healthBar.Configure(this);
+        }
+
+        public void ActivateFromPool(Vector3[] points, Castle castle, float laneOffset = 0f, float spawnDepthOffset = 0f)
+        {
+            activationId = activationId == int.MaxValue ? 1 : activationId + 1;
+            isActiveActivation = true;
+            SetPath(points, castle, laneOffset, spawnDepthOffset);
+            RegisterOnce();
+            animator?.SetMoving(true);
+        }
+
+        public void DespawnToPool()
+        {
+            UnregisterOnce();
+            isActiveActivation = false;
+            StopAllCoroutines();
+            statusController?.ResetController();
+            animator?.ResetForReuse();
+            slowMultiplier = 1f;
+            slowTimer = 0f;
+            isDead = false;
+            isAttackingCastle = false;
+            rewardClaimed = false;
+            castleDamageApplied = false;
+            pathPoints = null;
+            targetCastle = null;
+            currentWaypointIndex = 0;
+            SetRuntimeComponentsActive(false);
+            healthBar.ResetForReuse();
+            gameObject.SetActive(false);
+        }
+
+        public bool MatchesActivation(int expectedActivationId)
+        {
+            return isActiveActivation && activationId == expectedActivationId;
         }
 
         /// <summary>Called by the spawner right after this enemy is created to set its path.</summary>
@@ -125,7 +217,10 @@ namespace Stonehold
         {
             if (points != null)
             {
-                pathPoints = new Vector3[points.Length];
+                if (pathPoints == null || pathPoints.Length != points.Length)
+                {
+                    pathPoints = new Vector3[points.Length];
+                }
                 for (int i = 0; i < points.Length; i++)
                 {
                     float localJitter = i > 0 && i < points.Length - 1
@@ -150,7 +245,6 @@ namespace Stonehold
             currentWaypointIndex = 0;
             targetCastle = castle;
             isAttackingCastle = false;
-            castleAttackTimer = 0f;
             if (pathPoints != null && pathPoints.Length > 0)
             {
                 transform.position = pathPoints[0];
@@ -160,7 +254,7 @@ namespace Stonehold
         /// <summary>Called by projectiles. Kills the enemy (awarding gold) at 0 HP.</summary>
         public float TakeDamage(float amount, bool ignoreArmor = false, bool isCrit = false)
         {
-            if (isDead)
+            if (isDead || (poolOwner != null && !isActiveActivation))
             {
                 return 0f;
             }
@@ -171,7 +265,6 @@ namespace Stonehold
                 reducedAmount = Mathf.Max(1f, amount - data.armor);
             }
 
-            StatusEffectController statusController = GetComponent<StatusEffectController>();
             if (statusController != null && statusController.IsShocked())
             {
                 // INTENTIONAL MVP BEHAVIOR: Shock increases all incoming damage by +30%, including Burn DoT ticks.
@@ -199,14 +292,13 @@ namespace Stonehold
         /// <summary>Applies a status effect to the enemy.</summary>
         public void ApplyStatusEffect(StatusEffect effect)
         {
-            if (isDead) return;
+            if (isDead || (poolOwner != null && !isActiveActivation)) return;
 
-            StatusEffectController controller = GetComponent<StatusEffectController>();
-            if (controller == null)
+            if (statusController == null)
             {
-                controller = gameObject.AddComponent<StatusEffectController>();
+                statusController = gameObject.AddComponent<StatusEffectController>();
             }
-            controller.ApplyEffect(effect);
+            statusController.ApplyEffect(effect);
         }
 
         /// <summary>Non-stacking slow: the newest slow replaces the current one.</summary>
@@ -218,28 +310,45 @@ namespace Stonehold
         /// <summary>Death by tower: awards gold, then removes the enemy.</summary>
         public void Kill()
         {
-            if (isDead)
+            if (isDead || (poolOwner != null && !isActiveActivation))
             {
                 return;
             }
 
             isDead = true;
-            EnemyManager.Unregister(this);
+            UnregisterOnce();
 
-            if (EconomyManager.Instance != null)
+            if (!rewardClaimed && EconomyManager.Instance != null)
             {
                 EconomyManager.Instance.AddGold(data.goldReward);
             }
 
-            AnyKilled?.Invoke(this, data.goldReward);
+            if (!rewardClaimed)
+            {
+                rewardClaimed = true;
+                AnyKilled?.Invoke(this, data.goldReward);
+            }
+
+            int deathActivationId = activationId;
+            Action complete = () =>
+            {
+                if (poolOwner != null)
+                {
+                    poolOwner.Despawn(this, deathActivationId);
+                }
+                else if (this != null)
+                {
+                    Destroy(gameObject);
+                }
+            };
 
             if (animator != null)
             {
-                animator.PlayDeath(() => Destroy(gameObject));
+                animator.PlayDeath(complete);
             }
             else
             {
-                Destroy(gameObject);
+                complete();
             }
         }
 
@@ -250,7 +359,7 @@ namespace Stonehold
                 return;
             }
 
-            if (pathPoints == null || pathPoints.Length == 0 || isDead)
+            if (!isActiveActivation || pathPoints == null || pathPoints.Length == 0 || isDead)
             {
                 return;
             }
@@ -319,18 +428,19 @@ namespace Stonehold
 
         private void ReachCastle()
         {
-            if (isDead) return;
+            if (isDead || !isActiveActivation || castleDamageApplied) return;
             isAttackingCastle = true;
-            castleAttackTimer = UnityEngine.Random.Range(0.05f, 0.3f);
             if (animator != null)
             {
                 animator.SetMoving(false);
+                animator.PlayAttack();
             }
+            AttackCastle();
         }
 
         private void AttackCastle()
         {
-            if (targetCastle == null || targetCastle.IsGameOver)
+            if (!isActiveActivation || castleDamageApplied || targetCastle == null || targetCastle.IsGameOver)
             {
                 return;
             }
@@ -345,17 +455,55 @@ namespace Stonehold
                     12f * Time.deltaTime);
             }
 
-            castleAttackTimer -= Time.deltaTime;
-            if (castleAttackTimer > 0f)
-            {
-                return;
-            }
-
+            castleDamageApplied = true;
             targetCastle.TakeDamage(data.castleDamage);
-            castleAttackTimer = Mathf.Max(0.2f, castleAttackInterval);
-            if (animator != null)
+            int arrivalActivationId = activationId;
+            if (poolOwner != null)
             {
-                animator.PlayAttack();
+                poolOwner.Despawn(this, arrivalActivationId);
+            }
+        }
+
+        private void RegisterOnce()
+        {
+            if (isRegistered || !isActiveActivation) return;
+            EnemyManager.Register(this);
+            isRegistered = true;
+        }
+
+        private void UnregisterOnce()
+        {
+            if (!isRegistered) return;
+            EnemyManager.Unregister(this);
+            isRegistered = false;
+        }
+
+        private void SetRuntimeComponentsActive(bool active)
+        {
+            if (colliders != null)
+            {
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    if (colliders[i] != null) colliders[i].enabled = active;
+                }
+            }
+            if (renderers != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i] != null) renderers[i].enabled = active;
+                }
+            }
+            if (rigidbodies != null)
+            {
+                for (int i = 0; i < rigidbodies.Length; i++)
+                {
+                    Rigidbody body = rigidbodies[i];
+                    if (body == null) continue;
+                    body.linearVelocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                    body.Sleep();
+                }
             }
         }
     }

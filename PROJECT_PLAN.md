@@ -38,8 +38,8 @@ Target scope:
 Implementation order:
 
 1. **Completed in Task 13A:** define backward-compatible contracts for expanded card categories, Legendary rarity, hero behavior upgrades, traps, defenses, castle upgrades, rerolls, enemy classification, shields, dodge, elemental resistance, and crowd-control resistance; add read-only validation and automated tests.
-2. **Next - Task 13B:** implement and qualify Enemy Pooling while preserving current behavior and balance.
-3. Select four heroes and implement behavior-changing upgrade branches using the Task 13A contracts.
+2. **Completed in Task 13B:** implement and qualify Enemy Pooling while preserving current behavior and balance. The current 10-wave run, registry, rewards, status reset, stale-reference guards, boss, result, and restart lifecycle pass 58 automated tests.
+3. **Next:** select four heroes and implement behavior-changing upgrade branches using the Task 13A contracts.
 4. Build the curated 15-20 card test pool with deterministic validation tests.
 5. Add the sixth normal enemy and one Elite with readable counterplay.
 6. Add two traps and one battlefield defense without reintroducing tower-placement gameplay.
@@ -111,7 +111,7 @@ Battlefield mechanics:
 
 - Commercial content target: approximately 8 heroes and 45-60 cards.
 - Multiple behavior-changing upgrades per hero.
-- Dense encounters of roughly 60-100 enemies using pooling, allocation control, simplified AI, and effect limits.
+- Dense encounters of roughly 60-100 enemies using the qualified pooling foundation, followed by real encounter and physical-device profiling. Task 13B does not qualify this density target.
 - Android device profiling and release hardening.
 - Paid visual-asset integration after gameplay proof.
 - Additional stages, heroes, bosses, and live updates after the first publishable version.

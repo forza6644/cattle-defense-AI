@@ -301,6 +301,17 @@ namespace Stonehold.Tests
             }
 
             Assert.That(Time.timeScale, Is.Zero);
+            EnemyPoolManager enemyPool = EnemyPoolManager.Instance;
+            Assert.That(enemyPool, Is.Not.Null);
+            string[] poolKeys = { "grunt", "runner", "brute", "armored", "warlord_boss" };
+            for (int i = 0; i < poolKeys.Length; i++)
+            {
+                Assert.That(enemyPool.TryGetDiagnostics(poolKeys[i], out EnemyPoolManager.PoolDiagnostics diagnostics), Is.True);
+                Assert.That(diagnostics.Created, Is.GreaterThan(0), poolKeys[i] + " pool was never created.");
+                Assert.That(diagnostics.Active, Is.Zero, poolKeys[i] + " remained active at Victory.");
+                Assert.That(diagnostics.InvalidReturns, Is.Zero, poolKeys[i] + " had invalid returns.");
+            }
+            enemyPool.LogDiagnostics();
             yield return new WaitForSecondsRealtime(3f);
             Assert.That(SaveManager.MetaGold, Is.GreaterThan(startingGold));
             Assert.That(SaveManager.TryClaimRunRewards(10, out _, out _, out _), Is.False);

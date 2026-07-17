@@ -29,8 +29,19 @@ namespace Stonehold
                 ? owner.Data.enemyName.ToLowerInvariant()
                 : string.Empty;
             alwaysVisible = enemyName.Contains("boss") || enemyName.Contains("brute") || enemyName.Contains("armor");
-            Build(enemyName.Contains("boss"));
+            if (barRoot == null)
+            {
+                Build(enemyName.Contains("boss"));
+            }
             Refresh();
+        }
+
+        public void ResetForReuse()
+        {
+            if (barRoot != null)
+            {
+                barRoot.gameObject.SetActive(false);
+            }
         }
 
         private void LateUpdate()

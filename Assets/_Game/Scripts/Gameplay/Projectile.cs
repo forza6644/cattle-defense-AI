@@ -16,6 +16,7 @@ namespace Stonehold
         [SerializeField] private float hitDistance = 0.3f;
 
         private Enemy target;
+        private int targetActivationId;
         private float damage;
         private float splashRadius;
         private float slowMultiplier = 1f;
@@ -89,6 +90,7 @@ namespace Stonehold
         {
             speed = (damageSourceHeroId == "sniper") ? 60f : 12f;
             target = targetEnemy;
+            targetActivationId = targetEnemy != null ? targetEnemy.ActivationId : 0;
             damage = damageAmount;
             splashRadius = splash;
             slowMultiplier = slowMult;
@@ -152,6 +154,7 @@ namespace Stonehold
         {
             speed = (damageSourceHeroId == "sniper") ? 60f : 12f;
             target = targetEnemy;
+            targetActivationId = targetEnemy != null ? targetEnemy.ActivationId : 0;
             damage = damageAmount;
             splashRadius = splash;
             sourceHeroId = damageSourceHeroId;
@@ -203,7 +206,7 @@ namespace Stonehold
 
         private void Update()
         {
-            if (target != null && target.gameObject.activeInHierarchy && !target.IsDead)
+            if (IsCurrentTargetValid())
             {
                 targetLastPosition = GetTargetPosition(target);
             }
@@ -301,7 +304,7 @@ namespace Stonehold
             }
             else
             {
-                if (target != null && target.gameObject.activeInHierarchy && !target.IsDead)
+                if (IsCurrentTargetValid())
                 {
                     HitEnemy(target);
                 }
@@ -333,6 +336,7 @@ namespace Stonehold
         private void Return()
         {
             target = null;
+            targetActivationId = 0;
             sourceHeroId = null;
 
             if (trail != null)
@@ -367,6 +371,14 @@ namespace Stonehold
                 return adapter.impactPoint.position;
             }
             return targetEnemy.transform.position;
+        }
+
+        private bool IsCurrentTargetValid()
+        {
+            return target != null
+                && target.MatchesActivation(targetActivationId)
+                && target.gameObject.activeInHierarchy
+                && !target.IsDead;
         }
     }
 }

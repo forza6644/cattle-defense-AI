@@ -59,6 +59,10 @@ namespace Stonehold
             {
                 gameObject.AddComponent<StagePresentationController>();
             }
+            if (EnemyPoolManager.Instance == null && FindAnyObjectByType<EnemyPoolManager>() == null)
+            {
+                gameObject.AddComponent<EnemyPoolManager>();
+            }
             if (RunModifierManager.Instance == null)
             {
                 GameObject rmGo = new GameObject("RunModifierManager", typeof(RunModifierManager));
@@ -204,6 +208,7 @@ namespace Stonehold
         public void Restart()
         {
             Time.timeScale = 1f;
+            EnemyPoolManager.Instance?.DespawnAllActive();
             if (SceneFader.Instance != null)
             {
                 SceneFader.Instance.FadeToScene(SceneManager.GetActiveScene().name);
@@ -270,6 +275,7 @@ namespace Stonehold
             }
 
             runResultRecorded = true;
+            EnemyPoolManager.Instance?.DespawnAllActive();
 
             if (victory)
             {
