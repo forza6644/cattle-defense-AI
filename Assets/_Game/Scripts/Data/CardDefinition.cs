@@ -4,9 +4,10 @@ namespace Stonehold
 {
     public enum CardRarity
     {
-        Common,
-        Rare,
-        Epic
+        Common = 0,
+        Rare = 1,
+        Epic = 2,
+        Legendary = 3
     }
 
     public enum CardTargetType
@@ -36,8 +37,15 @@ namespace Stonehold
 
     public enum CardCategory
     {
-        Modifier,
-        RecruitHero
+        Modifier = 0,
+        RecruitHero = 1,
+        HeroUpgrade = 2,
+        GlobalUpgrade = 3,
+        Trap = 4,
+        BattlefieldDefense = 5,
+        CastleUpgrade = 6,
+        LegendaryModifier = 7,
+        Reroll = 8
     }
 
     [CreateAssetMenu(fileName = "CardDefinition", menuName = "Stonehold/Cards/Card Definition")]
@@ -59,5 +67,12 @@ namespace Stonehold
         public CardModifierType modifierType = CardModifierType.DamageMultiplier;
         public float modifierValue;
         public float weight = 1f;
+
+        [Header("Gameplay Expansion Contracts")]
+        public HeroBehaviorUpgradeData behaviorUpgrade;
+        public TrapDefinition trapDefinition;
+        public BattlefieldDefenseDefinition battlefieldDefenseDefinition;
+        public CastleUpgradeDefinition castleUpgradeDefinition;
+        public RerollDefinition rerollDefinition;
     }
 }

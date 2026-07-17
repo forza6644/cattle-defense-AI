@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 023039d46d0c89b45a888656b243966f, type: 3}
   m_Name: BruteData
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
+  stableId: brute
   enemyName: Brute
+  classification: 0
   prefab: {fileID: 5555025361673445348, guid: d97830f8f2ae43f4c9a978d818dcf3de, type: 3}
   health: 162
   moveSpeed: 1.4

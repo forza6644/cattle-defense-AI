@@ -5,13 +5,15 @@ Date: 2026-07-17
 ## Verified Baseline
 
 - Repository: `forza6644/cattle-defense-AI`
-- Active branch: `feature/hero-castle-defense-pivot`
+- Qualified remote baseline: `7f7101dfdf822f6e1b6c55845f59772003d5625e`
+- Active branch: `feature/gameplay-expansion-foundation`
+- Task 13A local commit: this commit, `Gameplay expansion data contracts and validation` (exact hash is reported after creation).
 - Remote baseline at qualification start: `d099439da47bfae171a8898d5a7306bf94015240`
 - Local presentation baseline: `9130af948f43d7a0c82dc82fc15771c3a0fd7e7d`
 - Local corrective code/test commit: `505a2c0e854b66ef53ab38466f789ddfd4fe9410`
 - Qualified baseline documentation commit: `c068fb5a6daf785e8150ef28f1b37d2a2fa7efa5`
 - Unity: `6000.5.2f1`
-- Current milestone: verified Hero Castle Defense baseline; Gameplay Expansion Vertical Slice is next.
+- Current milestone: Task 13A gameplay-expansion data contracts and validation foundation complete; Enemy Pooling is next.
 - Scenes: `MainMenu` and `GameScene`.
 
 Task 12B performed local qualification only; Task 12C owns the remote handoff.
@@ -58,11 +60,11 @@ Current content:
 
 ## Automated Verification
 
-Unity discovered and passed 13 tests:
+Unity discovered and passed 38 tests:
 
-- EditMode: 9 passed, 0 failed, 0 skipped.
+- EditMode: 34 passed, 0 failed, 0 skipped (9 previous and 25 new Task 13A tests).
 - PlayMode: 4 passed, 0 failed, 0 skipped.
-- Total: 13 passed, 0 failed, 0 skipped.
+- Total: 38 passed, 0 failed, 0 skipped.
 
 The PlayMode suite verifies result VFX at `Time.timeScale == 0`, duplicate subscription prevention, particle pool cleanup, all six heroes recording damage, 1x/1.5x/2x speed, pause/resume, drafts, 10 waves, boss victory, one-time rewards, and a clean restart with one instance of each critical manager.
 
@@ -70,13 +72,38 @@ Full-run batch evidence:
 
 - Waves: 10/10.
 - Draft choices applied: 8.
-- Peak enemies observed: 16.
-- Elapsed realtime: 77.1 seconds.
+- Peak enemies observed: 14.
+- Elapsed realtime: 76.3 seconds.
 - Approximate batch rate: 60.0 frames/second.
-- Peak recorded GC allocation in one sampled frame: 728,032 bytes. This includes scene/test harness and draft activity and is not a steady-state combat allocation measurement.
+- Peak recorded GC allocation in one sampled frame: 698,710 bytes. This includes scene/test harness and draft activity and is not a steady-state combat allocation measurement.
 
 Earlier interactive Editor observation was approximately 57-61 FPS. Neither result is mobile-device evidence.
 The Task 12A interactive Editor run also reached the end of the 10-wave stage; the Task 12B automated run supplied the final repeatable qualification evidence.
+
+## Task 13A Data Foundation
+
+Implemented contracts only:
+
+- Card categories now preserve legacy `Modifier=0` and `RecruitHero=1`, then append Hero Upgrade, Global Upgrade, Trap, Battlefield Defense, Castle Upgrade, Legendary Modifier, and Reroll.
+- Card rarity preserves Common, Rare, and Epic numeric values and appends Legendary.
+- Behavior-upgrade data supports stable effect enums, hero or attack-family targets, integer/float/percentage/duration/count values, secondary values, and stack limits.
+- Trap, battlefield-defense, castle-upgrade, and reroll ScriptableObject contracts are inspectable but have no runtime execution yet.
+- Enemy data now exposes stable IDs, Normal/Elite/Boss classification, shield, dodge, elemental resistance, and crowd-control resistance contracts. Warlord is classified as Boss without changing its health, speed, armor, reward, or castle damage.
+- A future-facing `DamageContext` carries damage type, source hero ID, critical state, and armor-piercing information; active attacks still use the proven legacy damage path.
+- Save Version 2 is unchanged. Temporary run traps and defenses are not persisted.
+- Read-only validation reports category/rarity counts, duplicate or missing IDs, target/execution errors, invalid values, enemy classification, defense ranges, and legacy Modifier migration warnings.
+
+Validation result:
+
+- 39 cards: 34 legacy Modifier and 5 Recruit Hero; 17 Common, 18 Rare, 4 Epic, 0 Legendary.
+- 5 enemies: 4 Normal, 0 Elite, 1 Boss.
+- 0 validation errors and 34 expected legacy Modifier warnings.
+
+Not implemented in Task 13A:
+
+- Runtime behavior-changing hero upgrades.
+- Functional traps, battlefield defenses, castle-upgrade cards, rerolls, shields, dodge, elemental resistance, or crowd-control resistance.
+- Sixth enemy, Elite content, Enemy Pooling, expanded card assets, UI changes, or balance changes.
 
 ## Known Technical Debt
 
@@ -100,4 +127,4 @@ The following pre-existing changes remain preserved and unstaged:
 
 ## Next Approved Task
 
-Build the Gameplay Expansion Vertical Slice: deeply test four active heroes, a curated 15-20 card pool, six enemy archetypes, one Elite, one Boss, two traps, and one battlefield defense. Begin with data/contracts and a narrow playable slice; do not start full paid-asset integration until that slice is fun, stable, and profiled.
+Task 13B: implement Enemy Pooling without changing the current ten-wave behavior or balance. Preserve Enemy registration, health/status reset, path assignment, castle attacks, rewards, death animation/VFX, boss victory, restart lifecycle, and current test coverage. Runtime hero-upgrade behavior follows after pooling is qualified.

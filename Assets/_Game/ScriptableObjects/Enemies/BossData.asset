@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 023039d46d0c89b45a888656b243966f, type: 3}
   m_Name: BossData
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
+  stableId: warlord_boss
   enemyName: Warlord Boss
+  classification: 2
   prefab: {fileID: 5555025361673445348, guid: 7126104e8d4a4133b1465b247095a77a, type: 3}
   health: 450
   moveSpeed: 1.2

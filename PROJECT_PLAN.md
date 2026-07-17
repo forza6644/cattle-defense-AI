@@ -37,13 +37,16 @@ Target scope:
 
 Implementation order:
 
-1. Define data contracts for card categories, rarity, traps, defenses, armor, shields, dodge, and resistances.
-2. Select four heroes and implement behavior-changing upgrade branches.
-3. Build the curated 15-20 card test pool with deterministic validation tests.
-4. Add the sixth normal enemy and one Elite with readable counterplay.
-5. Add two traps and one battlefield defense without reintroducing tower-placement gameplay.
-6. Create one balanced 10-wave expansion run and profile the densest encounter.
-7. Qualify save compatibility, drafts, rewards, restart, and Android build behavior.
+1. **Completed in Task 13A:** define backward-compatible contracts for expanded card categories, Legendary rarity, hero behavior upgrades, traps, defenses, castle upgrades, rerolls, enemy classification, shields, dodge, elemental resistance, and crowd-control resistance; add read-only validation and automated tests.
+2. **Next - Task 13B:** implement and qualify Enemy Pooling while preserving current behavior and balance.
+3. Select four heroes and implement behavior-changing upgrade branches using the Task 13A contracts.
+4. Build the curated 15-20 card test pool with deterministic validation tests.
+5. Add the sixth normal enemy and one Elite with readable counterplay.
+6. Add two traps and one battlefield defense without reintroducing tower-placement gameplay.
+7. Create one balanced 10-wave expansion run and profile the densest encounter.
+8. Qualify save compatibility, drafts, rewards, restart, and Android build behavior.
+
+Task 13A establishes schemas and validation only. Traps, defenses, armor expansion, shields, dodge, resistances, Legendary cards, and behavior-changing upgrades are not playable until their later implementation tasks are completed and tested.
 
 ## Planned Card System
 
