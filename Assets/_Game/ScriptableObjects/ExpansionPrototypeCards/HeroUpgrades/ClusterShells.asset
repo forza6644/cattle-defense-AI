@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3712fd46809c4174c83589090a128870, type: 3}
+  m_Name: ClusterShells
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
+  id: bombardier_cluster_shells
+  displayName: Cluster Shells
+  description: On impact, the main shell splits into two smaller arced secondary blasts.
+  icon: {fileID: 0}
+  cardCategory: 2
+  recruitHeroId: 
+  requiredOwnedHeroId: bombardier
+  blockedIfOwnedHeroId: 
+  rarity: 1
+  targetType: 1
+  targetHeroId: bombardier
+  targetAttackType: 0
+  modifierType: 0
+  modifierValue: 0
+  weight: 1
+  behaviorUpgrade:
+    effectType: 3
+    targetType: 1
+    targetHeroId: bombardier
+    targetAttackType: 0
+    integerValue: 0
+    floatValue: 0
+    percentageValue: 0
+    duration: 0
+    count: 2
+    secondaryValue: 0
+    maxStacks: 2
+  trapDefinition: {fileID: 0}
+  battlefieldDefenseDefinition: {fileID: 0}
+  castleUpgradeDefinition: {fileID: 0}
+  rerollDefinition: {fileID: 0}

@@ -39,6 +39,14 @@ namespace Stonehold
         private float elapsedTravelTime;
         private bool useArc;
 
+        // Behavior upgrades fields (pierce)
+        private int maxPierces;
+        private int currentPierces;
+        private float distanceTraveled;
+        private Vector3 moveDirection;
+        private float secondaryValue;
+        private readonly int[] hitEnemyActivationIds = new int[4];
+
         private static readonly Dictionary<GameObject, Queue<Projectile>> pools = new Dictionary<GameObject, Queue<Projectile>>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -68,6 +76,7 @@ namespace Stonehold
                 projectile = go.GetComponent<Projectile>();
                 projectile.sourcePrefab = prefab;
                 projectile.baseScale = go.transform.localScale;
+                go.SetActive(true);
             }
             else
             {
@@ -206,42 +215,111 @@ namespace Stonehold
 
         private void Update()
         {
-            if (IsCurrentTargetValid())
+            if (maxPierces > 0)
             {
-                targetLastPosition = GetTargetPosition(target);
-            }
+                Vector3 lastPos = transform.position;
+                transform.position += moveDirection * speed * Time.deltaTime;
+                distanceTraveled += Vector3.Distance(lastPos, transform.position);
 
-            Vector3 dest = targetLastPosition;
-
-            if (useArc)
-            {
-                elapsedTravelTime += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsedTravelTime / travelTime);
-
-                Vector3 currentPos = Vector3.Lerp(startPosition, dest, t);
-                float arcHeight = 2.4f;
-                float height = Mathf.Sin(t * Mathf.PI) * arcHeight;
-                currentPos.y += height;
-
-                transform.position = currentPos;
-
-                if (t >= 1.0f)
+                var allEnemies = EnemyManager.All;
+                for (int i = 0; i < allEnemies.Count; i++)
                 {
-                    Impact(dest);
+                    Enemy enemy = allEnemies[i];
+                    if (enemy == null || enemy.IsDead || !enemy.IsTargetable) continue;
+
+                    bool alreadyHit = false;
+                    for (int j = 0; j < currentPierces; j++)
+                    {
+                        if (hitEnemyActivationIds[j] == enemy.ActivationId)
+                        {
+                            alreadyHit = true;
+                            break;
+                        }
+                    }
+                    if (alreadyHit) continue;
+
+                    float dist = Vector3.Distance(transform.position, enemy.transform.position);
+                    if (dist <= 0.6f)
+                    {
+                        float pierceDamage = damage;
+                        if (secondaryValue > 0f)
+                        {
+                            pierceDamage *= Mathf.Max(0.1f, 1f - (currentPierces * secondaryValue));
+                        }
+
+                        float appliedDamage = enemy.TakeDamage(pierceDamage, false, isCrit);
+                        DamageTracker.RecordDamage(sourceHeroId, appliedDamage);
+
+                        if (statusEffectType != StatusEffectType.None && statusEffectDuration > 0f && !enemy.IsDead)
+                        {
+                            enemy.ApplyStatusEffect(new StatusEffect(statusEffectType, statusEffectValue, statusEffectDuration, sourceHeroId));
+                        }
+
+                        hitEnemyActivationIds[currentPierces] = enemy.ActivationId;
+                        currentPierces++;
+
+                        if (VfxManager.Instance != null)
+                        {
+                            VfxManager.Instance.PlayHit(enemy.transform.position, impactColor);
+                        }
+                        if (AudioManager.Instance != null)
+                        {
+                            AudioManager.Instance.PlayHeroImpact(sourceHeroId, isCrit || IsAbility);
+                        }
+
+                        if (currentPierces > maxPierces)
+                        {
+                            Return();
+                            return;
+                        }
+                    }
+                }
+
+                if (distanceTraveled >= 20f)
+                {
                     Return();
+                    return;
                 }
             }
             else
             {
-                transform.position = Vector3.MoveTowards(
-                    transform.position,
-                    dest,
-                    speed * Time.deltaTime);
-
-                if (Vector3.Distance(transform.position, dest) <= hitDistance)
+                if (IsCurrentTargetValid())
                 {
-                    Impact(dest);
-                    Return();
+                    targetLastPosition = GetTargetPosition(target);
+                }
+
+                Vector3 dest = targetLastPosition;
+
+                if (useArc)
+                {
+                    elapsedTravelTime += Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsedTravelTime / travelTime);
+
+                    Vector3 currentPos = Vector3.Lerp(startPosition, dest, t);
+                    float arcHeight = 2.4f;
+                    float height = Mathf.Sin(t * Mathf.PI) * arcHeight;
+                    currentPos.y += height;
+
+                    transform.position = currentPos;
+
+                    if (t >= 1.0f)
+                    {
+                        Impact(dest);
+                        Return();
+                    }
+                }
+                else
+                {
+                    transform.position = Vector3.MoveTowards(
+                        transform.position,
+                        dest,
+                        speed * Time.deltaTime);
+
+                    if (Vector3.Distance(transform.position, dest) <= hitDistance)
+                    {
+                        Impact(dest);
+                        Return();
+                    }
                 }
             }
         }
@@ -301,6 +379,27 @@ namespace Stonehold
                         HitEnemy(enemy);
                     }
                 }
+
+                // SplitProjectile behavior for Bombardier
+                if (sourceHeroId == "bombardier" && !IsAbility && RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("bombardier", HeroBehaviorEffectType.SplitProjectile))
+                {
+                    int stacks = RunModifierManager.Instance.GetBehaviorStacks("bombardier", HeroBehaviorEffectType.SplitProjectile);
+                    int clusterCount = 1 + stacks; // e.g. 2 for stack 1, 3 for stack 2
+                    float reducedDamage = damage * 0.4f;
+                    float reducedRadius = splashRadius * 0.6f;
+
+                    for (int c = 0; c < clusterCount; c++)
+                    {
+                        float angle = (360f / clusterCount) * c * Mathf.Deg2Rad;
+                        Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 1.5f;
+
+                        Projectile sub = Spawn(sourcePrefab, impactPoint);
+                        if (sub != null)
+                        {
+                            sub.InitSecondaryCluster(impactPoint + offset, reducedDamage, reducedRadius, impactColor, "bombardier_cluster");
+                        }
+                    }
+                }
             }
             else
             {
@@ -333,11 +432,66 @@ namespace Stonehold
             }
         }
 
+        public void InitSecondaryCluster(Vector3 targetPos, float damageAmount, float splash, Color trailColor, string damageSourceHeroId)
+        {
+            speed = 8f;
+            target = null;
+            targetActivationId = 0;
+            damage = damageAmount;
+            splashRadius = splash;
+            sourceHeroId = damageSourceHeroId;
+            impactColor = trailColor;
+            isCrit = false;
+            IsAbility = false;
+
+            targetLastPosition = targetPos;
+            startPosition = transform.position;
+            useArc = true;
+            float distance = Vector3.Distance(startPosition, targetLastPosition);
+            travelTime = Mathf.Max(0.1f, distance / speed);
+            elapsedTravelTime = 0f;
+
+            statusEffectType = StatusEffectType.None;
+            statusEffectValue = 0f;
+            statusEffectDuration = 0f;
+
+            maxPierces = 0;
+            currentPierces = 0;
+            distanceTraveled = 0f;
+            secondaryValue = 0f;
+            for (int i = 0; i < hitEnemyActivationIds.Length; i++)
+            {
+                hitEnemyActivationIds[i] = 0;
+            }
+
+            if (trail == null) trail = GetComponent<TrailRenderer>();
+            if (trail != null)
+            {
+                trail.Clear();
+                trail.emitting = true;
+                trail.startColor = trailColor;
+                Color end = trailColor;
+                end.a = 0f;
+                trail.endColor = end;
+                trail.startWidth = GetTrailWidth() * 0.6f;
+                trail.endWidth = 0.05f;
+                trail.time = 0.3f;
+            }
+        }
+
         private void Return()
         {
             target = null;
             targetActivationId = 0;
             sourceHeroId = null;
+            maxPierces = 0;
+            currentPierces = 0;
+            distanceTraveled = 0f;
+            secondaryValue = 0f;
+            for (int i = 0; i < hitEnemyActivationIds.Length; i++)
+            {
+                hitEnemyActivationIds[i] = 0;
+            }
 
             if (trail != null)
             {

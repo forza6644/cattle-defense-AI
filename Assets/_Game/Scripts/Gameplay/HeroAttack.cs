@@ -16,6 +16,8 @@ namespace Stonehold
         private float abilityBuffTimer; // Tracks Archer rapid multishot buff duration
         private ProceduralAnimator animator;
         private TargetingMode currentTargetingMode;
+        private readonly Enemy[] cachedTargets = new Enemy[8];
+        private readonly int[] cachedChainHitIds = new int[16];
 
         public HeroDefinition Definition => definition;
         public bool HasSignatureAbility => definition != null && definition.abilityType != HeroAbilityType.None;
@@ -251,20 +253,22 @@ namespace Stonehold
                 default: delay = 0.15f; break;
             }
 
-            StartCoroutine(ExecuteSignatureAbilityDelayed(primaryTarget, delay));
+            int targetActivationId = primaryTarget != null ? primaryTarget.ActivationId : 0;
+            StartCoroutine(ExecuteSignatureAbilityDelayed(primaryTarget, targetActivationId, delay));
         }
 
-        private System.Collections.IEnumerator ExecuteSignatureAbilityDelayed(Enemy primaryTarget, float delay)
+        private System.Collections.IEnumerator ExecuteSignatureAbilityDelayed(Enemy primaryTarget, int targetActivationId, float delay)
         {
             yield return new WaitForSeconds(delay);
 
-            if (primaryTarget == null || primaryTarget.IsDead || !primaryTarget.gameObject.activeInHierarchy)
+            if (primaryTarget == null || !primaryTarget.MatchesActivation(targetActivationId))
             {
                 primaryTarget = EnemyManager.FindTarget(transform.position, GetModifiedRange(), currentTargetingMode);
                 if (primaryTarget == null)
                 {
                     yield break;
                 }
+                targetActivationId = primaryTarget.ActivationId;
             }
 
             float abilityDamage = GetModifiedDamage() * Mathf.Max(1f, definition.abilityPowerMultiplier);
@@ -299,6 +303,10 @@ namespace Stonehold
                             CameraRig.Instance.Shake(0.5f);
                         }
                     }
+                    if (definition.id == "frost_mage" && RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("frost_mage", HeroBehaviorEffectType.ExtraCast))
+                    {
+                        StartCoroutine(ExecuteEchoingNova(primaryTarget.transform.position, abilityDamage * 0.5f, GetModifiedAbilityRadius() * 0.7f));
+                    }
                     break;
                 case HeroAbilityType.FlameWave:
                     SpawnMeteor(primaryTarget, abilityDamage);
@@ -312,6 +320,36 @@ namespace Stonehold
                 case HeroAbilityType.ChainStorm:
                     UseChainLightningAbility(primaryTarget, abilityDamage, definition.abilityTargetCount + extraProjOrChain);
                     break;
+            }
+        }
+
+        private System.Collections.IEnumerator ExecuteEchoingNova(Vector3 center, float damage, float radius)
+        {
+            float elapsed = 0f;
+            while (elapsed < 1.0f)
+            {
+                if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+                {
+                    if (GameManager.Instance.State == GameState.Victory || GameManager.Instance.State == GameState.Defeat)
+                    {
+                        yield break;
+                    }
+                    yield return null;
+                    continue;
+                }
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+            {
+                yield break;
+            }
+
+            HitEnemiesInRadius(center, damage, StatusEffectType.Slow, 0.0f, GetModifiedSlowDuration(), false, radius);
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayFrost(center, radius * 0.55f);
             }
         }
 
@@ -414,24 +452,38 @@ namespace Stonehold
                 extraProjOrChain = RunModifierManager.Instance.GetAbilityExtraProjOrChain(definition.id);
             }
             int targetsCount = Mathf.Max(1, definition.abilityTargetCount + extraProjOrChain);
+            if (targetsCount > cachedTargets.Length)
+            {
+                targetsCount = cachedTargets.Length;
+            }
+
             float rangeSqr = GetModifiedRange() * GetModifiedRange();
             var enemies = EnemyManager.All;
-            List<Enemy> targetList = new List<Enemy>();
 
-            for (int i = 0; i < enemies.Count && targetList.Count < targetsCount; i++)
+            for (int i = 0; i < cachedTargets.Length; i++)
+            {
+                cachedTargets[i] = null;
+            }
+
+            int targetsFound = 0;
+            for (int i = 0; i < enemies.Count && targetsFound < targetsCount; i++)
             {
                 Enemy enemy = enemies[i];
-                if (enemy != null && !enemy.IsDead && (enemy.transform.position - transform.position).sqrMagnitude <= rangeSqr)
+                if (enemy != null && !enemy.IsDead && enemy.IsTargetable && (enemy.transform.position - transform.position).sqrMagnitude <= rangeSqr)
                 {
-                    targetList.Add(enemy);
+                    cachedTargets[targetsFound] = enemy;
+                    targetsFound++;
                 }
             }
 
             WeaponDefinition weapon = definition.weapon;
             if (weapon != null && weapon.projectilePrefab != null)
             {
-                foreach (Enemy targetEnemy in targetList)
+                for (int i = 0; i < targetsFound; i++)
                 {
+                    Enemy targetEnemy = cachedTargets[i];
+                    if (targetEnemy == null) continue;
+
                     Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, GetMuzzlePosition());
                     if (projectile != null)
                     {
@@ -449,17 +501,26 @@ namespace Stonehold
                     }
                 }
             }
+
+            for (int i = 0; i < cachedTargets.Length; i++)
+            {
+                cachedTargets[i] = null;
+            }
         }
 
         private void UseChainLightningAbility(Enemy primaryTarget, float damage, int bounceCount)
         {
             Vector3 startSource = GetAbilityOriginPosition();
             Enemy current = primaryTarget;
-            List<Enemy> hitList = new List<Enemy>();
+
+            for (int i = 0; i < cachedChainHitIds.Length; i++)
+            {
+                cachedChainHitIds[i] = 0;
+            }
 
             for (int b = 0; b < bounceCount && current != null; b++)
             {
-                hitList.Add(current);
+                cachedChainHitIds[b] = current.ActivationId;
                 ApplyAbilityHit(current, damage, StatusEffectType.Shock, 1f, 4f, false);
 
                 Vector3 endPos = current.transform.position + Vector3.up * 0.25f;
@@ -475,7 +536,7 @@ namespace Stonehold
                 }
 
                 startSource = endPos;
-                current = FindNextChainTarget(current.transform.position, hitList, 5.0f);
+                current = FindNextChainTargetNonAlloc(current.transform.position, cachedChainHitIds, b + 1, 5.0f);
             }
         }
 
@@ -483,25 +544,120 @@ namespace Stonehold
         {
             Vector3 startSource = GetMuzzlePosition();
             Enemy current = primaryTarget;
-            List<Enemy> hitList = new List<Enemy>();
 
-            // Bounces up to 2 times (primary + 1 extra)
-            for (int b = 0; b < 2 && current != null; b++)
+            int extraBounces = 0;
+            if (RunModifierManager.Instance != null)
             {
-                hitList.Add(current);
+                extraBounces = RunModifierManager.Instance.GetBehaviorStacks("electric_engineer", HeroBehaviorEffectType.ExtraChain);
+            }
+            int totalBounces = 2 + extraBounces;
+
+            for (int i = 0; i < cachedChainHitIds.Length; i++)
+            {
+                cachedChainHitIds[i] = 0;
+            }
+
+            int hitCount = 0;
+
+            // Forked Current behavior check
+            int forkStacks = 0;
+            if (RunModifierManager.Instance != null)
+            {
+                forkStacks = RunModifierManager.Instance.GetBehaviorStacks("electric_engineer", HeroBehaviorEffectType.Ricochet);
+            }
+
+            // Primary hit setup
+            cachedChainHitIds[hitCount++] = current.ActivationId;
+
+            bool primaryCrit = Random.value < GetModifiedCritChance();
+            float primaryFinalDamage = damage;
+            if (primaryCrit) primaryFinalDamage *= GetModifiedCritMultiplier();
+
+            float primaryAppliedDamage = current.TakeDamage(primaryFinalDamage, false, primaryCrit);
+            DamageTracker.RecordDamage(definition.id, primaryAppliedDamage);
+
+            Vector3 startEndPos = current.transform.position + Vector3.up * 0.25f;
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayAbilityTrace(startSource, startEndPos, "electric_engineer", 0.08f);
+                VfxManager.Instance.PlayShockImpact(current.transform.position);
+            }
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayHeroImpact("electric_engineer", false);
+            }
+
+            if (!current.IsDead)
+            {
+                current.ApplyStatusEffect(new StatusEffect(StatusEffectType.Shock, 1f, 2.5f, definition.id));
+            }
+
+            // Perform forks off the primary target if Forked Current is active
+            if (forkStacks > 0)
+            {
+                int forksFound = 0;
+                var allEnemies = EnemyManager.All;
+                for (int i = 0; i < allEnemies.Count && forksFound < forkStacks; i++)
+                {
+                    Enemy candidate = allEnemies[i];
+                    if (candidate == null || candidate == current || candidate.IsDead || !candidate.IsTargetable) continue;
+
+                    float distSqr = (candidate.transform.position - current.transform.position).sqrMagnitude;
+                    if (distSqr <= 4.5f * 4.5f)
+                    {
+                        float forkDamage = damage * 0.5f; // documented 50% damage multiplier
+                        bool forkCrit = Random.value < GetModifiedCritChance();
+                        float finalForkDamage = forkDamage;
+                        if (forkCrit) finalForkDamage *= GetModifiedCritMultiplier();
+
+                        float appliedForkDamage = candidate.TakeDamage(finalForkDamage, false, forkCrit);
+                        DamageTracker.RecordDamage(definition.id, appliedForkDamage);
+
+                        if (VfxManager.Instance != null)
+                        {
+                            Vector3 forkStart = current.transform.position + Vector3.up * 0.25f;
+                            Vector3 forkEnd = candidate.transform.position + Vector3.up * 0.25f;
+                            VfxManager.Instance.PlayAbilityTrace(forkStart, forkEnd, "electric_engineer", 0.08f);
+                            VfxManager.Instance.PlayShockImpact(candidate.transform.position);
+                        }
+
+                        if (AudioManager.Instance != null)
+                        {
+                            AudioManager.Instance.PlayHeroImpact("electric_engineer", false);
+                        }
+
+                        if (!candidate.IsDead)
+                        {
+                            candidate.ApplyStatusEffect(new StatusEffect(StatusEffectType.Shock, 1f, 2.5f, definition.id));
+                        }
+
+                        cachedChainHitIds[totalBounces + forksFound] = candidate.ActivationId;
+                        forksFound++;
+                    }
+                }
+            }
+
+            Vector3 nextStartSource = startEndPos;
+            Enemy nextCurrent = FindNextChainTargetNonAlloc(current.transform.position, cachedChainHitIds, hitCount, 4.5f);
+
+            // Remaining bounces
+            for (int b = 1; b < totalBounces && nextCurrent != null; b++)
+            {
+                cachedChainHitIds[hitCount++] = nextCurrent.ActivationId;
 
                 bool isCrit = Random.value < GetModifiedCritChance();
                 float finalDamage = damage;
                 if (isCrit) finalDamage *= GetModifiedCritMultiplier();
 
-                float appliedDamage = current.TakeDamage(finalDamage, false, isCrit);
+                float appliedDamage = nextCurrent.TakeDamage(finalDamage, false, isCrit);
                 DamageTracker.RecordDamage(definition.id, appliedDamage);
 
-                Vector3 endPos = current.transform.position + Vector3.up * 0.25f;
+                Vector3 endPos = nextCurrent.transform.position + Vector3.up * 0.25f;
                 if (VfxManager.Instance != null)
                 {
-                    VfxManager.Instance.PlayAbilityTrace(startSource, endPos, "electric_engineer", 0.08f);
-                    VfxManager.Instance.PlayShockImpact(current.transform.position);
+                    VfxManager.Instance.PlayAbilityTrace(nextStartSource, endPos, "electric_engineer", 0.08f);
+                    VfxManager.Instance.PlayShockImpact(nextCurrent.transform.position);
                 }
 
                 if (AudioManager.Instance != null)
@@ -509,17 +665,17 @@ namespace Stonehold
                     AudioManager.Instance.PlayHeroImpact("electric_engineer", false);
                 }
 
-                if (!current.IsDead)
+                if (!nextCurrent.IsDead)
                 {
-                    current.ApplyStatusEffect(new StatusEffect(StatusEffectType.Shock, 1f, 2.5f, definition.id));
+                    nextCurrent.ApplyStatusEffect(new StatusEffect(StatusEffectType.Shock, 1f, 2.5f, definition.id));
                 }
 
-                startSource = endPos;
-                current = FindNextChainTarget(current.transform.position, hitList, 4.5f);
+                nextStartSource = endPos;
+                nextCurrent = FindNextChainTargetNonAlloc(nextCurrent.transform.position, cachedChainHitIds, hitCount, 4.5f);
             }
         }
 
-        private Enemy FindNextChainTarget(Vector3 sourcePos, List<Enemy> hitList, float bounceRange)
+        private Enemy FindNextChainTargetNonAlloc(Vector3 sourcePos, int[] hitList, int hitCount, float bounceRange)
         {
             Enemy best = null;
             float bestDistSqr = bounceRange * bounceRange;
@@ -527,7 +683,19 @@ namespace Stonehold
             for (int i = 0; i < all.Count; i++)
             {
                 Enemy enemy = all[i];
-                if (enemy == null || enemy.IsDead || hitList.Contains(enemy)) continue;
+                if (enemy == null || enemy.IsDead || !enemy.IsTargetable) continue;
+
+                bool alreadyHit = false;
+                for (int j = 0; j < hitList.Length; j++)
+                {
+                    if (hitList[j] != 0 && hitList[j] == enemy.ActivationId)
+                    {
+                        alreadyHit = true;
+                        break;
+                    }
+                }
+                if (alreadyHit) continue;
+
                 float distSqr = (enemy.transform.position - sourcePos).sqrMagnitude;
                 if (distSqr <= bestDistSqr)
                 {
@@ -538,13 +706,14 @@ namespace Stonehold
             return best;
         }
 
-        private void HitEnemiesInRadius(Vector3 center, float damage, StatusEffectType effectType, float effectValue, float effectDuration, bool ignoreArmor = false)
+        private void HitEnemiesInRadius(Vector3 center, float damage, StatusEffectType effectType, float effectValue, float effectDuration, bool ignoreArmor = false, float customRadius = -1f)
         {
-            float radius = GetModifiedAbilityRadius();
+            float radius = customRadius > 0f ? customRadius : GetModifiedAbilityRadius();
             float radiusSqr = radius * radius;
             var enemies = EnemyManager.All;
             for (int i = enemies.Count - 1; i >= 0; i--)
             {
+                if (i >= enemies.Count) continue;
                 Enemy enemy = enemies[i];
                 if (enemy != null && !enemy.IsDead && (enemy.transform.position - center).sqrMagnitude <= radiusSqr)
                 {
@@ -606,6 +775,18 @@ namespace Stonehold
             WeaponDefinition weapon = definition.weapon;
             float damage = GetModifiedDamage();
             float splashRadius = (definition.id == "archer" && abilityBuffTimer > 0f) ? 0f : (weapon.attackType == AttackType.Splash ? weapon.splashRadius : 0f);
+
+            // Check for Bombardier Wide Blast behavior upgrade
+            if (definition.id == "bombardier" && RunModifierManager.Instance != null)
+            {
+                int wideStacks = RunModifierManager.Instance.GetBehaviorStacks("bombardier", HeroBehaviorEffectType.ExplosionRadius);
+                if (wideStacks > 0)
+                {
+                    // Cap at safe maximum of 5.0m
+                    splashRadius = Mathf.Min(5.0f, splashRadius + (wideStacks * 0.75f));
+                }
+            }
+
             StatusEffectType effectType = weapon.statusEffectType;
             float effectValue = weapon.statusEffectValue;
             float effectDuration = weapon.statusEffectDuration;
@@ -656,20 +837,22 @@ namespace Stonehold
                 damage *= GetModifiedCritMultiplier();
             }
 
-            StartCoroutine(ExecuteFireDelayed(target, weapon, damage, splashRadius, effectType, effectValue, effectDuration, isCrit, delay));
+            int targetActivationId = target != null ? target.ActivationId : 0;
+            StartCoroutine(ExecuteFireDelayed(target, targetActivationId, weapon, damage, splashRadius, effectType, effectValue, effectDuration, isCrit, delay));
         }
 
-        private System.Collections.IEnumerator ExecuteFireDelayed(Enemy target, WeaponDefinition weapon, float damage, float splashRadius, StatusEffectType effectType, float effectValue, float effectDuration, bool isCrit, float delay)
+        private System.Collections.IEnumerator ExecuteFireDelayed(Enemy target, int targetActivationId, WeaponDefinition weapon, float damage, float splashRadius, StatusEffectType effectType, float effectValue, float effectDuration, bool isCrit, float delay)
         {
             yield return new WaitForSeconds(delay);
 
-            if (target == null || target.IsDead || !target.gameObject.activeInHierarchy)
+            if (target == null || !target.MatchesActivation(targetActivationId))
             {
                 target = EnemyManager.FindTarget(transform.position, GetModifiedRange(), currentTargetingMode);
                 if (target == null)
                 {
                     yield break;
                 }
+                targetActivationId = target.ActivationId;
             }
 
             if (definition.id == "archer" && abilityBuffTimer > 0f)
@@ -681,6 +864,120 @@ namespace Stonehold
             if (definition.id == "electric_engineer")
             {
                 UseChainLightningBasic(target, damage);
+                yield break;
+            }
+
+            // Archer Twin Volley
+            if (definition.id == "archer" && RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("archer", HeroBehaviorEffectType.ExtraProjectile))
+            {
+                int stacks = RunModifierManager.Instance.GetBehaviorStacks("archer", HeroBehaviorEffectType.ExtraProjectile);
+                for (int i = 0; i < cachedTargets.Length; i++) cachedTargets[i] = null;
+
+                cachedTargets[0] = target;
+                int targetsFound = 1;
+                float rangeSqr = GetModifiedRange() * GetModifiedRange();
+                var enemiesList = EnemyManager.All;
+                for (int i = 0; i < enemiesList.Count && targetsFound < 1 + stacks; i++)
+                {
+                    Enemy enemy = enemiesList[i];
+                    if (enemy == null || enemy == target || enemy.IsDead || !enemy.IsTargetable) continue;
+
+                    float distSqr = (enemy.transform.position - transform.position).sqrMagnitude;
+                    if (distSqr <= rangeSqr)
+                    {
+                        cachedTargets[targetsFound] = enemy;
+                        targetsFound++;
+                    }
+                }
+                while (targetsFound < 1 + stacks)
+                {
+                    cachedTargets[targetsFound] = target;
+                    targetsFound++;
+                }
+
+                if (weapon.projectilePrefab != null)
+                {
+                    for (int i = 0; i < 1 + stacks; i++)
+                    {
+                        Enemy t = cachedTargets[i];
+                        if (t == null || t.IsDead || !t.IsTargetable) continue;
+
+                        Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, GetMuzzlePosition());
+                        if (projectile != null)
+                        {
+                            projectile.InitWithStatusEffect(
+                                t,
+                                damage,
+                                splashRadius,
+                                GetTrailColor(weapon, effectType, definition.id),
+                                definition.id,
+                                effectType,
+                                effectValue,
+                                effectDuration,
+                                isCrit
+                            );
+                        }
+                    }
+                }
+
+                for (int i = 0; i < cachedTargets.Length; i++) cachedTargets[i] = null;
+                yield break;
+            }
+
+            // Frost Mage Shard Volley
+            if (definition.id == "frost_mage" && RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("frost_mage", HeroBehaviorEffectType.ExtraProjectile))
+            {
+                int stacks = RunModifierManager.Instance.GetBehaviorStacks("frost_mage", HeroBehaviorEffectType.ExtraProjectile);
+                for (int i = 0; i < cachedTargets.Length; i++) cachedTargets[i] = null;
+
+                cachedTargets[0] = target;
+                int targetsFound = 1;
+                float rangeSqr = GetModifiedRange() * GetModifiedRange();
+                var enemiesList = EnemyManager.All;
+                for (int i = 0; i < enemiesList.Count && targetsFound < 1 + stacks; i++)
+                {
+                    Enemy enemy = enemiesList[i];
+                    if (enemy == null || enemy == target || enemy.IsDead || !enemy.IsTargetable) continue;
+
+                    float distSqr = (enemy.transform.position - transform.position).sqrMagnitude;
+                    if (distSqr <= rangeSqr)
+                    {
+                        cachedTargets[targetsFound] = enemy;
+                        targetsFound++;
+                    }
+                }
+                while (targetsFound < 1 + stacks)
+                {
+                    cachedTargets[targetsFound] = target;
+                    targetsFound++;
+                }
+
+                if (weapon.projectilePrefab != null)
+                {
+                    for (int i = 0; i < 1 + stacks; i++)
+                    {
+                        Enemy t = cachedTargets[i];
+                        if (t == null || t.IsDead || !t.IsTargetable) continue;
+
+                        Projectile projectile = Projectile.Spawn(weapon.projectilePrefab, GetMuzzlePosition());
+                        if (projectile != null)
+                        {
+                            projectile.InitWithStatusEffect(
+                                t,
+                                damage,
+                                splashRadius,
+                                GetTrailColor(weapon, effectType, definition.id),
+                                definition.id,
+                                effectType,
+                                effectValue,
+                                effectDuration,
+                                isCrit
+                            );
+                        }
+                    }
+                }
+
+                for (int i = 0; i < cachedTargets.Length; i++) cachedTargets[i] = null;
                 yield break;
             }
 

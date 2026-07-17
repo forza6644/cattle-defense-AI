@@ -312,6 +312,115 @@ namespace Stonehold.Tests
             Assert.That(field.GetRawConstantValue(), Is.EqualTo(2));
         }
 
+        [Test]
+        public void RunModifierManager_BehaviorUpgrade_AppliesAndEnforcesMaxStacks()
+        {
+            if (RunModifierManager.Instance == null)
+            {
+                var go = new GameObject("RunModifierManager");
+                var manager = go.AddComponent<RunModifierManager>();
+                typeof(RunModifierManager).GetProperty("Instance").SetValue(null, manager);
+            }
+            RunModifierManager.Instance.ClearModifiers();
+
+            CardDefinition card = ScriptableObject.CreateInstance<CardDefinition>();
+            card.id = "test_upgrade";
+            card.displayName = "Test Upgrade";
+            card.cardCategory = CardCategory.HeroUpgrade;
+            card.targetType = CardTargetType.HeroById;
+            card.targetHeroId = "archer";
+            card.behaviorUpgrade = new HeroBehaviorUpgradeData
+            {
+                effectType = HeroBehaviorEffectType.ExtraProjectile,
+                targetType = CardTargetType.HeroById,
+                targetHeroId = "archer",
+                count = 1,
+                maxStacks = 2
+            };
+
+            RunModifierManager.Instance.AddCard(card);
+            Assert.That(RunModifierManager.Instance.GetBehaviorStacks("archer", HeroBehaviorEffectType.ExtraProjectile), Is.EqualTo(1));
+            Assert.That(RunModifierManager.Instance.GetBehaviorCount("archer", HeroBehaviorEffectType.ExtraProjectile), Is.EqualTo(1));
+            Assert.That(RunModifierManager.Instance.HasBehavior("archer", HeroBehaviorEffectType.ExtraProjectile), Is.True);
+
+            RunModifierManager.Instance.AddCard(card);
+            Assert.That(RunModifierManager.Instance.GetBehaviorStacks("archer", HeroBehaviorEffectType.ExtraProjectile), Is.EqualTo(2));
+
+            RunModifierManager.Instance.AddCard(card);
+            Assert.That(RunModifierManager.Instance.GetBehaviorStacks("archer", HeroBehaviorEffectType.ExtraProjectile), Is.EqualTo(2));
+
+            RunModifierManager.Instance.ClearModifiers();
+            Assert.That(RunModifierManager.Instance.GetBehaviorStacks("archer", HeroBehaviorEffectType.ExtraProjectile), Is.EqualTo(0));
+            Assert.That(RunModifierManager.Instance.HasBehavior("archer", HeroBehaviorEffectType.ExtraProjectile), Is.False);
+        }
+
+        [Test]
+        public void RunModifierManager_MultipleBehaviors_Coexist()
+        {
+            if (RunModifierManager.Instance == null)
+            {
+                var go = new GameObject("RunModifierManager");
+                var manager = go.AddComponent<RunModifierManager>();
+                typeof(RunModifierManager).GetProperty("Instance").SetValue(null, manager);
+            }
+            RunModifierManager.Instance.ClearModifiers();
+
+            CardDefinition card1 = ScriptableObject.CreateInstance<CardDefinition>();
+            card1.id = "test_extra";
+            card1.cardCategory = CardCategory.HeroUpgrade;
+            card1.targetType = CardTargetType.HeroById;
+            card1.targetHeroId = "archer";
+            card1.behaviorUpgrade = new HeroBehaviorUpgradeData
+            {
+                effectType = HeroBehaviorEffectType.ExtraProjectile,
+                targetType = CardTargetType.HeroById,
+                targetHeroId = "archer",
+                count = 1,
+                maxStacks = 2
+            };
+
+            CardDefinition card2 = ScriptableObject.CreateInstance<CardDefinition>();
+            card2.id = "test_pierce";
+            card2.cardCategory = CardCategory.HeroUpgrade;
+            card2.targetType = CardTargetType.HeroById;
+            card2.targetHeroId = "archer";
+            card2.behaviorUpgrade = new HeroBehaviorUpgradeData
+            {
+                effectType = HeroBehaviorEffectType.Piercing,
+                targetType = CardTargetType.HeroById,
+                targetHeroId = "archer",
+                count = 1,
+                maxStacks = 2
+            };
+
+            RunModifierManager.Instance.AddCard(card1);
+            RunModifierManager.Instance.AddCard(card2);
+
+            Assert.That(RunModifierManager.Instance.HasBehavior("archer", HeroBehaviorEffectType.ExtraProjectile), Is.True);
+            Assert.That(RunModifierManager.Instance.HasBehavior("archer", HeroBehaviorEffectType.Piercing), Is.True);
+
+            RunModifierManager.Instance.ClearModifiers();
+        }
+
+        [Test]
+        public void Resources_NormalDraftPool_ExcludesPrototypeCards()
+        {
+            var cards = Resources.LoadAll<CardDefinition>("Cards");
+            Assert.That(cards.Length, Is.EqualTo(39));
+
+            foreach (var card in cards)
+            {
+                Assert.That(card.id, Is.Not.EqualTo("archer_twin_volley"));
+                Assert.That(card.id, Is.Not.EqualTo("archer_piercing_arrows"));
+                Assert.That(card.id, Is.Not.EqualTo("bombardier_cluster_shells"));
+                Assert.That(card.id, Is.Not.EqualTo("bombardier_wide_blast"));
+                Assert.That(card.id, Is.Not.EqualTo("frost_mage_shard_volley"));
+                Assert.That(card.id, Is.Not.EqualTo("frost_mage_echoing_nova"));
+                Assert.That(card.id, Is.Not.EqualTo("electric_engineer_extended_circuit"));
+                Assert.That(card.id, Is.Not.EqualTo("electric_engineer_forked_current"));
+            }
+        }
+
         private CardDefinition CreateCard(string id)
         {
             CardDefinition card = Create<CardDefinition>();

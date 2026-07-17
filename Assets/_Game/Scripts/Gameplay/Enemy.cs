@@ -23,6 +23,23 @@ namespace Stonehold
         [SerializeField] private EnemyData data;
         [SerializeField] private float arriveDistance = 0.1f;
 
+        private static int globalActivationCounter = 0;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            globalActivationCounter = 0;
+            AnyDamaged = null;
+            AnyDamagedDetailed = null;
+            AnyKilled = null;
+        }
+
+        private void AssignUniqueActivationId()
+        {
+            globalActivationCounter = globalActivationCounter == int.MaxValue ? 1 : globalActivationCounter + 1;
+            activationId = globalActivationCounter;
+        }
+
         private Vector3[] pathPoints;
         private int currentWaypointIndex;
         private Castle targetCastle;
@@ -120,7 +137,7 @@ namespace Stonehold
             // instances may briefly enable while Unity constructs them.
             if (poolOwner == null && data != null && !isActiveActivation)
             {
-                activationId = activationId == int.MaxValue ? 1 : activationId + 1;
+                AssignUniqueActivationId();
                 isActiveActivation = true;
                 currentHealth = data.health;
                 rewardClaimed = false;
@@ -179,7 +196,7 @@ namespace Stonehold
 
         public void ActivateFromPool(Vector3[] points, Castle castle, float laneOffset = 0f, float spawnDepthOffset = 0f)
         {
-            activationId = activationId == int.MaxValue ? 1 : activationId + 1;
+            AssignUniqueActivationId();
             isActiveActivation = true;
             SetPath(points, castle, laneOffset, spawnDepthOffset);
             RegisterOnce();
