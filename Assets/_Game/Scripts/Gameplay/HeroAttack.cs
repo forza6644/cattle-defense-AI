@@ -305,7 +305,8 @@ namespace Stonehold
                     }
                     if (definition.id == "frost_mage" && RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("frost_mage", HeroBehaviorEffectType.ExtraCast))
                     {
-                        StartCoroutine(ExecuteEchoingNova(primaryTarget.transform.position, abilityDamage * 0.5f, GetModifiedAbilityRadius() * 0.7f));
+                        int modifierRevision = RunModifierManager.Instance.Revision;
+                        StartCoroutine(ExecuteEchoingNova(primaryTarget.transform.position, abilityDamage * 0.5f, GetModifiedAbilityRadius() * 0.7f, modifierRevision));
                     }
                     break;
                 case HeroAbilityType.FlameWave:
@@ -323,7 +324,7 @@ namespace Stonehold
             }
         }
 
-        private System.Collections.IEnumerator ExecuteEchoingNova(Vector3 center, float damage, float radius)
+        private System.Collections.IEnumerator ExecuteEchoingNova(Vector3 center, float damage, float radius, int modifierRevision)
         {
             float elapsed = 0f;
             while (elapsed < 1.0f)
@@ -342,6 +343,13 @@ namespace Stonehold
             }
 
             if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+            {
+                yield break;
+            }
+
+            if (RunModifierManager.Instance == null ||
+                RunModifierManager.Instance.Revision != modifierRevision ||
+                !RunModifierManager.Instance.HasBehavior("frost_mage", HeroBehaviorEffectType.ExtraCast))
             {
                 yield break;
             }
@@ -916,6 +924,7 @@ namespace Stonehold
                                 effectDuration,
                                 isCrit
                             );
+                            ConfigurePiercingIfActive(projectile, t);
                         }
                     }
                 }
@@ -997,6 +1006,7 @@ namespace Stonehold
                         effectDuration,
                         isCrit
                     );
+                    ConfigurePiercingIfActive(projectile, target);
                 }
                 yield break;
             }
@@ -1008,6 +1018,25 @@ namespace Stonehold
             {
                 target.ApplyStatusEffect(new StatusEffect(effectType, effectValue, effectDuration, definition.id));
             }
+        }
+
+        private void ConfigurePiercingIfActive(Projectile projectile, Enemy target)
+        {
+            if (projectile == null || target == null || definition.id != "archer" || RunModifierManager.Instance == null)
+            {
+                return;
+            }
+
+            int stacks = RunModifierManager.Instance.GetBehaviorStacks("archer", HeroBehaviorEffectType.Piercing);
+            if (stacks <= 0)
+            {
+                return;
+            }
+
+            float reduction = RunModifierManager.Instance.GetBehaviorSecondaryValue("archer", HeroBehaviorEffectType.Piercing) / stacks;
+            Vector3 direction = target.transform.position - GetMuzzlePosition();
+            direction.y = 0f;
+            projectile.ConfigurePiercing(stacks, direction, reduction);
         }
 
 

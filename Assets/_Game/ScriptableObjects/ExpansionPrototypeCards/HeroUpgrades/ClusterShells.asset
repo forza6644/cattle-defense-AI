@@ -17,9 +17,9 @@ MonoBehaviour:
   description: On impact, the main shell splits into two smaller arced secondary blasts.
   icon: {fileID: 0}
   cardCategory: 2
-  recruitHeroId: 
+  recruitHeroId:
   requiredOwnedHeroId: bombardier
-  blockedIfOwnedHeroId: 
+  blockedIfOwnedHeroId:
   rarity: 1
   targetType: 1
   targetHeroId: bombardier

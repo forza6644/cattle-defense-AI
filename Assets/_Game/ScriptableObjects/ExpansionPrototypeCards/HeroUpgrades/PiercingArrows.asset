@@ -17,9 +17,9 @@ MonoBehaviour:
   description: Arrows pierce through one additional enemy, dealing 80% damage to pierced targets.
   icon: {fileID: 0}
   cardCategory: 2
-  recruitHeroId: 
+  recruitHeroId:
   requiredOwnedHeroId: archer
-  blockedIfOwnedHeroId: 
+  blockedIfOwnedHeroId:
   rarity: 1
   targetType: 1
   targetHeroId: archer

@@ -17,9 +17,9 @@ MonoBehaviour:
   description: Basic attacks launch an extra frost shard at another valid nearby target.
   icon: {fileID: 0}
   cardCategory: 2
-  recruitHeroId: 
+  recruitHeroId:
   requiredOwnedHeroId: frost_mage
-  blockedIfOwnedHeroId: 
+  blockedIfOwnedHeroId:
   rarity: 1
   targetType: 1
   targetHeroId: frost_mage

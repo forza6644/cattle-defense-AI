@@ -17,9 +17,9 @@ MonoBehaviour:
   description: Adds one valid chain target to basic attacks.
   icon: {fileID: 0}
   cardCategory: 2
-  recruitHeroId: 
+  recruitHeroId:
   requiredOwnedHeroId: electric_engineer
-  blockedIfOwnedHeroId: 
+  blockedIfOwnedHeroId:
   rarity: 1
   targetType: 1
   targetHeroId: electric_engineer

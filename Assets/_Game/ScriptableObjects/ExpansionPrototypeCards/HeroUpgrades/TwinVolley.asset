@@ -17,9 +17,9 @@ MonoBehaviour:
   description: Basic attacks fire one additional arrow at a nearby target.
   icon: {fileID: 0}
   cardCategory: 2
-  recruitHeroId: 
+  recruitHeroId:
   requiredOwnedHeroId: archer
-  blockedIfOwnedHeroId: 
+  blockedIfOwnedHeroId:
   rarity: 1
   targetType: 1
   targetHeroId: archer

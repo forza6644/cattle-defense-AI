@@ -15,6 +15,7 @@ namespace Stonehold
         private readonly Dictionary<BehaviorKey, ActiveBehaviorState> behaviorUpgrades = new Dictionary<BehaviorKey, ActiveBehaviorState>();
 
         public IReadOnlyList<CardDefinition> ActiveCards => activeCards;
+        public int Revision { get; private set; }
 
         private void Awake()
         {
@@ -29,21 +30,27 @@ namespace Stonehold
 
         public void AddCard(CardDefinition card)
         {
-            if (card != null)
+            if (card == null)
             {
-                activeCards.Add(card);
-                if (card.cardCategory == CardCategory.HeroUpgrade && card.behaviorUpgrade != null)
-                {
-                    ApplyBehaviorUpgrade(card.behaviorUpgrade);
-                }
-                Debug.Log($"[RunModifierManager] Card modifier added: {card.displayName} ({card.modifierType} +{card.modifierValue})");
+                return;
             }
+
+            if (card.cardCategory == CardCategory.HeroUpgrade &&
+                card.behaviorUpgrade != null &&
+                !ApplyBehaviorUpgrade(card.behaviorUpgrade))
+            {
+                return;
+            }
+
+            activeCards.Add(card);
+            Debug.Log($"[RunModifierManager] Card modifier added: {card.displayName} ({card.modifierType} +{card.modifierValue})");
         }
 
         public void ClearModifiers()
         {
             activeCards.Clear();
             behaviorUpgrades.Clear();
+            Revision++;
             Debug.Log("[RunModifierManager] Cleared all run modifiers and behavior upgrades.");
         }
 
@@ -298,17 +305,23 @@ namespace Stonehold
             return false;
         }
 
-        private void ApplyBehaviorUpgrade(HeroBehaviorUpgradeData upgrade)
+        private bool ApplyBehaviorUpgrade(HeroBehaviorUpgradeData upgrade)
         {
             if (upgrade == null || upgrade.effectType == HeroBehaviorEffectType.None)
             {
-                return;
+                return false;
             }
 
             string heroId = upgrade.targetType == CardTargetType.HeroById ? upgrade.targetHeroId : "";
             if (string.IsNullOrEmpty(heroId))
             {
-                return;
+                return false;
+            }
+
+            if (upgrade.maxStacks <= 0)
+            {
+                Debug.LogWarning($"[RunModifierManager] Behavior upgrade {heroId} {upgrade.effectType} has no valid stacks. Rejected.");
+                return false;
             }
 
             var key = new BehaviorKey(heroId, upgrade.effectType);
@@ -329,11 +342,11 @@ namespace Stonehold
                 state.secondaryValue += upgrade.secondaryValue;
 
                 Debug.Log($"[RunModifierManager] Applied behavior upgrade: {heroId} {upgrade.effectType} Stack: {state.stacks}/{upgrade.maxStacks}");
+                return true;
             }
-            else
-            {
-                Debug.LogWarning($"[RunModifierManager] Exceeded max stacks ({upgrade.maxStacks}) for behavior upgrade {heroId} {upgrade.effectType}. Rejected.");
-            }
+
+            Debug.LogWarning($"[RunModifierManager] Exceeded max stacks ({upgrade.maxStacks}) for behavior upgrade {heroId} {upgrade.effectType}. Rejected.");
+            return false;
         }
 
         public int GetBehaviorStacks(string heroId, HeroBehaviorEffectType effectType)

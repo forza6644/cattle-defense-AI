@@ -42,9 +42,12 @@ namespace Stonehold
         // Behavior upgrades fields (pierce)
         private int maxPierces;
         private int currentPierces;
+        private int additionalPierces;
+        private bool hitPrimaryTarget;
         private float distanceTraveled;
         private Vector3 moveDirection;
         private float secondaryValue;
+        private bool isSecondaryCluster;
         private readonly int[] hitEnemyActivationIds = new int[4];
 
         private static readonly Dictionary<GameObject, Queue<Projectile>> pools = new Dictionary<GameObject, Queue<Projectile>>();
@@ -107,6 +110,7 @@ namespace Stonehold
             sourceHeroId = damageSourceHeroId;
             impactColor = trailColor;
             isCrit = isCritical;
+            ResetBehaviorState();
 
             targetLastPosition = target != null ? GetTargetPosition(target) : transform.position;
             startPosition = transform.position;
@@ -172,6 +176,7 @@ namespace Stonehold
             statusEffectDuration = effectDuration;
             impactColor = trailColor;
             isCrit = isCritical;
+            ResetBehaviorState();
 
             targetLastPosition = target != null ? target.transform.position : transform.position;
             startPosition = transform.position;
@@ -213,6 +218,13 @@ namespace Stonehold
             }
         }
 
+        public void ConfigurePiercing(int additionalTargets, Vector3 direction, float damageReductionPerPierce)
+        {
+            maxPierces = Mathf.Clamp(additionalTargets, 0, hitEnemyActivationIds.Length - 1);
+            moveDirection = direction.sqrMagnitude > 0.0001f ? direction.normalized : transform.forward;
+            secondaryValue = Mathf.Clamp01(damageReductionPerPierce);
+        }
+
         private void Update()
         {
             if (maxPierces > 0)
@@ -238,13 +250,24 @@ namespace Stonehold
                     }
                     if (alreadyHit) continue;
 
-                    float dist = Vector3.Distance(transform.position, enemy.transform.position);
-                    if (dist <= 0.6f)
+                    Vector3 planarOffset = transform.position - enemy.transform.position;
+                    planarOffset.y = 0f;
+                    if (planarOffset.sqrMagnitude <= 0.6f * 0.6f)
                     {
-                        float pierceDamage = damage;
-                        if (secondaryValue > 0f)
+                        bool isPrimaryTarget = enemy.MatchesActivation(targetActivationId);
+                        if (!isPrimaryTarget && additionalPierces >= maxPierces)
                         {
-                            pierceDamage *= Mathf.Max(0.1f, 1f - (currentPierces * secondaryValue));
+                            continue;
+                        }
+
+                        float pierceDamage = isPrimaryTarget ? damage : damage * Mathf.Max(0.1f, 1f - secondaryValue);
+                        if (!isPrimaryTarget)
+                        {
+                            additionalPierces++;
+                        }
+                        else
+                        {
+                            hitPrimaryTarget = true;
                         }
 
                         float appliedDamage = enemy.TakeDamage(pierceDamage, false, isCrit);
@@ -267,7 +290,7 @@ namespace Stonehold
                             AudioManager.Instance.PlayHeroImpact(sourceHeroId, isCrit || IsAbility);
                         }
 
-                        if (currentPierces > maxPierces)
+                        if (hitPrimaryTarget && additionalPierces >= maxPierces)
                         {
                             Return();
                             return;
@@ -381,7 +404,7 @@ namespace Stonehold
                 }
 
                 // SplitProjectile behavior for Bombardier
-                if (sourceHeroId == "bombardier" && !IsAbility && RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("bombardier", HeroBehaviorEffectType.SplitProjectile))
+                if (sourceHeroId == "bombardier" && !IsAbility && !isSecondaryCluster && RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("bombardier", HeroBehaviorEffectType.SplitProjectile))
                 {
                     int stacks = RunModifierManager.Instance.GetBehaviorStacks("bombardier", HeroBehaviorEffectType.SplitProjectile);
                     int clusterCount = 1 + stacks; // e.g. 2 for stack 1, 3 for stack 2
@@ -396,7 +419,7 @@ namespace Stonehold
                         Projectile sub = Spawn(sourcePrefab, impactPoint);
                         if (sub != null)
                         {
-                            sub.InitSecondaryCluster(impactPoint + offset, reducedDamage, reducedRadius, impactColor, "bombardier_cluster");
+                            sub.InitSecondaryCluster(impactPoint + offset, reducedDamage, reducedRadius, impactColor, sourceHeroId);
                         }
                     }
                 }
@@ -443,6 +466,7 @@ namespace Stonehold
             impactColor = trailColor;
             isCrit = false;
             IsAbility = false;
+            isSecondaryCluster = true;
 
             targetLastPosition = targetPos;
             startPosition = transform.position;
@@ -457,6 +481,8 @@ namespace Stonehold
 
             maxPierces = 0;
             currentPierces = 0;
+            additionalPierces = 0;
+            hitPrimaryTarget = false;
             distanceTraveled = 0f;
             secondaryValue = 0f;
             for (int i = 0; i < hitEnemyActivationIds.Length; i++)
@@ -479,6 +505,22 @@ namespace Stonehold
             }
         }
 
+        private void ResetBehaviorState()
+        {
+            maxPierces = 0;
+            currentPierces = 0;
+            additionalPierces = 0;
+            hitPrimaryTarget = false;
+            distanceTraveled = 0f;
+            moveDirection = Vector3.zero;
+            secondaryValue = 0f;
+            isSecondaryCluster = false;
+            for (int i = 0; i < hitEnemyActivationIds.Length; i++)
+            {
+                hitEnemyActivationIds[i] = 0;
+            }
+        }
+
         private void Return()
         {
             target = null;
@@ -486,8 +528,11 @@ namespace Stonehold
             sourceHeroId = null;
             maxPierces = 0;
             currentPierces = 0;
+            additionalPierces = 0;
+            hitPrimaryTarget = false;
             distanceTraveled = 0f;
             secondaryValue = 0f;
+            isSecondaryCluster = false;
             for (int i = 0; i < hitEnemyActivationIds.Length; i++)
             {
                 hitEnemyActivationIds[i] = 0;

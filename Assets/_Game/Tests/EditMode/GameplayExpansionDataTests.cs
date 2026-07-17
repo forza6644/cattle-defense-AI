@@ -348,6 +348,7 @@ namespace Stonehold.Tests
 
             RunModifierManager.Instance.AddCard(card);
             Assert.That(RunModifierManager.Instance.GetBehaviorStacks("archer", HeroBehaviorEffectType.ExtraProjectile), Is.EqualTo(2));
+            Assert.That(RunModifierManager.Instance.ActiveCards, Has.Count.EqualTo(2), "A rejected stack must not be recorded as an active card.");
 
             RunModifierManager.Instance.ClearModifiers();
             Assert.That(RunModifierManager.Instance.GetBehaviorStacks("archer", HeroBehaviorEffectType.ExtraProjectile), Is.EqualTo(0));
@@ -418,6 +419,72 @@ namespace Stonehold.Tests
                 Assert.That(card.id, Is.Not.EqualTo("frost_mage_echoing_nova"));
                 Assert.That(card.id, Is.Not.EqualTo("electric_engineer_extended_circuit"));
                 Assert.That(card.id, Is.Not.EqualTo("electric_engineer_forked_current"));
+            }
+        }
+
+        [Test]
+        public void HeroUpgradePrototypes_ExactlyEightHaveExpectedContracts()
+        {
+            CardDefinition[] cards = AssetDatabase.FindAssets(
+                    "t:CardDefinition",
+                    new[] { "Assets/_Game/ScriptableObjects/ExpansionPrototypeCards/HeroUpgrades" })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Select(AssetDatabase.LoadAssetAtPath<CardDefinition>)
+                .Where(card => card != null)
+                .ToArray();
+
+            string[] expectedIds =
+            {
+                "archer_twin_volley",
+                "archer_piercing_arrows",
+                "bombardier_cluster_shells",
+                "bombardier_wide_blast",
+                "frost_mage_shard_volley",
+                "frost_mage_echoing_nova",
+                "electric_engineer_extended_circuit",
+                "electric_engineer_forked_current"
+            };
+
+            Assert.That(cards, Has.Length.EqualTo(8));
+            Assert.That(cards.Select(card => card.id), Is.EquivalentTo(expectedIds));
+            Assert.That(cards.All(card => card.cardCategory == CardCategory.HeroUpgrade), Is.True);
+            Assert.That(cards.All(card => card.behaviorUpgrade != null && card.behaviorUpgrade.maxStacks > 0), Is.True);
+            Assert.That(GameplayDataValidation.HasErrors(GameplayDataValidation.ValidateCards(cards)), Is.False);
+        }
+
+        [Test]
+        public void HeroUpgradePrototypes_AllEightCanCoexistInControlledRunState()
+        {
+            if (RunModifierManager.Instance == null)
+            {
+                var go = new GameObject("RunModifierManager");
+                var manager = go.AddComponent<RunModifierManager>();
+                createdObjects.Add(go);
+                typeof(RunModifierManager).GetProperty("Instance").SetValue(null, manager);
+            }
+            RunModifierManager.Instance.ClearModifiers();
+
+            CardDefinition[] cards = AssetDatabase.FindAssets(
+                    "t:CardDefinition",
+                    new[] { "Assets/_Game/ScriptableObjects/ExpansionPrototypeCards/HeroUpgrades" })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Select(AssetDatabase.LoadAssetAtPath<CardDefinition>)
+                .Where(card => card != null)
+                .OrderBy(card => card.id)
+                .ToArray();
+
+            foreach (CardDefinition card in cards)
+            {
+                RunModifierManager.Instance.AddCard(card);
+            }
+
+            Assert.That(RunModifierManager.Instance.ActiveCards, Has.Count.EqualTo(8));
+            foreach (CardDefinition card in cards)
+            {
+                Assert.That(
+                    RunModifierManager.Instance.HasBehavior(card.targetHeroId, card.behaviorUpgrade.effectType),
+                    Is.True,
+                    card.id);
             }
         }
 

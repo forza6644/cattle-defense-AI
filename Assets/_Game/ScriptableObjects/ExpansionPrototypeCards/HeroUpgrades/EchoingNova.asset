@@ -17,9 +17,9 @@ MonoBehaviour:
   description: Frost Nova repeats once after a 1.0s delay with 50% damage and 70% radius.
   icon: {fileID: 0}
   cardCategory: 2
-  recruitHeroId: 
+  recruitHeroId:
   requiredOwnedHeroId: frost_mage
-  blockedIfOwnedHeroId: 
+  blockedIfOwnedHeroId:
   rarity: 1
   targetType: 1
   targetHeroId: frost_mage

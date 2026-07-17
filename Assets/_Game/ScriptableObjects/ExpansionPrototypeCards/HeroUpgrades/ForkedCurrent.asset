@@ -17,9 +17,9 @@ MonoBehaviour:
   description: Basic chain attack forks off primary target to one additional unhit target with 50% damage.
   icon: {fileID: 0}
   cardCategory: 2
-  recruitHeroId: 
+  recruitHeroId:
   requiredOwnedHeroId: electric_engineer
-  blockedIfOwnedHeroId: 
+  blockedIfOwnedHeroId:
   rarity: 1
   targetType: 1
   targetHeroId: electric_engineer

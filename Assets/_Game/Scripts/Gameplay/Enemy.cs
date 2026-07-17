@@ -36,8 +36,29 @@ namespace Stonehold
 
         private void AssignUniqueActivationId()
         {
-            globalActivationCounter = globalActivationCounter == int.MaxValue ? 1 : globalActivationCounter + 1;
+            int attempts = Mathf.Max(2, EnemyManager.AliveCount + 2);
+            do
+            {
+                globalActivationCounter = globalActivationCounter == int.MaxValue ? 1 : globalActivationCounter + 1;
+                attempts--;
+            }
+            while (attempts > 0 && IsActivationIdInUse(globalActivationCounter));
+
             activationId = globalActivationCounter;
+        }
+
+        private bool IsActivationIdInUse(int candidate)
+        {
+            var enemies = EnemyManager.All;
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                Enemy enemy = enemies[i];
+                if (enemy != null && enemy != this && enemy.IsActiveActivation && enemy.ActivationId == candidate)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private Vector3[] pathPoints;

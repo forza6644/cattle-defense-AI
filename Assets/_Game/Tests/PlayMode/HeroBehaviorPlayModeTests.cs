@@ -28,6 +28,16 @@ namespace Stonehold.Tests
         public void SetUp()
         {
             Time.timeScale = 1f;
+            DestroyAllComponents<HeroAttack>();
+            DestroyAllComponents<Enemy>();
+            DestroyAllComponents<Projectile>();
+            DestroyAllComponents<DamageTracker>();
+            DestroyAllComponents<RunModifierManager>();
+            DestroyAllComponents<EnemyPoolManager>();
+            DestroyAllComponents<EnemyManager>();
+            DestroyAllComponents<Castle>();
+            var resetProjectileStatics = typeof(Projectile).GetMethod("ResetStatics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            resetProjectileStatics.Invoke(null, null);
 
             // Setup Enemy registry and pool
             enemyRegistryObject = new GameObject("Enemy Registry");
@@ -200,27 +210,9 @@ namespace Stonehold.Tests
             Enemy enemy1 = SpawnEnemy(100f, new Vector3(2f, 0f, 0f));
             Enemy enemy2 = SpawnEnemy(100f, new Vector3(4f, 0f, 0f));
 
-            // Spawn projectile manually to trace piercing
-            Projectile projectile = Projectile.Spawn(projPrefab, Vector3.zero);
-            createdObjects.Add(projectile.gameObject);
-            projectile.Init(enemy1, 10f, 0f, 1f, 0f, Color.white, "archer");
+            heroAttack.enabled = true;
+            yield return new WaitForSeconds(0.75f);
 
-            // Setup projectile properties via reflection or public API if available
-            var maxPiercesField = projectile.GetType().GetField("maxPierces", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            var moveDirectionField = projectile.GetType().GetField("moveDirection", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            
-            if (maxPiercesField != null) maxPiercesField.SetValue(projectile, 2);
-            if (moveDirectionField != null) moveDirectionField.SetValue(projectile, Vector3.right);
-
-            // Wait for projectile to travel and process collisions
-            float elapsed = 0f;
-            while (elapsed < 0.5f)
-            {
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
-
-            // Both enemies should have taken damage
             Assert.That(enemy1.CurrentHealth, Is.LessThan(100f));
             Assert.That(enemy2.CurrentHealth, Is.LessThan(100f));
         }
@@ -229,6 +221,8 @@ namespace Stonehold.Tests
         public IEnumerator Bombardier_ClusterShells_SpawnsSecondaryBlasts()
         {
             SetupHero("bombardier", AttackType.Splash);
+            GameObject trackerObject = new GameObject("DamageTracker", typeof(DamageTracker));
+            createdObjects.Add(trackerObject);
 
             CardDefinition card = ScriptableObject.CreateInstance<CardDefinition>();
             card.id = "bombardier_cluster_shells";
@@ -250,15 +244,14 @@ namespace Stonehold.Tests
             Enemy enemy1 = SpawnEnemy(100f, new Vector3(4f, 0f, 0f));
             projectileLaunch(enemy1);
 
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(0.75f);
 
-            // Check secondary blasts
-            var projectiles = Object.FindObjectsByType<Projectile>(FindObjectsInactive.Exclude);
-            Assert.That(projectiles.Length, Is.GreaterThan(0));
+            Assert.That(DamageTracker.Instance.DamageByHeroId.ContainsKey("bombardier"), Is.True);
+            Assert.That(DamageTracker.Instance.DamageByHeroId.ContainsKey("bombardier_cluster"), Is.False);
         }
 
-        [Test]
-        public void Bombardier_WideBlast_ModifiesRadiusRespectsCap()
+        [UnityTest]
+        public IEnumerator Bombardier_WideBlast_ModifiesRadiusRespectsCap()
         {
             SetupHero("bombardier", AttackType.Splash);
 
@@ -287,6 +280,15 @@ namespace Stonehold.Tests
             RunModifierManager.Instance.AddCard(card);
 
             Assert.That(RunModifierManager.Instance.GetBehaviorStacks("bombardier", HeroBehaviorEffectType.ExplosionRadius), Is.EqualTo(3));
+
+            Enemy target = SpawnEnemy(200f, new Vector3(8f, 0f, 0f));
+            projectileLaunch(target);
+            yield return new WaitForSeconds(0.25f);
+
+            Projectile projectile = Object.FindFirstObjectByType<Projectile>();
+            var splashRadius = typeof(Projectile).GetField("splashRadius", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(projectile, Is.Not.Null);
+            Assert.That((float)splashRadius.GetValue(projectile), Is.EqualTo(4.25f).Within(0.001f));
         }
 
         [UnityTest]
@@ -454,10 +456,149 @@ namespace Stonehold.Tests
             Assert.That(enemy2.CurrentHealth, Is.EqualTo(100f));
         }
 
+        [UnityTest]
+        public IEnumerator EnabledHeroAttack_TwinVolleyAndPiercingCompose()
+        {
+            SetupHero("archer", AttackType.SingleTarget);
+            CardDefinition twin = CreateBehaviorCard("twin", "archer", HeroBehaviorEffectType.ExtraProjectile, 1, 0f, 2);
+            CardDefinition pierce = CreateBehaviorCard("pierce", "archer", HeroBehaviorEffectType.Piercing, 0, 0.2f, 2);
+            RunModifierManager.Instance.AddCard(twin);
+            RunModifierManager.Instance.AddCard(pierce);
+
+            Enemy first = SpawnEnemy(100f, new Vector3(2f, 0f, 0f));
+            Enemy second = SpawnEnemy(100f, new Vector3(4f, 0f, 0f));
+            Enemy third = SpawnEnemy(100f, new Vector3(6f, 0f, 0f));
+
+            heroAttack.enabled = true;
+            yield return new WaitForSeconds(0.85f);
+
+            Assert.That(first.CurrentHealth, Is.LessThan(100f));
+            Assert.That(second.CurrentHealth, Is.LessThan(100f));
+            Assert.That(third.CurrentHealth, Is.LessThan(100f));
+        }
+
+        [UnityTest]
+        public IEnumerator EchoingNova_IsCancelledWhenRunModifiersAreCleared()
+        {
+            SetupHero("frost_mage", AttackType.SingleTarget);
+            heroDef.abilityType = HeroAbilityType.FrostNova;
+            CardDefinition echo = CreateBehaviorCard("echo", "frost_mage", HeroBehaviorEffectType.ExtraCast, 1, 0f, 1);
+            RunModifierManager.Instance.AddCard(echo);
+            Enemy enemy = SpawnEnemy(200f, new Vector3(2f, 0f, 0f));
+
+            var useAbility = heroAttack.GetType().GetMethod("UseSignatureAbility", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            useAbility.Invoke(heroAttack, new object[] { enemy });
+            yield return new WaitForSeconds(0.4f);
+            float healthAfterFirstCast = enemy.CurrentHealth;
+
+            RunModifierManager.Instance.ClearModifiers();
+            yield return new WaitForSeconds(1.1f);
+
+            Assert.That(enemy.CurrentHealth, Is.EqualTo(healthAfterFirstCast));
+        }
+
+        [Test]
+        public void EnemyActivationIds_AreNonZeroUniqueAndChangeOnReuse()
+        {
+            Enemy first = SpawnEnemy(100f, new Vector3(2f, 0f, 0f));
+            Enemy second = SpawnEnemy(100f, new Vector3(4f, 0f, 0f));
+            int firstActivation = first.ActivationId;
+
+            Assert.That(firstActivation, Is.Not.Zero);
+            Assert.That(second.ActivationId, Is.Not.Zero.And.Not.EqualTo(firstActivation));
+
+            first.DespawnToPool();
+            first.PrepareForSpawn(first.Data, new Vector3(3f, 0f, 0f), Quaternion.identity);
+            first.ActivateFromPool(new[] { new Vector3(3f, 0f, 0f), new Vector3(1000f, 0f, 0f) }, castle);
+
+            Assert.That(first.ActivationId, Is.Not.EqualTo(firstActivation));
+            Assert.That(first.ActivationId, Is.Not.EqualTo(second.ActivationId));
+        }
+
+        [Test]
+        public void EnemyActivationId_WrapSkipsAnActiveCollision()
+        {
+            Enemy first = SpawnEnemy(100f, new Vector3(2f, 0f, 0f));
+            var counter = typeof(Enemy).GetField("globalActivationCounter", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            counter.SetValue(null, int.MaxValue);
+
+            Enemy wrapped = SpawnEnemy(100f, new Vector3(4f, 0f, 0f));
+
+            Assert.That(wrapped.ActivationId, Is.Not.Zero);
+            Assert.That(wrapped.ActivationId, Is.Not.EqualTo(first.ActivationId));
+        }
+
+        [Test]
+        public void EnemyRegistry_CleansUpDespawnedActivations()
+        {
+            Enemy first = SpawnEnemy(100f, new Vector3(2f, 0f, 0f));
+            Enemy second = SpawnEnemy(100f, new Vector3(4f, 0f, 0f));
+            Assert.That(EnemyManager.AliveCount, Is.EqualTo(2));
+
+            first.DespawnToPool();
+            second.DespawnToPool();
+
+            Assert.That(EnemyManager.AliveCount, Is.Zero);
+        }
+
+        [Test]
+        public void ProjectileSpawn_ActivatesInactiveTemplateAndReturnResetsBehaviorState()
+        {
+            Projectile projectile = Projectile.Spawn(projPrefab, Vector3.zero);
+            Assert.That(projectile.gameObject.activeSelf, Is.True);
+
+            projectile.ConfigurePiercing(2, Vector3.right, 0.2f);
+            var returnMethod = typeof(Projectile).GetMethod("Return", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            returnMethod.Invoke(projectile, null);
+
+            Assert.That(projectile.gameObject.activeSelf, Is.False);
+            Projectile reused = Projectile.Spawn(projPrefab, Vector3.one);
+            Assert.That(reused, Is.SameAs(projectile));
+            Assert.That(reused.gameObject.activeSelf, Is.True);
+
+            var maxPierces = typeof(Projectile).GetField("maxPierces", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var secondaryCluster = typeof(Projectile).GetField("isSecondaryCluster", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(maxPierces.GetValue(reused), Is.EqualTo(0));
+            Assert.That(secondaryCluster.GetValue(reused), Is.False);
+        }
+
+        private CardDefinition CreateBehaviorCard(string id, string heroId, HeroBehaviorEffectType effect, int count, float secondaryValue, int maxStacks)
+        {
+            CardDefinition card = ScriptableObject.CreateInstance<CardDefinition>();
+            card.id = id;
+            card.displayName = id;
+            card.cardCategory = CardCategory.HeroUpgrade;
+            card.targetType = CardTargetType.HeroById;
+            card.targetHeroId = heroId;
+            card.behaviorUpgrade = new HeroBehaviorUpgradeData
+            {
+                effectType = effect,
+                targetType = CardTargetType.HeroById,
+                targetHeroId = heroId,
+                count = count,
+                secondaryValue = secondaryValue,
+                maxStacks = maxStacks
+            };
+            createdObjects.Add(card);
+            return card;
+        }
+
         private void projectileLaunch(Enemy target)
         {
             var fireMethod = heroAttack.GetType().GetMethod("Fire", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             fireMethod.Invoke(heroAttack, new object[] { target });
+        }
+
+        private static void DestroyAllComponents<T>() where T : Component
+        {
+            T[] components = Object.FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < components.Length; i++)
+            {
+                if (components[i] != null)
+                {
+                    Object.DestroyImmediate(components[i].gameObject);
+                }
+            }
         }
     }
 }

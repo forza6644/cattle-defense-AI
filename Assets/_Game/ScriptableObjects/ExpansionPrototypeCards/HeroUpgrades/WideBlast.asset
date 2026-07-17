@@ -17,9 +17,9 @@ MonoBehaviour:
   description: Increases splash explosion radius by 0.75m. Max 5.0m radius.
   icon: {fileID: 0}
   cardCategory: 2
-  recruitHeroId: 
+  recruitHeroId:
   requiredOwnedHeroId: bombardier
-  blockedIfOwnedHeroId: 
+  blockedIfOwnedHeroId:
   rarity: 1
   targetType: 1
   targetHeroId: bombardier
