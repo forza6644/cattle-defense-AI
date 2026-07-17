@@ -6,15 +6,17 @@ Date: 2026-07-17
 
 - Repository: `forza6644/cattle-defense-AI`
 - Qualified remote baseline: `7f7101dfdf822f6e1b6c55845f59772003d5625e`
-- Task 13B source baseline: `21a10784dd4d7349534f90be8eebed82c8b81699`.
-- Active branch: `feature/enemy-pooling`
+- Task 13C source baseline: `5f5810479268d8619506e4db2f3c6cb5bfff1741`.
+- Active branch: `feature/hero-behavior-upgrades`.
+- Original Task 13C implementation commit: `7e483ac8a6eacd47caa8d58a7af15e260fe71bbf`.
+- Task 13C corrective qualification commit: `3acfff4cf87c620e0f8348fa719a696c0310af89`.
 - Task 13A local commit: this commit, `Gameplay expansion data contracts and validation` (exact hash is reported after creation).
 - Remote baseline at qualification start: `d099439da47bfae171a8898d5a7306bf94015240`
 - Local presentation baseline: `9130af948f43d7a0c82dc82fc15771c3a0fd7e7d`
 - Local corrective code/test commit: `505a2c0e854b66ef53ab38466f789ddfd4fe9410`
 - Qualified baseline documentation commit: `c068fb5a6daf785e8150ef28f1b37d2a2fa7efa5`
 - Unity: `6000.5.2f1`
-- Current milestone: Task 13B qualified Enemy Pooling lifecycle complete; four-hero behavior upgrades are next.
+- Current milestone: Task 13C four-hero behavior upgrade prototypes are qualified; Task 13D curated 15-20 card pool is next.
 - Scenes: `MainMenu` and `GameScene`.
 
 Task 12B performed local qualification only; Task 12C owns the remote handoff.
@@ -61,13 +63,15 @@ Current content:
 
 ## Automated Verification
 
-Unity discovered and passed 58 tests:
+Unity discovered and passed 78 tests after Task 13C:
 
-- EditMode: 34 passed, 0 failed, 0 skipped (9 previous and 25 new Task 13A tests).
-- PlayMode: 24 passed, 0 failed, 0 skipped (4 previous and 20 new Task 13B tests).
-- Total: 58 passed, 0 failed, 0 skipped.
+- EditMode: 39 passed, 0 failed, 0 skipped.
+- PlayMode: 39 passed, 0 failed, 0 skipped.
+- Previous Task 13B baseline: 58 tests.
+- New Task 13C coverage: 20 tests (5 EditMode and 15 PlayMode).
+- Total: 78 passed, 0 failed, 0 skipped.
 
-The PlayMode suite verifies result VFX at `Time.timeScale == 0`, duplicate subscription prevention, particle pool cleanup, all six heroes recording damage, 1x/1.5x/2x speed, pause/resume, drafts, 10 waves, boss victory, one-time rewards, and a clean restart with one instance of each critical manager.
+The PlayMode suite verifies result VFX at `Time.timeScale == 0`, duplicate subscription prevention, particle pool cleanup, all six heroes recording damage, 1x/1.5x/2x speed, pause/resume, drafts, 10 waves, boss victory, one-time rewards, and a clean restart with one instance of each critical manager. Task 13C adds enabled-HeroAttack integration, all eight prototype behaviors, stack rejection, activation reuse/wrap, stale-target protection, projectile reset, cluster attribution, and delayed-echo restart invalidation.
 
 Full-run batch evidence:
 
@@ -122,6 +126,19 @@ Not implemented in Task 13A:
 - The observed 17 pooled Runner activations include enemies in death presentation; the active targetable registry peaked at 13.
 - This qualifies current content only. It does not qualify a real 60-100-enemy encounter, Android, or physical-device performance.
 
+## Task 13C Hero Behavior Upgrades
+
+- Selected heroes: Archer, Bombardier, Frost Mage, and Electric Engineer.
+- Eight prototype upgrades: Twin Volley, Piercing Arrows, Cluster Shells, Wide Blast, Shard Volley, Echoing Nova, Extended Circuit, and Forked Current.
+- Prototype cards remain outside `Resources/Cards`; the production draft remains exactly 39 cards.
+- Runtime behavior is applied through `RunModifierManager.AddCard` and the enabled `HeroAttack` fire/update paths.
+- Piercing always reaches its selected target and adds bounded 80%-damage pierced targets.
+- Cluster shells are bounded, cannot recursively split, and retain `bombardier` DamageTracker attribution.
+- Echoing Nova is invalidated when run modifiers are cleared or the run restarts.
+- Enemy activation IDs are non-zero and unique across simultaneous enemies, pool reuse, static reset/wrap, stale projectile checks, and delayed despawn callbacks.
+- Projectile reuse clears target activation, source, status, piercing, cluster, trail, and ability state before reuse.
+- The final 39-test PlayMode run repeated the complete 10-wave Warlord victory, rewards, result, pooling, and restart regression after the Task 13C correction.
+
 ## Known Technical Debt
 
 - Dense 60-100 enemy gameplay still requires a separate production encounter and physical-device profile; Task 13B only qualifies lifecycle reuse.
@@ -139,9 +156,9 @@ The following pre-existing changes remain preserved and unstaged:
 
 - 10 Quaternius enemy material files.
 - `ProjectSettings/ProjectSettings.asset`.
-- `unity_launch_log.txt` remains untracked and must not be committed.
+- `unity_launch_log.txt` was deleted by the earlier Antigravity Task 13C execution. It was not recreated and is not committed.
 - External safety patches remain outside the Unity project.
 
 ## Next Approved Task
 
-Implement behavior-changing upgrade branches for four active heroes using the Task 13A contracts. Preserve the qualified pooling lifecycle and current balance, then curate the 15-20 card test pool.
+Task 13D: curate the approved 15-20 card test pool from the qualified behavior foundation. Do not change production balance until that pool is reviewed and validated.

@@ -1,5 +1,13 @@
 # Task 13C Qualification
 
+Final decision: **QUALIFIED**.
+
+- Source baseline: `5f5810479268d8619506e4db2f3c6cb5bfff1741`.
+- Branch: `feature/hero-behavior-upgrades`.
+- Original implementation: `7e483ac8a6eacd47caa8d58a7af15e260fe71bbf`.
+- Corrective qualification: `3acfff4cf87c620e0f8348fa719a696c0310af89`.
+- Automated result: EditMode 39/39 and PlayMode 39/39, for 78/78 total.
+
 Task 13C introduces eight prototype hero behavior upgrades without adding them to
 the production draft pool. The prototype assets remain under
 `Assets/_Game/ScriptableObjects/ExpansionPrototypeCards/HeroUpgrades`; the normal
@@ -47,3 +55,8 @@ draft continues to load the 39 cards under `Resources/Cards`.
 The corrective qualification does not recreate it. Third-party materials and
 `ProjectSettings/ProjectSettings.asset` are intentionally excluded from this
 task and its commit.
+
+The complete PlayMode qualification includes the production-equivalent enabled
+hero attack path and the existing ten-wave Warlord victory, one-claim rewards,
+result, speed, pause, pooling, and restart regression. Task 13D is the next
+approved step and will curate a 15-20 card test pool from these prototypes.

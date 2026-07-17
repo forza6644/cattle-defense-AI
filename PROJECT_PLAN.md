@@ -38,9 +38,9 @@ Target scope:
 Implementation order:
 
 1. **Completed in Task 13A:** define backward-compatible contracts for expanded card categories, Legendary rarity, hero behavior upgrades, traps, defenses, castle upgrades, rerolls, enemy classification, shields, dodge, elemental resistance, and crowd-control resistance; add read-only validation and automated tests.
-2. **Completed in Task 13B:** implement and qualify Enemy Pooling while preserving current behavior and balance. The current 10-wave run, registry, rewards, status reset, stale-reference guards, boss, result, and restart lifecycle pass 58 automated tests.
-3. **Next:** select four heroes and implement behavior-changing upgrade branches using the Task 13A contracts.
-4. Build the curated 15-20 card test pool with deterministic validation tests.
+2. **Completed in Task 13B:** implement and qualify Enemy Pooling while preserving current behavior and balance. The current 10-wave run, registry, rewards, status reset, stale-reference guards, boss, result, and restart lifecycle passed the 58-test baseline.
+3. **Completed in Task 13C:** qualify eight behavior-changing prototype upgrades for Archer, Bombardier, Frost Mage, and Electric Engineer. The prototypes remain outside `Resources/Cards`; the full result is 78/78 automated tests, including the 10-wave Warlord regression.
+4. **Next - Task 13D:** build the curated 15-20 card test pool with deterministic validation tests.
 5. Add the sixth normal enemy and one Elite with readable counterplay.
 6. Add two traps and one battlefield defense without reintroducing tower-placement gameplay.
 7. Create one balanced 10-wave expansion run and profile the densest encounter.
