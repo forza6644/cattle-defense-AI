@@ -43,8 +43,8 @@ Implementation order:
 4. **Completed in Task 13D:** build and qualify the isolated 18-card vertical-slice pool with deterministic selection, recruit guarantees, validation, 500-run simulation, controlled PlayMode, and unchanged production regression.
 5. **Completed in Task 13E:** add the isolated Crossbow Raider ranged normal and War Shaman healing Elite with readable counterplay, pooled lifecycle safety, 38 focused tests, a 700-activation stress qualification, and unchanged production waves/card pools.
 6. **Completed in Task 13F:** add fixed automatic anchors, Caltrops, Burning Oil, and Wooden Barricade with isolated qualification cards, pooled reset-safe runtime, 32 focused tests, 800 deployment cycles, and unchanged production waves/card pools.
-7. **Next:** build a balanced ten-wave expansion run and profile the densest qualified encounter on target mobile hardware.
-8. Qualify save compatibility, drafts, rewards, restart, and Android build behavior.
+7. **Completed in Task 13G:** build and qualify the isolated ten-wave expansion run, exact twenty-card pool, 100-seed balance window, 70-enemy Wave 9 Editor profiles at 1x/2x, real ten-wave Victory, restart cleanup, and unchanged production regression.
+8. **Next:** qualify save compatibility, drafts, rewards, restart, Android build behavior, and physical-device performance.
 
 Task 13A establishes schemas and validation only. Traps, defenses, armor expansion, shields, dodge, resistances, Legendary cards, and behavior-changing upgrades are not playable until their later implementation tasks are completed and tested.
 

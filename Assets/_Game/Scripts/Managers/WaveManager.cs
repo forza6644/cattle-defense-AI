@@ -55,12 +55,20 @@ namespace Stonehold
         private bool startNextWaveRequested;
         private int spawnSequence;
         private EnemyPoolManager enemyPool;
+        private GameObject stageFixtureInstance;
+
+        public StageData ActiveStage => activeStage;
 
         private bool IsGameOver => castleComponent != null && castleComponent.IsGameOver;
 
         private void Start()
         {
-            if (config != null && config.stages != null && config.stages.Length > SaveManager.SelectedStageIndex)
+            if (ExpansionRunContext.StageOverride != null)
+            {
+                activeStage = ExpansionRunContext.StageOverride;
+                activeWaves = activeStage.waves;
+            }
+            else if (config != null && config.stages != null && config.stages.Length > SaveManager.SelectedStageIndex)
             {
                 var stage = config.stages[SaveManager.SelectedStageIndex];
                 if (stage != null && stage.waves != null && stage.waves.Length > 0)
@@ -80,6 +88,8 @@ namespace Stonehold
                 Debug.LogWarning("WaveManager: assign config (with waves/stages), spawnPoint and castle in the Inspector.");
                 return;
             }
+
+            ConfigureStageOverrides();
 
             castleComponent = castle.GetComponent<Castle>();
             enemyPool = EnemyPoolManager.Instance != null
@@ -138,6 +148,10 @@ namespace Stonehold
 
                 foreach (WaveData.SpawnEntry entry in wave.spawns)
                 {
+                    if (entry.startDelay > 0f)
+                    {
+                        yield return new WaitForSeconds(entry.startDelay);
+                    }
                     float waveProgress = activeWaves.Length > 1
                         ? (float)w / (activeWaves.Length - 1)
                         : 0f;
@@ -146,9 +160,9 @@ namespace Stonehold
                     float stageDensity = activeStage != null
                         ? Mathf.Max(0.5f, activeStage.enemyCountMultiplier)
                         : 1f;
-                    int adjustedCount = Mathf.Max(
-                        1,
-                        Mathf.CeilToInt(entry.count * enemyCountMultiplier * progressionDensity * randomDensity * stageDensity));
+                    int adjustedCount = activeStage != null && activeStage.useExactWaveCounts
+                        ? Mathf.Max(1, entry.count)
+                        : Mathf.Max(1, Mathf.CeilToInt(entry.count * enemyCountMultiplier * progressionDensity * randomDensity * stageDensity));
                     for (int i = 0; i < adjustedCount; i++)
                     {
                         if (IsGameOver)
@@ -219,6 +233,25 @@ namespace Stonehold
 
             Debug.Log("All " + TotalWaves + " waves cleared - VICTORY");
             AllWavesCleared?.Invoke();
+        }
+
+        private void ConfigureStageOverrides()
+        {
+            if (activeStage == null) return;
+            if (activeStage.cardPoolOverride != null)
+            {
+                CardDraftManager.Instance?.SetPoolOverrideForQualification(activeStage.cardPoolOverride);
+            }
+            if (activeStage.battlefieldFixturePrefab != null)
+            {
+                stageFixtureInstance = Instantiate(activeStage.battlefieldFixturePrefab);
+                stageFixtureInstance.name = activeStage.battlefieldFixturePrefab.name + " Runtime";
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (stageFixtureInstance != null) Destroy(stageFixtureInstance);
         }
 
         public void StartNextWaveNow()

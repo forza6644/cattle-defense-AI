@@ -15,6 +15,12 @@ namespace Stonehold
         [Header("Waves")]
         public WaveData[] waves;
 
+        [Header("Optional Isolated Run Overrides")]
+        public CardPoolDefinition cardPoolOverride;
+        public string startingHeroId = "archer";
+        public GameObject battlefieldFixturePrefab;
+        public bool useExactWaveCounts;
+
         [Header("Stage Pacing")]
         [Min(0.5f)] public float enemyCountMultiplier = 1f;
         [Range(0.5f, 1.5f)] public float spawnIntervalMultiplier = 1f;

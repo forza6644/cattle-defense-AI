@@ -21,6 +21,7 @@ namespace Stonehold
             public EnemyData enemy;
             public int count;
             public float spawnInterval;
+            [Min(0f)] public float startDelay;
         }
     }
 }

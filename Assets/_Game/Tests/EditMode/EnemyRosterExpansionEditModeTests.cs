@@ -114,10 +114,13 @@ namespace Stonehold.Tests
 
         [Test] public void ProductionWaves_DoNotReferenceExpansionEnemies()
         {
+            StageData isolatedStage = AssetDatabase.LoadAssetAtPath<StageData>("Assets/_Game/ScriptableObjects/ExpansionRunQualification/StoneholdExpansionTrial.asset");
             WaveData[] waves = LoadAll<WaveData>();
             foreach (WaveData wave in waves)
             {
-                if (AssetDatabase.GetAssetPath(wave) == QualificationWavePath || wave.spawns == null) continue;
+                string path = AssetDatabase.GetAssetPath(wave).Replace('\\', '/');
+                bool isIsolatedExpansionWave = isolatedStage != null && isolatedStage.waves != null && isolatedStage.waves.Contains(wave);
+                if (path == QualificationWavePath || isIsolatedExpansionWave || wave.spawns == null) continue;
                 Assert.That(wave.spawns.Any(x => x.enemy == raider || x.enemy == shaman), Is.False, wave.name);
             }
         }

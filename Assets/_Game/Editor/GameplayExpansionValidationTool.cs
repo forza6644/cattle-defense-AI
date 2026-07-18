@@ -19,6 +19,7 @@ namespace Stonehold.Editor
             CastleUpgradeDefinition[] castleUpgrades = LoadAssets<CastleUpgradeDefinition>();
             RerollDefinition[] rerolls = LoadAssets<RerollDefinition>();
             CardPoolDefinition[] cardPools = LoadAssets<CardPoolDefinition>();
+            StageData[] stages = LoadAssets<StageData>();
 
             HashSet<string> heroIds = new HashSet<string>(
                 heroes.Where(hero => hero != null && !string.IsNullOrWhiteSpace(hero.id)).Select(hero => hero.id),
@@ -38,6 +39,12 @@ namespace Stonehold.Editor
             }
             ValidateTask13EIsolation(enemies, issues);
             ValidateTask13FIsolation(cards, traps, defenses, issues);
+            StageData expansionStage = stages.FirstOrDefault(stage => stage != null && stage.stageId == ExpansionRunValidation.StageId);
+            if (expansionStage != null)
+            {
+                issues.AddRange(ExpansionRunValidation.Validate(expansionStage));
+                ValidateTask13GIsolation(expansionStage, issues);
+            }
 
             Debug.Log(BuildSummary(cards, enemies, traps.Length, defenses.Length, castleUpgrades.Length, rerolls.Length, cardPools.Length, issues));
             foreach (GameplayValidationIssue issue in issues)
@@ -56,6 +63,21 @@ namespace Stonehold.Editor
                         break;
                 }
             }
+        }
+
+        private static void ValidateTask13GIsolation(StageData stage, List<GameplayValidationIssue> issues)
+        {
+            CardDefinition[] productionCards = Resources.LoadAll<CardDefinition>("Cards");
+            if (productionCards.Length != 39)
+                issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13g.production-cards", "Production Resources/Cards must remain at 39 cards.", stage));
+            CardPoolDefinition vertical = AssetDatabase.LoadAssetAtPath<CardPoolDefinition>("Assets/_Game/ScriptableObjects/CardPools/VerticalSlice18.asset");
+            if (vertical == null || vertical.cards == null || vertical.cards.Count != 18)
+                issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13g.vertical-slice", "VerticalSlice18 must remain at 18 entries.", vertical));
+            string stagePath = AssetDatabase.GetAssetPath(stage);
+            if (!stagePath.StartsWith(ExpansionRunQualificationBuilder.Root, StringComparison.Ordinal))
+                issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13g.stage-isolation", "Expansion stage must remain in its qualification root.", stage));
+            if (stage.cardPoolOverride != null && AssetDatabase.GetAssetPath(stage.cardPoolOverride).Contains("Resources/Cards"))
+                issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13g.pool-isolation", "Expansion pool cannot live under Resources/Cards.", stage.cardPoolOverride));
         }
 
         private static string BuildSummary(
@@ -155,7 +177,8 @@ namespace Stonehold.Editor
             for (int i = 0; i < waves.Length; i++)
             {
                 WaveData wave = waves[i];
-                if (wave == null || wave.spawns == null || AssetDatabase.GetAssetPath(wave) == EnemyRosterExpansionBuilder.QualificationWavePath) continue;
+                string wavePath = wave == null ? string.Empty : AssetDatabase.GetAssetPath(wave).Replace('\\', '/');
+                if (wave == null || wave.spawns == null || wavePath == EnemyRosterExpansionBuilder.QualificationWavePath || wavePath.StartsWith(ExpansionRunQualificationBuilder.Root + "/", StringComparison.Ordinal)) continue;
                 for (int j = 0; j < wave.spawns.Length; j++)
                 {
                     EnemyData enemy = wave.spawns[j].enemy;

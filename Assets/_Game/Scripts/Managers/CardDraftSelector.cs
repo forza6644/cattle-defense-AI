@@ -13,17 +13,23 @@ namespace Stonehold
             IEnumerable<string> activeHeroes,
             IEnumerable<AttackType> attackTypes,
             int openHeroSlots,
-            IDictionary<string, int> stacks = null)
+            IDictionary<string, int> stacks = null,
+            bool trapDeploymentAvailable = true,
+            bool defenseDeploymentAvailable = true)
         {
             activeHeroIds = new HashSet<string>(activeHeroes ?? Array.Empty<string>(), StringComparer.Ordinal);
             activeAttackTypes = new HashSet<AttackType>(attackTypes ?? Array.Empty<AttackType>());
             OpenHeroSlots = Math.Max(0, openHeroSlots);
+            TrapDeploymentAvailable = trapDeploymentAvailable;
+            DefenseDeploymentAvailable = defenseDeploymentAvailable;
             cardStacks = stacks != null
                 ? new Dictionary<string, int>(stacks, StringComparer.Ordinal)
                 : new Dictionary<string, int>(StringComparer.Ordinal);
         }
 
         public int OpenHeroSlots { get; }
+        public bool TrapDeploymentAvailable { get; }
+        public bool DefenseDeploymentAvailable { get; }
         public IReadOnlyCollection<string> ActiveHeroIds => activeHeroIds;
         public bool HasHero(string heroId) => !string.IsNullOrEmpty(heroId) && activeHeroIds.Contains(heroId);
         public bool HasAttackType(AttackType attackType) => activeAttackTypes.Contains(attackType);
@@ -145,6 +151,9 @@ namespace Stonehold
                     && card.behaviorUpgrade.maxStacks > 0
                     && state.GetStacks(card.id) < card.behaviorUpgrade.maxStacks;
             }
+
+            if (card.cardCategory == CardCategory.Trap && !state.TrapDeploymentAvailable) return false;
+            if (card.cardCategory == CardCategory.BattlefieldDefense && !state.DefenseDeploymentAvailable) return false;
 
             return true;
         }

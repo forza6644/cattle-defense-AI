@@ -274,7 +274,11 @@ namespace Stonehold
                     }
                 }
             }
-            return new DraftSelectionState(heroIds, attackTypes, openSlots, stacks);
+            bool trapAvailable = BattlefieldAnchorManager.Instance != null
+                && BattlefieldAnchorManager.Instance.HasAvailableAnchor(BattlefieldAnchorType.Trap);
+            bool defenseAvailable = BattlefieldAnchorManager.Instance != null
+                && BattlefieldAnchorManager.Instance.HasAvailableAnchor(BattlefieldAnchorType.Defense);
+            return new DraftSelectionState(heroIds, attackTypes, openSlots, stacks, trapAvailable, defenseAvailable);
         }
     }
 }

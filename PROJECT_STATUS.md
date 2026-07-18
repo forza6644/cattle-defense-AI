@@ -180,11 +180,11 @@ Not implemented in Task 13A:
 
 ## Known Technical Debt
 
-- Dense 60-100 enemy gameplay still requires a separate production encounter and physical-device profile; Task 13B only qualifies lifecycle reuse.
+- The isolated 70-enemy Wave 9 lifecycle is qualified in the Editor; physical Android performance remains unverified.
 - Some hero ability paths allocate temporary lists.
 - First-time VFX creation instantiates objects before their pooled reuse.
 - Hero recruitment instantiates hero objects, which is acceptable outside the dense per-frame path.
-- Dense 60-100 enemy encounters have not been qualified.
+- Dense encounter behavior is qualified only in the isolated Task 13G Editor fixture, not on physical mobile hardware.
 - Android IL2CPP build and physical-device profiling remain unverified.
 - The batch GC peak includes test and scene-transition allocations; use Unity Profiler on device before optimization claims.
 - Imported Quaternius material customizations should later move to project-owned material copies.
@@ -203,6 +203,17 @@ Not implemented in Task 13A:
 - Stress: 300 Caltrops, 300 Oil and 200 Barricade cycles with zero active runtime objects or occupied anchors after cleanup.
 - Detailed evidence: `Assets/_Game/Docs/Task13F_BattlefieldDefenseQualification.md`.
 
+## Task 13G Balanced Expansion Run
+
+- Added the isolated `expansion_vertical_slice_01` stage with ten exact-count waves and the isolated `expansion_run_20` card pool.
+- The pool contains 3 recruits, 8 behavior upgrades, 6 support modifiers, 2 traps, and 1 battlefield defense. Production remains 39 cards and `VerticalSlice18` remains 18.
+- Wave 9 is the peak encounter with 70 enemies; Wave 10 contains exactly one Warlord. Raider starts in Wave 4 and Shaman starts in Wave 6, with at most two Shamans per wave.
+- The 100-seed simulation produced 75 wins, zero invalid drafts, zero soft locks, median Wave 10, average Wave 9.75, and all 20 cards offered.
+- Editor profiling exercised 70 active Wave 9 enemies at 1x and 2x. Cleanup returned the active registry to zero at both speeds.
+- The real isolated run reached Victory in 82.0 seconds at 2x, processed 10 drafts, peaked at 21 targetable enemies, and restarted with one instance of each persistent manager and no active battlefield objects.
+- Tests: 130 EditMode + 96 PlayMode = 226/226 passing. Validator: 50 cards, 7 enemies, 2 traps, 1 defense, 3 pools, 0 errors, 34 legacy warnings.
+- Detailed evidence: `Assets/_Game/Docs/Task13G_BalancedExpansionRunQualification.md`.
+
 ## Protected Local Files
 
 The following pre-existing changes remain preserved and unstaged:
@@ -217,4 +228,4 @@ The following pre-existing changes remain preserved and unstaged:
 
 ## Next Approved Task
 
-Task 13G: build a balanced ten-wave expansion run and profile the densest qualified encounter without changing the core Hero Castle Defense loop.
+Task 13H: qualify save compatibility, rewards, restart behavior, and an Android release-candidate build without changing the core Hero Castle Defense loop.

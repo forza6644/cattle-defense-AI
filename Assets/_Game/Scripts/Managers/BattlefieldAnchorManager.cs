@@ -40,6 +40,16 @@ namespace Stonehold
             return false;
         }
 
+        public bool HasAvailableAnchor(BattlefieldAnchorType type)
+        {
+            for (int i = 0; i < anchors.Count; i++)
+            {
+                BattlefieldAnchor anchor = anchors[i];
+                if (anchor != null && anchor.AnchorType == type && !anchor.IsOccupied) return true;
+            }
+            return false;
+        }
+
         public void ResetForRun()
         {
             for (int i = 0; i < anchors.Count; i++) if (anchors[i] != null) anchors[i].Release(null);

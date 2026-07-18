@@ -14,6 +14,15 @@ namespace Stonehold
         public int RejectedCount { get; private set; }
         public int StaleTickCount => 0;
 
+        public bool CanDeploy(TrapDefinition definition)
+        {
+            if (definition == null || BattlefieldAnchorManager.Instance == null
+                || !BattlefieldAnchorManager.Instance.HasAvailableAnchor(BattlefieldAnchorType.Trap)) return false;
+            int sameType = 0;
+            for (int i = 0; i < active.Count; i++) if (active[i] != null && active[i].Definition == definition) sameType++;
+            return sameType < Mathf.Max(1, definition.maxActive);
+        }
+
         private void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -25,10 +34,7 @@ namespace Stonehold
         public bool TryDeploy(TrapDefinition definition, out TrapRuntimeZone zone)
         {
             zone = null;
-            if (definition == null || BattlefieldAnchorManager.Instance == null) { RejectedCount++; return false; }
-            int sameType = 0;
-            for (int i = 0; i < active.Count; i++) if (active[i] != null && active[i].Definition == definition) sameType++;
-            if (sameType >= Mathf.Max(1, definition.maxActive)) { RejectedCount++; return false; }
+            if (!CanDeploy(definition)) { RejectedCount++; return false; }
             zone = Acquire(definition);
             if (!BattlefieldAnchorManager.Instance.TryClaim(BattlefieldAnchorType.Trap, zone, out BattlefieldAnchor anchor))
             {

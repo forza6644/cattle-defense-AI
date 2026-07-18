@@ -13,13 +13,18 @@ namespace Stonehold
         public int RejectedCount { get; private set; }
         public int StaleTargetCount => 0;
 
+        public bool CanDeploy(BattlefieldDefenseDefinition definition) => definition != null
+            && ActiveDefense == null
+            && BattlefieldAnchorManager.Instance != null
+            && BattlefieldAnchorManager.Instance.HasAvailableAnchor(BattlefieldAnchorType.Defense);
+
         private void Awake() { if (Instance != null && Instance != this) { Destroy(gameObject); return; } Instance = this; }
         private void OnDestroy() { if (Instance == this) Instance = null; }
 
         public bool TryDeploy(BattlefieldDefenseDefinition definition, out BattlefieldDefenseRuntime runtime)
         {
             runtime = null;
-            if (definition == null || ActiveDefense != null || BattlefieldAnchorManager.Instance == null) { RejectedCount++; return false; }
+            if (!CanDeploy(definition)) { RejectedCount++; return false; }
             runtime = Acquire(definition);
             if (!BattlefieldAnchorManager.Instance.TryClaim(BattlefieldAnchorType.Defense, runtime, out BattlefieldAnchor anchor))
             {
