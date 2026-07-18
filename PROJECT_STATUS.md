@@ -18,7 +18,7 @@ Date: 2026-07-18
 - Local corrective code/test commit: `505a2c0e854b66ef53ab38466f789ddfd4fe9410`
 - Qualified baseline documentation commit: `c068fb5a6daf785e8150ef28f1b37d2a2fa7efa5`
 - Unity: `6000.5.2f1`
-- Current milestone: Task 13E ranged normal enemy and healing Elite are locally qualified and remain isolated from production waves.
+- Current milestone: Task 13F fixed-anchor Caltrops, Burning Oil, and Wooden Barricade are locally qualified and remain isolated from production content.
 - Scenes: `MainMenu` and `GameScene`.
 
 Task 12B performed local qualification only; Task 12C owns the remote handoff.
@@ -189,6 +189,19 @@ Not implemented in Task 13A:
 - The batch GC peak includes test and scene-transition allocations; use Unity Profiler on device before optimization claims.
 - Imported Quaternius material customizations should later move to project-owned material copies.
 - Task 13E uses project-owned prototype accents and placeholders; final character art and mobile-device readability still require later visual integration and profiling.
+- Task 13F uses prototype trap and barricade geometry; final art, audio, physical Android profiling, and the final dense production encounter remain P3 work.
+
+## Task 13F Battlefield Defenses
+
+- Fixed Trap and Defense anchors deploy automatically; no grid, drag, free placement, or rotation UI was introduced.
+- `trap_caltrops`: radius 2, duration 18, damage 2/0.9s, 28% slow for 1.2s, maximum active 2.
+- `trap_burning_oil`: radius 2.5, 0.65s ignition, 5s burn, value 3/0.75s, maximum active 1.
+- `defense_wooden_barricade`: 90 health, armor 2, maximum active 1, no damage or rewards.
+- Qualification cards and pool remain outside `Resources/Cards`; production stays at 39 cards and `VerticalSlice18` stays at 18 entries.
+- Validator: 50 discovered cards, 7 enemies, 2 traps, 1 defense, 2 pools, 0 errors, 34 legacy warnings.
+- Tests: 88 EditMode + 85 PlayMode = 173/173 passing.
+- Stress: 300 Caltrops, 300 Oil and 200 Barricade cycles with zero active runtime objects or occupied anchors after cleanup.
+- Detailed evidence: `Assets/_Game/Docs/Task13F_BattlefieldDefenseQualification.md`.
 
 ## Protected Local Files
 
@@ -204,4 +217,4 @@ The following pre-existing changes remain preserved and unstaged:
 
 ## Next Approved Task
 
-Task 13F: add two traps and one battlefield defense without reintroducing tower-placement gameplay. Preserve the qualified enemy roster, 39-card production default, and isolated `VerticalSlice18` test pool.
+Task 13G: build a balanced ten-wave expansion run and profile the densest qualified encounter without changing the core Hero Castle Defense loop.

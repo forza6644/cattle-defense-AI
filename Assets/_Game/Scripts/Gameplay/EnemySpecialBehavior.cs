@@ -92,6 +92,10 @@ namespace Stonehold
 
         private bool TickRanged(EnemyRangedAttackSettings settings)
         {
+            BattlefieldDefenseRuntime defense = BattlefieldDefenseManager.Instance != null
+                ? BattlefieldDefenseManager.Instance.ActiveDefense
+                : null;
+            if (defense != null && defense.IsActive) return TickRangedDefense(settings, defense);
             if (castle == null || castle.IsGameOver)
             {
                 CancelPendingActions();
@@ -133,6 +137,29 @@ namespace Stonehold
                 actionTimer = settings.windUpSeconds;
                 SetWindUpVisible(true, 0f, new Color(1f, 0.55f, 0.08f));
             }
+            return true;
+        }
+
+        private bool TickRangedDefense(EnemyRangedAttackSettings settings, BattlefieldDefenseRuntime defense)
+        {
+            if (defense == null || !defense.IsActive) { CancelPendingActions(); return false; }
+            Face(defense.transform.position);
+            if (isWindingUp)
+            {
+                actionTimer -= Time.deltaTime;
+                SetWindUpVisible(true, 1f - Mathf.Clamp01(actionTimer / Mathf.Max(0.01f, settings.windUpSeconds)), new Color(1f, 0.55f, 0.08f));
+                if (actionTimer <= 0f)
+                {
+                    defense.TakeDamage(enemy.Data.castleDamage, enemy, activationId);
+                    VfxManager.Instance?.PlayHit(defense.transform.position + Vector3.up, new Color(1f, 0.45f, 0.08f));
+                    isWindingUp = false; actionTimer = settings.cooldownSeconds; SetWindUpVisible(false, 0f, Color.clear);
+                }
+                return true;
+            }
+            if (actionTimer > 0f) actionTimer -= Time.deltaTime;
+            float distance = Vector3.Distance(transform.position, defense.transform.position);
+            if (distance > settings.standOffRange) return false;
+            if (actionTimer <= 0f) { isWindingUp = true; actionTimer = settings.windUpSeconds; SetWindUpVisible(true, 0f, new Color(1f, 0.55f, 0.08f)); }
             return true;
         }
 

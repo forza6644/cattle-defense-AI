@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3712fd46809c4174c83589090a128870, type: 3}
+  m_Name: DeployCaltrops
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.CardDefinition
+  id: deploy_caltrops
+  displayName: Deploy Caltrops
+  description: Automatically deploy Caltrops at the first open trap anchor.
+  icon: {fileID: 0}
+  cardCategory: 4
+  recruitHeroId:
+  requiredOwnedHeroId:
+  blockedIfOwnedHeroId:
+  rarity: 0
+  targetType: 0
+  targetHeroId:
+  targetAttackType: 0
+  modifierType: 0
+  modifierValue: 0
+  weight: 1
+  maxStacks: 1
+  behaviorUpgrade:
+    effectType: 0
+    targetType: 1
+    targetHeroId:
+    targetAttackType: 0
+    integerValue: 0
+    floatValue: 0
+    percentageValue: 0
+    duration: 0
+    count: 0
+    secondaryValue: 0
+    maxStacks: 1
+  trapDefinition: {fileID: 11400000, guid: d46167ec81093c34c9ca8a01b849f34a, type: 2}
+  battlefieldDefenseDefinition: {fileID: 0}
+  castleUpgradeDefinition: {fileID: 0}
+  rerollDefinition: {fileID: 0}

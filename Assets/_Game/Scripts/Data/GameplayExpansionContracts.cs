@@ -36,6 +36,12 @@ namespace Stonehold
         Support = 5
     }
 
+    public enum TrapRuntimeType
+    {
+        Caltrops = 0,
+        BurningOil = 1
+    }
+
     public enum CastleUpgradeType
     {
         MaxHealth = 0,
@@ -141,17 +147,6 @@ namespace Stonehold
         public StatusEffectType statusEffectType = StatusEffectType.None;
         public float statusEffectValue;
         [Min(0f)] public float statusEffectDuration;
-    }
-
-    [CreateAssetMenu(fileName = "TrapDefinition", menuName = "Stonehold/Expansion/Trap Definition")]
-    public class TrapDefinition : BattlefieldContentDefinition
-    {
-    }
-
-    [CreateAssetMenu(fileName = "BattlefieldDefenseDefinition", menuName = "Stonehold/Expansion/Battlefield Defense Definition")]
-    public class BattlefieldDefenseDefinition : BattlefieldContentDefinition
-    {
-        [Min(0f)] public float health;
     }
 
     [CreateAssetMenu(fileName = "CastleUpgradeDefinition", menuName = "Stonehold/Expansion/Castle Upgrade Definition")]

@@ -83,6 +83,8 @@ namespace Stonehold
         private Renderer[] renderers;
         private Rigidbody[] rigidbodies;
         private EnemySpecialBehavior specialBehavior;
+        private BattlefieldDefenseRuntime blockingDefense;
+        private float defenseAttackTimer;
 
         public EnemyData Data => data;
         public float CurrentHealth => currentHealth;
@@ -241,6 +243,8 @@ namespace Stonehold
             statusController?.ResetController();
             animator?.ResetForReuse();
             specialBehavior?.ResetForReuse();
+            blockingDefense = null;
+            defenseAttackTimer = 0f;
             slowMultiplier = 1f;
             slowTimer = 0f;
             isDead = false;
@@ -355,6 +359,11 @@ namespace Stonehold
             ApplyStatusEffect(new StatusEffect(StatusEffectType.Slow, multiplier, duration));
         }
 
+        public void RemoveStatusEffectsFromSource(string sourceId)
+        {
+            statusController?.RemoveEffectsFromSource(sourceId);
+        }
+
         public float RestoreHealth(float amount)
         {
             if (amount <= 0f || isDead || !isActiveActivation || data == null)
@@ -431,6 +440,13 @@ namespace Stonehold
                 return;
             }
 
+
+            if (TickBlockingDefense())
+            {
+                animator?.SetMoving(false);
+                return;
+            }
+
             if (specialBehavior != null && specialBehavior.Tick())
             {
                 animator?.SetMoving(false);
@@ -504,6 +520,27 @@ namespace Stonehold
                 animator.PlayAttack();
             }
             AttackCastle();
+        }
+
+        private bool TickBlockingDefense()
+        {
+            BattlefieldDefenseRuntime active = BattlefieldDefenseManager.Instance != null
+                ? BattlefieldDefenseManager.Instance.ActiveDefense
+                : null;
+            if (active == null || !active.IsActive) { blockingDefense = null; return false; }
+            blockingDefense = active;
+            float distance = Vector3.Distance(transform.position, active.transform.position);
+            if (distance > active.MeleeStopRange) return false;
+            Vector3 direction = active.transform.position - transform.position; direction.y = 0f;
+            if (direction.sqrMagnitude > 0.001f) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), 12f * Time.deltaTime);
+            defenseAttackTimer -= Time.deltaTime;
+            if (defenseAttackTimer <= 0f)
+            {
+                defenseAttackTimer = 1f;
+                animator?.PlayAttack();
+                active.TakeDamage(data != null ? data.castleDamage : 1f, this, activationId);
+            }
+            return true;
         }
 
         private void AttackCastle()

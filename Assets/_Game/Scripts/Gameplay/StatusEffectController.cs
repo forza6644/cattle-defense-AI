@@ -129,6 +129,21 @@ namespace Stonehold
             enabled = activeEffects.Count > 0;
         }
 
+        public void RemoveEffectsFromSource(string sourceId)
+        {
+            if (string.IsNullOrEmpty(sourceId)) return;
+            bool slowChanged = false;
+            for (int i = activeEffects.Count - 1; i >= 0; i--)
+            {
+                if (activeEffects[i].SourceHeroId != sourceId) continue;
+                slowChanged |= activeEffects[i].EffectType == StatusEffectType.Slow || activeEffects[i].EffectType == StatusEffectType.Stun;
+                activeEffects.RemoveAt(i);
+            }
+            if (slowChanged) UpdateEnemySlowMultiplier();
+            RebuildActiveState(true);
+            enabled = activeEffects.Count > 0;
+        }
+
         private void HandleApplySlow(StatusEffect newEffect)
         {
             StatusEffect existingSlow = activeEffects.Find(e => e.EffectType == StatusEffectType.Slow);

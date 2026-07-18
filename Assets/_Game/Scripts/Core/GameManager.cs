@@ -79,11 +79,25 @@ namespace Stonehold
             }
             CardDraftManager.Instance?.ResetForRun();
 
+            EnsureBattlefieldManager<BattlefieldAnchorManager>("BattlefieldAnchorManager");
+            EnsureBattlefieldManager<TrapRuntimeManager>("TrapRuntimeManager");
+            EnsureBattlefieldManager<BattlefieldDefenseManager>("BattlefieldDefenseManager");
+            TrapRuntimeManager.Instance?.ResetForRun();
+            BattlefieldDefenseManager.Instance?.ResetForRun();
+            BattlefieldAnchorManager.Instance?.ResetForRun();
+
             if (FindAnyObjectByType<MetaUpgradeManager>() == null)
             {
                 GameObject managerGo = new GameObject("MetaUpgradeManager", typeof(MetaUpgradeManager));
                 DontDestroyOnLoad(managerGo);
             }
+        }
+
+        private static void EnsureBattlefieldManager<T>(string objectName) where T : Component
+        {
+            if (FindAnyObjectByType<T>() != null) return;
+            GameObject manager = new GameObject(objectName, typeof(T));
+            DontDestroyOnLoad(manager);
         }
 
         private void Start()

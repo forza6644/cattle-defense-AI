@@ -67,6 +67,7 @@ namespace Stonehold
         public CardModifierType modifierType = CardModifierType.DamageMultiplier;
         public float modifierValue;
         public float weight = 1f;
+        [Min(1)] public int maxStacks = 1;
 
         [Header("Gameplay Expansion Contracts")]
         public HeroBehaviorUpgradeData behaviorUpgrade;

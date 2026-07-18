@@ -213,9 +213,29 @@ namespace Stonehold
                 return;
             }
 
+            if (card.cardCategory == CardCategory.Trap)
+            {
+                if (TrapRuntimeManager.Instance != null
+                    && TrapRuntimeManager.Instance.TryDeploy(card.trapDefinition, out _))
+                {
+                    RunModifierManager.Instance?.TryAddCard(card);
+                }
+                return;
+            }
+
+            if (card.cardCategory == CardCategory.BattlefieldDefense)
+            {
+                if (BattlefieldDefenseManager.Instance != null
+                    && BattlefieldDefenseManager.Instance.TryDeploy(card.battlefieldDefenseDefinition, out _))
+                {
+                    RunModifierManager.Instance?.TryAddCard(card);
+                }
+                return;
+            }
+
             if (RunModifierManager.Instance != null)
             {
-                RunModifierManager.Instance.AddCard(card);
+                RunModifierManager.Instance.TryAddCard(card);
             }
         }
 

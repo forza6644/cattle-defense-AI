@@ -41,20 +41,26 @@ namespace Stonehold
 
         public void AddCard(CardDefinition card)
         {
+            TryAddCard(card);
+        }
+
+        public bool TryAddCard(CardDefinition card)
+        {
             if (card == null)
             {
-                return;
+                return false;
             }
 
             if (card.cardCategory == CardCategory.HeroUpgrade &&
                 card.behaviorUpgrade != null &&
                 !ApplyBehaviorUpgrade(card.behaviorUpgrade))
             {
-                return;
+                return false;
             }
 
             activeCards.Add(card);
             Debug.Log($"[RunModifierManager] Card modifier added: {card.displayName} ({card.modifierType} +{card.modifierValue})");
+            return true;
         }
 
         public void ClearModifiers()

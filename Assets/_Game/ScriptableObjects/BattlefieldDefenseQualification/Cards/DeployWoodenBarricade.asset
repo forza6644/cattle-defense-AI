@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3712fd46809c4174c83589090a128870, type: 3}
+  m_Name: DeployWoodenBarricade
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.CardDefinition
+  id: deploy_wooden_barricade
+  displayName: Deploy Wooden Barricade
+  description: Automatically deploy a barricade at the fixed defense anchor.
+  icon: {fileID: 0}
+  cardCategory: 5
+  recruitHeroId:
+  requiredOwnedHeroId:
+  blockedIfOwnedHeroId:
+  rarity: 1
+  targetType: 0
+  targetHeroId:
+  targetAttackType: 0
+  modifierType: 0
+  modifierValue: 0
+  weight: 1
+  maxStacks: 1
+  behaviorUpgrade:
+    effectType: 0
+    targetType: 1
+    targetHeroId:
+    targetAttackType: 0
+    integerValue: 0
+    floatValue: 0
+    percentageValue: 0
+    duration: 0
+    count: 0
+    secondaryValue: 0
+    maxStacks: 1
+  trapDefinition: {fileID: 0}
+  battlefieldDefenseDefinition: {fileID: 11400000, guid: 17114e6bc8fdc164ca7ea0ca5463a279, type: 2}
+  castleUpgradeDefinition: {fileID: 0}
+  rerollDefinition: {fileID: 0}

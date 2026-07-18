@@ -37,6 +37,7 @@ namespace Stonehold.Editor
                 issues.AddRange(GameplayDataValidation.ValidateCardPool(pool));
             }
             ValidateTask13EIsolation(enemies, issues);
+            ValidateTask13FIsolation(cards, traps, defenses, issues);
 
             Debug.Log(BuildSummary(cards, enemies, traps.Length, defenses.Length, castleUpgrades.Length, rerolls.Length, cardPools.Length, issues));
             foreach (GameplayValidationIssue issue in issues)
@@ -163,6 +164,30 @@ namespace Stonehold.Editor
                         issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13e.production-wave", $"'{enemy.stableId}' must remain outside production wave '{wave.name}'.", wave));
                     }
                 }
+            }
+        }
+
+        private static void ValidateTask13FIsolation(CardDefinition[] cards, TrapDefinition[] traps, BattlefieldDefenseDefinition[] defenses, List<GameplayValidationIssue> issues)
+        {
+            TrapDefinition caltrops = traps.FirstOrDefault(item => item != null && item.stableId == "trap_caltrops");
+            TrapDefinition oil = traps.FirstOrDefault(item => item != null && item.stableId == "trap_burning_oil");
+            BattlefieldDefenseDefinition barricade = defenses.FirstOrDefault(item => item != null && item.stableId == "defense_wooden_barricade");
+            bool any = caltrops != null || oil != null || barricade != null;
+            if (!any) return;
+            if (traps.Count(item => item != null && AssetDatabase.GetAssetPath(item).StartsWith(BattlefieldDefenseQualificationBuilder.Root, StringComparison.Ordinal)) != 2)
+                issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13f.trap-count", "Task 13F requires exactly two isolated trap definitions."));
+            if (defenses.Count(item => item != null && AssetDatabase.GetAssetPath(item).StartsWith(BattlefieldDefenseQualificationBuilder.Root, StringComparison.Ordinal)) != 1)
+                issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13f.defense-count", "Task 13F requires exactly one isolated battlefield defense."));
+            if (caltrops == null || oil == null || barricade == null)
+                issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13f.definition-missing", "Task 13F qualification definitions are incomplete."));
+
+            string[] ids = { "deploy_caltrops", "deploy_burning_oil", "deploy_wooden_barricade" };
+            for (int i = 0; i < ids.Length; i++)
+            {
+                CardDefinition card = cards.FirstOrDefault(item => item != null && item.id == ids[i]);
+                if (card == null) { issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13f.card-missing", $"Missing qualification card '{ids[i]}'.")); continue; }
+                string path = AssetDatabase.GetAssetPath(card).Replace('\\', '/');
+                if (path.Contains("/Resources/Cards/")) issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13f.production-card", $"'{ids[i]}' must remain outside Resources/Cards.", card));
             }
         }
 

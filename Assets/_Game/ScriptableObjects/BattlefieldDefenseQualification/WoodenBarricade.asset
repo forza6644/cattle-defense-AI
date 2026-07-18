@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 900cceed92e685646a763235b3a9d2b6, type: 3}
+  m_Name: WoodenBarricade
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.BattlefieldDefenseDefinition
+  stableId: defense_wooden_barricade
+  displayName: Wooden Barricade
+  description: A fixed temporary blocker that buys time without attacking.
+  rarity: 1
+  prefab: {fileID: 7534266620272710273, guid: 1f088b54262c2fd43821b310238fc102, type: 3}
+  placementMode: 2
+  duration: 0
+  charges: 1
+  damage: 0
+  effectRadius: 0
+  triggerInterval: 0
+  effectType: 4
+  statusEffectType: 0
+  statusEffectValue: 0
+  statusEffectDuration: 0
+  health: 90
+  armor: 2
+  maxActive: 1

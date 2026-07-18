@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6168053ae5f624e4ba469a6f14a7cd7c, type: 3}
+  m_Name: Task13FQualificationPool
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.CardPoolDefinition
+  stableId: task13f_qualification
+  displayName: Task 13F Qualification
+  description: Isolated controlled card pool for fixed battlefield anchors.
+  startingHeroId: archer
+  supportedHeroIds:
+  - archer
+  expectedCardCount: 3
+  recruitOptionPolicy: 0
+  allowedCategories: 0400000005000000
+  allowedRarities: 0000000001000000
+  cards:
+  - card: {fileID: 11400000, guid: 30d849d567b3e274c8de2ac7cead4b00, type: 2}
+    rarity: 0
+    weight: 1
+  - card: {fileID: 11400000, guid: 41a472c49e386bc4ba85de3489381296, type: 2}
+    rarity: 1
+    weight: 1
+  - card: {fileID: 11400000, guid: 697fdc45493e33542a3a9dd3130eaa35, type: 2}
+    rarity: 1
+    weight: 1

@@ -130,6 +130,21 @@ namespace Stonehold
             {
                 issues.Add(Error("battlefield.values", $"'{definition.name}' contains invalid numeric values.", definition));
             }
+            if (definition is TrapDefinition trap)
+            {
+                if (!Enum.IsDefined(typeof(TrapRuntimeType), trap.runtimeType) || trap.maxActive < 1 || trap.maxTicksPerEnemy < 1
+                    || !IsFiniteNonNegative(trap.ignitionDelay) || !IsFiniteNonNegative(trap.burningDuration)
+                    || !IsFiniteNonNegative(trap.retriggerCooldown) || trap.effectRadius <= 0f || trap.duration <= 0f
+                    || trap.triggerInterval <= 0f)
+                {
+                    issues.Add(Error("trap.runtime-values", $"'{definition.name}' requires bounded runtime values.", definition));
+                }
+            }
+            if (definition is BattlefieldDefenseDefinition defense
+                && (defense.health <= 0f || !IsFiniteNonNegative(defense.armor) || defense.maxActive < 1))
+            {
+                issues.Add(Error("defense.runtime-values", $"'{definition.name}' requires positive health and bounded runtime values.", definition));
+            }
             return issues;
         }
 
@@ -317,6 +332,8 @@ namespace Stonehold
                 return issues;
             }
 
+            if (pool.stableId == "task13f_qualification") return ValidateQualificationPool(pool);
+
             ValidateIdentity(pool.stableId, pool.displayName, pool.description, "card-pool", pool, issues);
             if (pool.expectedCardCount < 1 || pool.cards == null || pool.cards.Count != pool.expectedCardCount)
             {
@@ -380,6 +397,26 @@ namespace Stonehold
             {
                 if (heroId != pool.startingHeroId && !recruitHeroes.Contains(heroId)) issues.Add(Error("card-pool.recruit.coverage", $"Pool lacks recruit coverage for '{heroId}'.", pool));
                 if (!upgradeCounts.TryGetValue(heroId, out int count) || count < 2) issues.Add(Error("card-pool.upgrade.coverage", $"Pool requires two behavior upgrades for '{heroId}'.", pool));
+            }
+            return issues;
+        }
+
+        private static List<GameplayValidationIssue> ValidateQualificationPool(CardPoolDefinition pool)
+        {
+            var issues = new List<GameplayValidationIssue>();
+            ValidateIdentity(pool.stableId, pool.displayName, pool.description, "card-pool", pool, issues);
+            if (pool.cards == null || pool.cards.Count != 3 || pool.expectedCardCount != 3)
+                issues.Add(Error("task13f.pool-count", "Task 13F qualification pool requires exactly three cards.", pool));
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            if (pool.cards != null) for (int i = 0; i < pool.cards.Count; i++)
+            {
+                CardPoolEntry entry = pool.cards[i]; CardDefinition card = entry?.card;
+                if (card == null) { issues.Add(Error("task13f.pool-card", "Task 13F qualification pool contains a missing card.", pool)); continue; }
+                if (!ids.Add(card.id)) issues.Add(Error("task13f.pool-duplicate", $"Duplicate qualification card '{card.id}'.", card));
+                if (card.cardCategory != CardCategory.Trap && card.cardCategory != CardCategory.BattlefieldDefense)
+                    issues.Add(Error("task13f.pool-category", $"Qualification card '{card.id}' has an invalid category.", card));
+                if (!IsFinite(entry.weight) || entry.weight <= 0f || card.maxStacks < 1)
+                    issues.Add(Error("task13f.pool-values", $"Qualification card '{card.id}' has invalid weight or stacks.", card));
             }
             return issues;
         }
