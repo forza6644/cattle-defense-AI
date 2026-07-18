@@ -21,6 +21,7 @@ namespace Stonehold
 
         public IReadOnlyCollection<string> OwnedHeroIds => ownedHeroIds;
         public int EmptySlotCount => CountEmptySlots();
+        public int CachedEmptySlotCount => CountCachedEmptySlots();
         public IReadOnlyList<HeroSlot> Slots => slots;
 
         private void Awake()
@@ -90,6 +91,19 @@ namespace Stonehold
             }
 
             return false;
+        }
+
+        public void CopyOwnedAttackTypesTo(ICollection<AttackType> destination)
+        {
+            if (destination == null) return;
+            foreach (string heroId in ownedHeroIds)
+            {
+                if (heroDefinitions.TryGetValue(heroId, out HeroDefinition hero)
+                    && hero != null && hero.weapon != null && !destination.Contains(hero.weapon.attackType))
+                {
+                    destination.Add(hero.weapon.attackType);
+                }
+            }
         }
 
         public bool RecruitHero(string heroId)
@@ -280,6 +294,11 @@ namespace Stonehold
         private int CountEmptySlots()
         {
             RefreshSlots();
+            return CountCachedEmptySlots();
+        }
+
+        private int CountCachedEmptySlots()
+        {
             int count = 0;
             for (int i = 0; i < slots.Count; i++)
             {

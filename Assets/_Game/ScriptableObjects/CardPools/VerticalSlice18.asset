@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6168053ae5f624e4ba469a6f14a7cd7c, type: 3}
+  m_Name: VerticalSlice18
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.CardPoolDefinition
+  stableId: vertical_slice_18
+  displayName: Vertical Slice 18
+  description: Controlled four-hero qualification pool for the ten-wave vertical
+    slice.
+  startingHeroId: archer
+  supportedHeroIds:
+  - archer
+  - bombardier
+  - frost_mage
+  - electric_engineer
+  expectedCardCount: 18
+  recruitOptionPolicy: 1
+  allowedCategories: 000000000100000002000000
+  allowedRarities: 000000000100000002000000
+  cards:
+  - card: {fileID: 11400000, guid: 2f5f8fd89f7445a09e1f3b0b0e4d8b01, type: 2}
+    rarity: 0
+    weight: 2
+  - card: {fileID: 11400000, guid: b3d3c23f2214479abed6de56ca9e1d92, type: 2}
+    rarity: 0
+    weight: 2
+  - card: {fileID: 11400000, guid: 92866fddbd314b5397feee33e6cdd22b, type: 2}
+    rarity: 0
+    weight: 2
+  - card: {fileID: 11400000, guid: e919db26292d6f848b39f102ccb0c620, type: 2}
+    rarity: 0
+    weight: 1.2
+  - card: {fileID: 11400000, guid: 0ca74569ac068e846a0491a9d4f5e296, type: 2}
+    rarity: 1
+    weight: 0.8
+  - card: {fileID: 11400000, guid: 35ff285d8e0b4e3458e85a83627b2792, type: 2}
+    rarity: 1
+    weight: 0.8
+  - card: {fileID: 11400000, guid: d2ec438e7be001a4a938eb970a3fbae6, type: 2}
+    rarity: 0
+    weight: 1.2
+  - card: {fileID: 11400000, guid: f8698f462cd1f194387b15e86589ffab, type: 2}
+    rarity: 1
+    weight: 0.8
+  - card: {fileID: 11400000, guid: e8f4e3b2d9456024088707c22b9b7db1, type: 2}
+    rarity: 2
+    weight: 0.35
+  - card: {fileID: 11400000, guid: 304d09902c28b8d428524c9c517d3d92, type: 2}
+    rarity: 1
+    weight: 0.8
+  - card: {fileID: 11400000, guid: 9cc2ea8515199094fb3db01d1ba82e70, type: 2}
+    rarity: 2
+    weight: 0.35
+  - card: {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120024, type: 2}
+    rarity: 0
+    weight: 1.2
+  - card: {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120023, type: 2}
+    rarity: 0
+    weight: 1.2
+  - card: {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120025, type: 2}
+    rarity: 0
+    weight: 1.2
+  - card: {fileID: 11400000, guid: 0d87cf1111c140e4bb3d20bec80be887, type: 2}
+    rarity: 0
+    weight: 1.2
+  - card: {fileID: 11400000, guid: 0a8235b13a89525498b5fac04f23a756, type: 2}
+    rarity: 0
+    weight: 1.2
+  - card: {fileID: 11400000, guid: 3f633392d95389c4287f8d24f7718f4c, type: 2}
+    rarity: 1
+    weight: 0.8
+  - card: {fileID: 11400000, guid: ee3e13bd74e2601499259e7eba4aa1a0, type: 2}
+    rarity: 1
+    weight: 0.8

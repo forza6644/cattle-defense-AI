@@ -17,6 +17,17 @@ namespace Stonehold
         public IReadOnlyList<CardDefinition> ActiveCards => activeCards;
         public int Revision { get; private set; }
 
+        public int GetCardStackCount(string cardId)
+        {
+            if (string.IsNullOrEmpty(cardId)) return 0;
+            int count = 0;
+            for (int i = 0; i < activeCards.Count; i++)
+            {
+                if (activeCards[i] != null && activeCards[i].id == cardId) count++;
+            }
+            return count;
+        }
+
         private void Awake()
         {
             if (Instance != null && Instance != this)

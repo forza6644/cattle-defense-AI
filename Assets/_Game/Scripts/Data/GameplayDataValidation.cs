@@ -255,6 +255,82 @@ namespace Stonehold
             return issues;
         }
 
+        public static List<GameplayValidationIssue> ValidateCardPool(CardPoolDefinition pool)
+        {
+            var issues = new List<GameplayValidationIssue>();
+            if (pool == null)
+            {
+                issues.Add(Error("card-pool.missing", "Card pool definition is missing."));
+                return issues;
+            }
+
+            ValidateIdentity(pool.stableId, pool.displayName, pool.description, "card-pool", pool, issues);
+            if (pool.expectedCardCount < 1 || pool.cards == null || pool.cards.Count != pool.expectedCardCount)
+            {
+                issues.Add(Error("card-pool.count", $"'{pool.name}' requires exactly {pool.expectedCardCount} card entries.", pool));
+            }
+
+            var allowedCategories = new HashSet<CardCategory>(pool.allowedCategories ?? Array.Empty<CardCategory>());
+            var allowedRarities = new HashSet<CardRarity>(pool.allowedRarities ?? Array.Empty<CardRarity>());
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var references = new HashSet<CardDefinition>();
+            var recruitHeroes = new HashSet<string>(StringComparer.Ordinal);
+            var upgradeCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            var supportedHeroes = new HashSet<string>(pool.supportedHeroIds ?? Array.Empty<string>(), StringComparer.Ordinal);
+
+            if (supportedHeroes.Count == 0 || supportedHeroes.Contains(string.Empty))
+            {
+                issues.Add(Error("card-pool.heroes", $"'{pool.name}' requires explicit supported hero IDs.", pool));
+            }
+
+            if (string.IsNullOrWhiteSpace(pool.startingHeroId) || !supportedHeroes.Contains(pool.startingHeroId))
+            {
+                issues.Add(Error("card-pool.starting-hero", $"'{pool.name}' requires a supported starting hero.", pool));
+            }
+
+            if (pool.cards != null)
+            {
+                for (int i = 0; i < pool.cards.Count; i++)
+                {
+                    CardPoolEntry entry = pool.cards[i];
+                    CardDefinition card = entry?.card;
+                    if (card == null)
+                    {
+                        issues.Add(Error("card-pool.card.missing", $"'{pool.name}' has a missing card at index {i}.", pool));
+                        continue;
+                    }
+                    if (!references.Add(card)) issues.Add(Error("card-pool.reference.duplicate", $"'{pool.name}' references '{card.name}' more than once.", pool));
+                    if (string.IsNullOrWhiteSpace(card.id) || !ids.Add(card.id)) issues.Add(Error("card-pool.id.duplicate", $"'{pool.name}' has duplicate or missing card ID '{card.id}'.", pool));
+                    if (!allowedCategories.Contains(card.cardCategory)) issues.Add(Error("card-pool.category", $"Card '{card.id}' uses a disallowed category.", card));
+                    if (!Enum.IsDefined(typeof(CardRarity), entry.rarity) || !allowedRarities.Contains(entry.rarity)) issues.Add(Error("card-pool.rarity", $"Card '{card.id}' uses a disallowed rarity.", card));
+                    if (!IsFinite(entry.weight) || entry.weight <= 0f) issues.Add(Error("card-pool.weight", $"Card '{card.id}' requires a positive finite pool weight.", card));
+
+                    if (card.cardCategory == CardCategory.RecruitHero)
+                    {
+                        if (!supportedHeroes.Contains(card.recruitHeroId)) issues.Add(Error("card-pool.recruit.unsupported", $"Card '{card.id}' recruits unsupported hero '{card.recruitHeroId}'.", card));
+                        else recruitHeroes.Add(card.recruitHeroId);
+                    }
+                    if (card.targetType == CardTargetType.HeroById && !supportedHeroes.Contains(card.targetHeroId))
+                    {
+                        issues.Add(Error("card-pool.target.unknown", $"Card '{card.id}' targets unsupported hero '{card.targetHeroId}'.", card));
+                    }
+                    if (card.cardCategory == CardCategory.HeroUpgrade)
+                    {
+                        if (card.behaviorUpgrade == null) issues.Add(Error("card-pool.upgrade.missing", $"Card '{card.id}' lacks behavior data.", card));
+                        string heroId = card.targetHeroId;
+                        upgradeCounts[heroId] = upgradeCounts.TryGetValue(heroId, out int value) ? value + 1 : 1;
+                    }
+                }
+            }
+
+            foreach (string heroId in supportedHeroes)
+            {
+                if (heroId != pool.startingHeroId && !recruitHeroes.Contains(heroId)) issues.Add(Error("card-pool.recruit.coverage", $"Pool lacks recruit coverage for '{heroId}'.", pool));
+                if (!upgradeCounts.TryGetValue(heroId, out int count) || count < 2) issues.Add(Error("card-pool.upgrade.coverage", $"Pool requires two behavior upgrades for '{heroId}'.", pool));
+            }
+            return issues;
+        }
+
         public static bool HasErrors(IEnumerable<GameplayValidationIssue> issues)
         {
             if (issues == null) return false;

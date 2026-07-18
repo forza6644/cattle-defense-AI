@@ -13,11 +13,14 @@ namespace Stonehold
     {
         public static CardDraftManager Instance { get; private set; }
 
-        private List<CardDefinition> cardPool = new List<CardDefinition>();
+        [SerializeField] private CardPoolDefinition poolOverride;
+
+        private readonly List<CardPoolEntry> cardPool = new List<CardPoolEntry>();
         private bool isDraftActive = false;
         private bool isSelectionMade = false;
 
         public bool IsDraftActive => isDraftActive;
+        public CardPoolDefinition PoolOverride => poolOverride;
 
         private void Awake()
         {
@@ -49,11 +52,32 @@ namespace Stonehold
 
         private void LoadCardPool()
         {
-            CardDefinition[] loadedCards = Resources.LoadAll<CardDefinition>("Cards");
             cardPool.Clear();
+            if (poolOverride != null)
+            {
+                if (GameplayDataValidation.HasErrors(GameplayDataValidation.ValidateCardPool(poolOverride)))
+                {
+                    Debug.LogError($"[CardDraftManager] Pool override '{poolOverride.name}' is invalid. Draft disabled until corrected.", poolOverride);
+                    return;
+                }
+
+                cardPool.AddRange(poolOverride.cards);
+                Debug.Log($"[CardDraftManager] Loaded override pool '{poolOverride.stableId}' with {cardPool.Count} cards.");
+                return;
+            }
+
+            CardDefinition[] loadedCards = Resources.LoadAll<CardDefinition>("Cards");
             if (loadedCards != null && loadedCards.Length > 0)
             {
-                cardPool.AddRange(loadedCards);
+                for (int i = 0; i < loadedCards.Length; i++)
+                {
+                    cardPool.Add(new CardPoolEntry
+                    {
+                        card = loadedCards[i],
+                        rarity = loadedCards[i].rarity,
+                        weight = loadedCards[i].weight
+                    });
+                }
                 Debug.Log($"[CardDraftManager] Successfully loaded {cardPool.Count} cards from Resources/Cards.");
             }
             else
@@ -70,6 +94,17 @@ namespace Stonehold
             LoadCardPool();
         }
 
+        public void SetPoolOverrideForQualification(CardPoolDefinition definition)
+        {
+            if (isDraftActive)
+            {
+                Debug.LogWarning("[CardDraftManager] Cannot change card pool during an active draft.");
+                return;
+            }
+            poolOverride = definition;
+            LoadCardPool();
+        }
+
 
         /// <summary>
         /// Suspends wave progression, shows the draft UI, and blocks until a card is selected.
@@ -81,11 +116,8 @@ namespace Stonehold
                 yield break;
             }
 
-            // Reload card pool to make sure any dynamically created/edited cards are captured
-            LoadCardPool();
-
-            List<CardDefinition> validCards = GetValidCardPool();
-            if (validCards.Count == 0)
+            List<DraftCardChoice> choices = GenerateDraftChoices();
+            if (choices.Count == 0)
             {
                 Debug.LogWarning("[CardDraftManager] Cannot start draft: no valid cards for the current roster.");
                 yield break;
@@ -94,17 +126,13 @@ namespace Stonehold
             isDraftActive = true;
             isSelectionMade = false;
 
-            // Pick 3 random cards based on weights
-            List<CardDefinition> choices = PickRandomCards(validCards, 3);
-
             // Map CardDefinition to RunProgressionManager.CardChoice
             RunProgressionManager.CardChoice[] choiceStructs = new RunProgressionManager.CardChoice[3];
             for (int i = 0; i < 3; i++)
             {
                 if (i < choices.Count)
                 {
-                    var card = choices[i];
-                    choiceStructs[i] = CreateChoice(card);
+                    choiceStructs[i] = CreateChoice(choices[i]);
                 }
                 else
                 {
@@ -138,9 +166,9 @@ namespace Stonehold
             }
         }
 
-        private RunProgressionManager.CardChoice CreateChoice(CardDefinition card)
+        private RunProgressionManager.CardChoice CreateChoice(DraftCardChoice choice)
         {
-            CardDefinition selectedCard = card;
+            CardDefinition selectedCard = choice.Card;
             string cardType = selectedCard.cardCategory == CardCategory.RecruitHero ? "Add" : "Card";
             return new RunProgressionManager.CardChoice(
                 selectedCard.displayName,
@@ -151,7 +179,7 @@ namespace Stonehold
                     isSelectionMade = true;
                 },
                 cardType,
-                selectedCard.rarity.ToString()
+                choice.Rarity.ToString()
             );
         }
 
@@ -191,115 +219,42 @@ namespace Stonehold
             }
         }
 
-        private List<CardDefinition> GetValidCardPool()
+        public List<DraftCardChoice> GenerateDraftChoices(int? deterministicSeed = null)
         {
-            List<CardDefinition> valid = new List<CardDefinition>();
-            foreach (CardDefinition card in cardPool)
-            {
-                if (IsCardValid(card))
-                {
-                    valid.Add(card);
-                }
-            }
-
-            return valid;
+            DraftSelectionState state = BuildSelectionState();
+            RecruitOptionPolicy policy = poolOverride != null
+                ? poolOverride.recruitOptionPolicy
+                : RecruitOptionPolicy.Weighted;
+            return CardDraftSelector.Generate(cardPool, state, 3, policy, deterministicSeed);
         }
 
-        private bool IsCardValid(CardDefinition card)
+        private DraftSelectionState BuildSelectionState()
         {
-            if (card == null)
-            {
-                return false;
-            }
-
             HeroRosterManager roster = HeroRosterManager.Instance;
-            if (roster == null)
+            var heroIds = new List<string>();
+            var attackTypes = new List<AttackType>();
+            int openSlots = 0;
+            if (roster != null)
             {
-                return card.cardCategory != CardCategory.RecruitHero;
+                heroIds.AddRange(roster.OwnedHeroIds);
+                roster.CopyOwnedAttackTypesTo(attackTypes);
+                openSlots = roster.CachedEmptySlotCount;
             }
 
-            if (!string.IsNullOrEmpty(card.requiredOwnedHeroId) && !roster.IsHeroOwned(card.requiredOwnedHeroId))
+            var stacks = new Dictionary<string, int>(System.StringComparer.Ordinal);
+            RunModifierManager modifiers = RunModifierManager.Instance;
+            if (modifiers != null)
             {
-                return false;
-            }
-
-            if (!string.IsNullOrEmpty(card.blockedIfOwnedHeroId) && roster.IsHeroOwned(card.blockedIfOwnedHeroId))
-            {
-                return false;
-            }
-
-            if (card.cardCategory == CardCategory.RecruitHero)
-            {
-                return roster.CanRecruit(card.recruitHeroId);
-            }
-
-            if (card.targetType == CardTargetType.HeroById && !string.IsNullOrEmpty(card.targetHeroId))
-            {
-                return roster.CanUpgrade(card.targetHeroId);
-            }
-
-            if (card.targetType == CardTargetType.AttackType)
-            {
-                return roster.HasOwnedHeroWithAttackType(card.targetAttackType);
-            }
-
-            return true;
-        }
-
-        private List<CardDefinition> PickRandomCards(List<CardDefinition> sourcePool, int count)
-        {
-            List<CardDefinition> pool = new List<CardDefinition>(sourcePool);
-            List<CardDefinition> selected = new List<CardDefinition>();
-            System.Random rng = new System.Random();
-
-            for (int c = 0; c < count; c++)
-            {
-                if (pool.Count == 0) break;
-
-                // Calculate cumulative weight
-                float totalWeight = 0f;
-                foreach (var card in pool)
+                for (int i = 0; i < cardPool.Count; i++)
                 {
-                    totalWeight += card.weight;
-                }
-
-                if (totalWeight <= 0f)
-                {
-                    // Fallback to direct random index
-                    int idx = rng.Next(pool.Count);
-                    selected.Add(pool[idx]);
-                    pool.RemoveAt(idx);
-                    continue;
-                }
-
-                double randVal = rng.NextDouble() * totalWeight;
-                float runningSum = 0f;
-                int selectedIndex = 0;
-
-                for (int i = 0; i < pool.Count; i++)
-                {
-                    runningSum += pool[i].weight;
-                    if (randVal <= runningSum)
+                    CardDefinition card = cardPool[i]?.card;
+                    if (card != null && card.cardCategory == CardCategory.HeroUpgrade)
                     {
-                        selectedIndex = i;
-                        break;
+                        stacks[card.id] = modifiers.GetCardStackCount(card.id);
                     }
                 }
-
-                CardDefinition selectedCard = pool[selectedIndex];
-                selected.Add(selectedCard);
-                if (selectedCard.cardCategory == CardCategory.RecruitHero && !string.IsNullOrEmpty(selectedCard.recruitHeroId))
-                {
-                    pool.RemoveAll(card => card != null
-                        && card.cardCategory == CardCategory.RecruitHero
-                        && card.recruitHeroId == selectedCard.recruitHeroId);
-                    continue;
-                }
-
-                pool.RemoveAt(selectedIndex);
             }
-
-            return selected;
+            return new DraftSelectionState(heroIds, attackTypes, openSlots, stacks);
         }
     }
 }

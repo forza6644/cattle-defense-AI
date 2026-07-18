@@ -7,7 +7,8 @@ Date: 2026-07-17
 - Repository: `forza6644/cattle-defense-AI`
 - Qualified remote baseline: `7f7101dfdf822f6e1b6c55845f59772003d5625e`
 - Task 13C source baseline: `5f5810479268d8619506e4db2f3c6cb5bfff1741`.
-- Active branch: `feature/hero-behavior-upgrades`.
+- Task 13D source baseline: `8f34d660a584bd24f169dbeeaaa97a1f90276a31`.
+- Active branch: `feature/curated-card-pool`.
 - Original Task 13C implementation commit: `7e483ac8a6eacd47caa8d58a7af15e260fe71bbf`.
 - Task 13C corrective qualification commit: `3acfff4cf87c620e0f8348fa719a696c0310af89`.
 - Task 13A local commit: this commit, `Gameplay expansion data contracts and validation` (exact hash is reported after creation).
@@ -16,7 +17,7 @@ Date: 2026-07-17
 - Local corrective code/test commit: `505a2c0e854b66ef53ab38466f789ddfd4fe9410`
 - Qualified baseline documentation commit: `c068fb5a6daf785e8150ef28f1b37d2a2fa7efa5`
 - Unity: `6000.5.2f1`
-- Current milestone: Task 13C four-hero behavior upgrade prototypes are qualified; Task 13D curated 15-20 card pool is next.
+- Current milestone: Task 13D curated 18-card vertical-slice pool is qualified; the sixth normal enemy and one Elite are next.
 - Scenes: `MainMenu` and `GameScene`.
 
 Task 12B performed local qualification only; Task 12C owns the remote handoff.
@@ -139,6 +140,21 @@ Not implemented in Task 13A:
 - Projectile reuse clears target activation, source, status, piercing, cluster, trail, and ability state before reuse.
 - The final 39-test PlayMode run repeated the complete 10-wave Warlord victory, rewards, result, pooling, and restart regression after the Task 13C correction.
 
+## Task 13D Curated Card Pool
+
+- `VerticalSlice18` is a project-owned `CardPoolDefinition` at `Assets/_Game/ScriptableObjects/CardPools/VerticalSlice18.asset`.
+- The production default remains the unchanged 39 cards in `Resources/Cards`; no scene uses the override by default.
+- Archer is the controlled starting hero. Bombardier, Frost Mage, and Electric Engineer are guaranteed recruit candidates while a slot and valid recruit remain.
+- The pool contains 3 recruit cards, 8 qualified behavior upgrades, and 7 reused production support modifiers.
+- Effective pool rarity is 10 Common, 6 Rare, 2 Epic, and 0 Legendary without mutating referenced card assets.
+- Eligibility is evaluated before weighted selection. Hero cards require active targets, max-stack upgrades disappear, duplicate choices are impossible, and a fixed seed is deterministic for tests.
+- The selector uses a cached roster snapshot and performs no scene scans in the weighted choice loop. Its small lists, hash set, and random generator are bounded per draft.
+- Read-only validation reports 0 errors and 34 intentional legacy Modifier warnings.
+- Automated result: 63/63 EditMode and 40/40 PlayMode, for 103/103 total. The original 78 tests remain intact and 25 Task 13D tests were added.
+- The 500-run simulation generated 5,000 drafts and 15,000 choices with zero invalid drafts, duplicates, short drafts, recruit-guarantee failures, or max-stack violations. Every card was offered.
+- Controlled PlayMode qualified the real draft manager override, recruitment, post-recruit upgrade eligibility, stack rejection, and restart clearing.
+- Production PlayMode again completed all ten waves, Warlord victory, Defeat, one-time rewards, restart, pause/speed controls, and clean pooling.
+
 ## Known Technical Debt
 
 - Dense 60-100 enemy gameplay still requires a separate production encounter and physical-device profile; Task 13B only qualifies lifecycle reuse.
@@ -161,4 +177,4 @@ The following pre-existing changes remain preserved and unstaged:
 
 ## Next Approved Task
 
-Task 13D: curate the approved 15-20 card test pool from the qualified behavior foundation. Do not change production balance until that pool is reviewed and validated.
+Add the sixth normal enemy and one Elite with readable counterplay. Preserve the qualified 39-card production default and the isolated `VerticalSlice18` test pool.
