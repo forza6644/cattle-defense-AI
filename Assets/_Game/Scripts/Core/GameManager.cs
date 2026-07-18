@@ -209,6 +209,7 @@ namespace Stonehold
         {
             Time.timeScale = 1f;
             EnemyPoolManager.Instance?.DespawnAllActive();
+            EnemyCastleProjectile.DespawnAllActive();
             if (SceneFader.Instance != null)
             {
                 SceneFader.Instance.FadeToScene(SceneManager.GetActiveScene().name);
@@ -276,6 +277,7 @@ namespace Stonehold
 
             runResultRecorded = true;
             EnemyPoolManager.Instance?.DespawnAllActive();
+            EnemyCastleProjectile.DespawnAllActive();
 
             if (victory)
             {

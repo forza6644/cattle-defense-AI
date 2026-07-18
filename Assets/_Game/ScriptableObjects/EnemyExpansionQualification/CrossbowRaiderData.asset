@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 023039d46d0c89b45a888656b243966f, type: 3}
+  m_Name: CrossbowRaiderData
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.EnemyData
+  stableId: crossbow_raider
+  enemyName: Crossbow Raider
+  prefab: {fileID: 5687726004075980767, guid: de862604e40c4414687a44532a025239, type: 3}
+  classification: 0
+  health: 17
+  moveSpeed: 3
+  armor: 0
+  shieldCapacity: 0
+  dodgeChance: 0
+  elementalResistances:
+    physical: 0
+    fire: 0
+    frost: 0
+    electric: 0
+    explosive: 0
+  crowdControlResistance: 0
+  goldReward: 6
+  xpValue: 6
+  castleDamage: 2
+  specialRole: 1
+  rangedAttack:
+    standOffRange: 5.5
+    windUpSeconds: 0.75
+    cooldownSeconds: 2.1
+    projectileSpeed: 10
+    projectilePrefab: {fileID: 6574914297990863513, guid: 398190529c820ce48a5767375add9506, type: 3}
+  healingPulse:
+    intervalSeconds: 0
+    castSeconds: 0
+    radius: 0
+    maxHealthFraction: 0
+    selfHealMultiplier: 0
+    targetCap: 1
+    excludeBoss: 1

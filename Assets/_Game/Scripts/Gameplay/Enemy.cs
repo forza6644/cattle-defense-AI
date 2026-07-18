@@ -82,6 +82,7 @@ namespace Stonehold
         private Collider[] colliders;
         private Renderer[] renderers;
         private Rigidbody[] rigidbodies;
+        private EnemySpecialBehavior specialBehavior;
 
         public EnemyData Data => data;
         public float CurrentHealth => currentHealth;
@@ -93,6 +94,7 @@ namespace Stonehold
         public bool IsActiveActivation => isActiveActivation;
         public bool IsTargetable => isActiveActivation && !isDead && gameObject.activeInHierarchy;
         public string PoolKey => poolKey;
+        public Castle TargetCastle => targetCastle;
 
         public float SlowMultiplier
         {
@@ -147,6 +149,11 @@ namespace Stonehold
             }
             animator = GetComponent<ProceduralAnimator>();
             statusController = GetComponent<StatusEffectController>();
+            specialBehavior = GetComponent<EnemySpecialBehavior>();
+            if (specialBehavior == null && data != null && data.specialRole != EnemySpecialRole.None)
+            {
+                specialBehavior = gameObject.AddComponent<EnemySpecialBehavior>();
+            }
             if (colliders == null) colliders = GetComponentsInChildren<Collider>(true);
             if (renderers == null) renderers = GetComponentsInChildren<Renderer>(true);
             if (rigidbodies == null) rigidbodies = GetComponentsInChildren<Rigidbody>(true);
@@ -211,6 +218,7 @@ namespace Stonehold
 
             statusController?.ResetController();
             animator?.ResetForReuse();
+            specialBehavior?.PrepareForSpawn(this);
             SetRuntimeComponentsActive(true);
             healthBar.Configure(this);
         }
@@ -222,6 +230,7 @@ namespace Stonehold
             SetPath(points, castle, laneOffset, spawnDepthOffset);
             RegisterOnce();
             animator?.SetMoving(true);
+            specialBehavior?.Activate(targetCastle, activationId);
         }
 
         public void DespawnToPool()
@@ -231,6 +240,7 @@ namespace Stonehold
             StopAllCoroutines();
             statusController?.ResetController();
             animator?.ResetForReuse();
+            specialBehavior?.ResetForReuse();
             slowMultiplier = 1f;
             slowTimer = 0f;
             isDead = false;
@@ -345,6 +355,18 @@ namespace Stonehold
             ApplyStatusEffect(new StatusEffect(StatusEffectType.Slow, multiplier, duration));
         }
 
+        public float RestoreHealth(float amount)
+        {
+            if (amount <= 0f || isDead || !isActiveActivation || data == null)
+            {
+                return 0f;
+            }
+
+            float previous = currentHealth;
+            currentHealth = Mathf.Min(data.health, currentHealth + amount);
+            return currentHealth - previous;
+        }
+
         /// <summary>Death by tower: awards gold, then removes the enemy.</summary>
         public void Kill()
         {
@@ -354,6 +376,7 @@ namespace Stonehold
             }
 
             isDead = true;
+            specialBehavior?.CancelPendingActions();
             UnregisterOnce();
 
             if (!rewardClaimed && EconomyManager.Instance != null)
@@ -407,6 +430,13 @@ namespace Stonehold
                 AttackCastle();
                 return;
             }
+
+            if (specialBehavior != null && specialBehavior.Tick())
+            {
+                animator?.SetMoving(false);
+                return;
+            }
+            animator?.SetMoving(true);
 
             if (targetCastle != null)
             {

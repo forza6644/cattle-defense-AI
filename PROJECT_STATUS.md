@@ -1,6 +1,6 @@
 # Stonehold Project Status
 
-Date: 2026-07-17
+Date: 2026-07-18
 
 ## Verified Baseline
 
@@ -8,7 +8,8 @@ Date: 2026-07-17
 - Qualified remote baseline: `7f7101dfdf822f6e1b6c55845f59772003d5625e`
 - Task 13C source baseline: `5f5810479268d8619506e4db2f3c6cb5bfff1741`.
 - Task 13D source baseline: `8f34d660a584bd24f169dbeeaaa97a1f90276a31`.
-- Active branch: `feature/curated-card-pool`.
+- Task 13E source baseline: `92b28022da2b73eccd0bb89fe8a0272537e6a28d`.
+- Active branch: `feature/enemy-roster-expansion`.
 - Original Task 13C implementation commit: `7e483ac8a6eacd47caa8d58a7af15e260fe71bbf`.
 - Task 13C corrective qualification commit: `3acfff4cf87c620e0f8348fa719a696c0310af89`.
 - Task 13A local commit: this commit, `Gameplay expansion data contracts and validation` (exact hash is reported after creation).
@@ -17,7 +18,7 @@ Date: 2026-07-17
 - Local corrective code/test commit: `505a2c0e854b66ef53ab38466f789ddfd4fe9410`
 - Qualified baseline documentation commit: `c068fb5a6daf785e8150ef28f1b37d2a2fa7efa5`
 - Unity: `6000.5.2f1`
-- Current milestone: Task 13D curated 18-card vertical-slice pool is qualified; the sixth normal enemy and one Elite are next.
+- Current milestone: Task 13E ranged normal enemy and healing Elite are locally qualified and remain isolated from production waves.
 - Scenes: `MainMenu` and `GameScene`.
 
 Task 12B performed local qualification only; Task 12C owns the remote handoff.
@@ -41,7 +42,7 @@ Current content:
 - Current card categories are Recruit Hero and Modifier.
 - Current implemented rarities are Common, Rare, and Epic.
 - Modifiers cover damage, fire rate, range, burn, slow, shock, ability cooldown/damage/radius, extra projectiles or chains, and critical stats.
-- Five enemy data archetypes: Grunt, Runner, Brute, Armored, and Warlord Boss.
+- Seven enemy data archetypes: five production archetypes plus the isolated Crossbow Raider and War Shaman qualification content.
 - Three authored stages, each referencing 10 waves.
 - Stage 1's 10-wave run and boss were exercised by the automated qualification run.
 
@@ -63,6 +64,16 @@ Current content:
 - Castle damage and healing now use separate events. Damage feedback no longer runs during regeneration.
 
 ## Automated Verification
+
+Task 13E qualification passes 141 automated tests:
+
+- EditMode: 75 passed, 0 failed, 0 skipped.
+- PlayMode: 66 passed, 0 failed, 0 skipped.
+- Previous Task 13D baseline: 103 tests.
+- New Task 13E coverage: 38 tests (12 EditMode and 26 PlayMode).
+- Total: 141 passed, 0 failed, 0 skipped.
+
+The Task 13E suite covers stable IDs and classification, ranged stand-off/wind-up/projectile safety, healing selection and boss exclusion, pool reuse, activation-ID wrap, all six hero damage paths, status and reward reset, 700 pooled expansion-enemy activations, controlled ranged/healing combat, cleanup, and the unchanged production ten-wave regression.
 
 Unity discovered and passed 78 tests after Task 13C:
 
@@ -155,6 +166,18 @@ Not implemented in Task 13A:
 - Controlled PlayMode qualified the real draft manager override, recruitment, post-recruit upgrade eligibility, stack rejection, and restart clearing.
 - Production PlayMode again completed all ten waves, Warlord victory, Defeat, one-time rewards, restart, pause/speed controls, and clean pooling.
 
+## Task 13E Enemy Roster Expansion
+
+- `crossbow_raider` is an isolated Normal enemy with 17 HP, speed 3, 5.5-unit stand-off range, 0.75-second wind-up, 2.1-second cooldown, projectile speed 10, 2 castle damage, 6 gold, and 6 XP.
+- `elite_war_shaman` is an isolated Elite with 75 HP, speed 1.7, armor 1, a 5-second pulse interval, 1-second cast, 4-unit radius, 12% max-health healing, 50% self-heal multiplier, five-target cap, 3 castle damage, 45 gold, and 40 XP.
+- Normal enemy pools prewarm 3 by default; Elite pools prewarm 1. Pool keys remain stable EnemyData IDs and expansion remains supported.
+- Crossbow shots use a dedicated pooled castle projectile with source activation-token checks, one-hit return, trail reset, invalid-target return, and restart cleanup.
+- War Shaman pulses select the lowest-health bounded nearby active non-boss enemies without reviving, overhealing, or retaining stale pooled references.
+- Project-owned prefabs, materials, telegraphs, qualification data, and an isolated test wave were added. No production wave references either enemy.
+- Read-only validation reports 47 cards, 7 enemies (5 Normal, 1 Elite, 1 Boss), 0 errors, and the existing 34 intentional legacy Modifier warnings.
+- The production default remains the unchanged 39-card `Resources/Cards` pool. `VerticalSlice18` and the production ten-wave stage remain unchanged.
+- Detailed evidence is recorded in `Assets/_Game/Docs/Task13E_EnemyRosterQualification.md`.
+
 ## Known Technical Debt
 
 - Dense 60-100 enemy gameplay still requires a separate production encounter and physical-device profile; Task 13B only qualifies lifecycle reuse.
@@ -165,6 +188,7 @@ Not implemented in Task 13A:
 - Android IL2CPP build and physical-device profiling remain unverified.
 - The batch GC peak includes test and scene-transition allocations; use Unity Profiler on device before optimization claims.
 - Imported Quaternius material customizations should later move to project-owned material copies.
+- Task 13E uses project-owned prototype accents and placeholders; final character art and mobile-device readability still require later visual integration and profiling.
 
 ## Protected Local Files
 
@@ -172,9 +196,12 @@ The following pre-existing changes remain preserved and unstaged:
 
 - 10 Quaternius enemy material files.
 - `ProjectSettings/ProjectSettings.asset`.
+- `ProjectSettings/TimeManager.asset`.
+- `ProjectSettings/EditorSettings.asset` (unrelated local Unity test-setting change).
+- `TD catle defence.slnx`.
 - `unity_launch_log.txt` was deleted by the earlier Antigravity Task 13C execution. It was not recreated and is not committed.
 - External safety patches remain outside the Unity project.
 
 ## Next Approved Task
 
-Add the sixth normal enemy and one Elite with readable counterplay. Preserve the qualified 39-card production default and the isolated `VerticalSlice18` test pool.
+Task 13F: add two traps and one battlefield defense without reintroducing tower-placement gameplay. Preserve the qualified enemy roster, 39-card production default, and isolated `VerticalSlice18` test pool.

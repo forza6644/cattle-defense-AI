@@ -1,6 +1,6 @@
 # Stonehold Approved Product Plan
 
-Date: 2026-07-17
+Date: 2026-07-18
 
 ## Active Decisions
 
@@ -41,8 +41,8 @@ Implementation order:
 2. **Completed in Task 13B:** implement and qualify Enemy Pooling while preserving current behavior and balance. The current 10-wave run, registry, rewards, status reset, stale-reference guards, boss, result, and restart lifecycle passed the 58-test baseline.
 3. **Completed in Task 13C:** qualify eight behavior-changing prototype upgrades for Archer, Bombardier, Frost Mage, and Electric Engineer. The prototypes remain outside `Resources/Cards`; the full result is 78/78 automated tests, including the 10-wave Warlord regression.
 4. **Completed in Task 13D:** build and qualify the isolated 18-card vertical-slice pool with deterministic selection, recruit guarantees, validation, 500-run simulation, controlled PlayMode, and unchanged production regression.
-5. **Next:** add the sixth normal enemy and one Elite with readable counterplay.
-6. Add two traps and one battlefield defense without reintroducing tower-placement gameplay.
+5. **Completed in Task 13E:** add the isolated Crossbow Raider ranged normal and War Shaman healing Elite with readable counterplay, pooled lifecycle safety, 38 focused tests, a 700-activation stress qualification, and unchanged production waves/card pools.
+6. **Next:** add two traps and one battlefield defense without reintroducing tower-placement gameplay.
 7. Create one balanced 10-wave expansion run and profile the densest encounter.
 8. Qualify save compatibility, drafts, rewards, restart, and Android build behavior.
 

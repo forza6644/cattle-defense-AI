@@ -36,6 +36,7 @@ namespace Stonehold.Editor
             {
                 issues.AddRange(GameplayDataValidation.ValidateCardPool(pool));
             }
+            ValidateTask13EIsolation(enemies, issues);
 
             Debug.Log(BuildSummary(cards, enemies, traps.Length, defenses.Length, castleUpgrades.Length, rerolls.Length, cardPools.Length, issues));
             foreach (GameplayValidationIssue issue in issues)
@@ -138,6 +139,31 @@ namespace Stonehold.Editor
             CardDefinition card = AssetDatabase.LoadAssetAtPath<CardDefinition>(path);
             if (card == null) throw new InvalidOperationException("Missing card asset: " + path);
             return new CardPoolEntry { card = card, rarity = rarity, weight = weight };
+        }
+
+        private static void ValidateTask13EIsolation(EnemyData[] enemies, List<GameplayValidationIssue> issues)
+        {
+            EnemyData raider = enemies.FirstOrDefault(enemy => enemy != null && enemy.stableId == EnemyRosterExpansionBuilder.RaiderId);
+            EnemyData shaman = enemies.FirstOrDefault(enemy => enemy != null && enemy.stableId == EnemyRosterExpansionBuilder.ShamanId);
+            if (raider == null && shaman == null) return;
+            if (raider == null) issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13e.raider.missing", "Task 13E requires Crossbow Raider data."));
+            if (shaman == null) issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13e.shaman.missing", "Task 13E requires War Shaman data."));
+
+            string[] expansionIds = { EnemyRosterExpansionBuilder.RaiderId, EnemyRosterExpansionBuilder.ShamanId };
+            WaveData[] waves = LoadAssets<WaveData>();
+            for (int i = 0; i < waves.Length; i++)
+            {
+                WaveData wave = waves[i];
+                if (wave == null || wave.spawns == null || AssetDatabase.GetAssetPath(wave) == EnemyRosterExpansionBuilder.QualificationWavePath) continue;
+                for (int j = 0; j < wave.spawns.Length; j++)
+                {
+                    EnemyData enemy = wave.spawns[j].enemy;
+                    if (enemy != null && expansionIds.Contains(enemy.stableId))
+                    {
+                        issues.Add(new GameplayValidationIssue(ValidationSeverity.Error, "task13e.production-wave", $"'{enemy.stableId}' must remain outside production wave '{wave.name}'.", wave));
+                    }
+                }
+            }
         }
 
         private static T[] LoadAssets<T>() where T : UnityEngine.Object

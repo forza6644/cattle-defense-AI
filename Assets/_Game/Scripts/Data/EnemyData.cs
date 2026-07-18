@@ -2,6 +2,35 @@ using UnityEngine;
 
 namespace Stonehold
 {
+    public enum EnemySpecialRole
+    {
+        None = 0,
+        RangedCastleAttacker = 1,
+        HealingElite = 2
+    }
+
+    [System.Serializable]
+    public sealed class EnemyRangedAttackSettings
+    {
+        [Min(0f)] public float standOffRange;
+        [Min(0f)] public float windUpSeconds;
+        [Min(0f)] public float cooldownSeconds;
+        [Min(0f)] public float projectileSpeed;
+        public GameObject projectilePrefab;
+    }
+
+    [System.Serializable]
+    public sealed class EnemyHealingPulseSettings
+    {
+        [Min(0f)] public float intervalSeconds;
+        [Min(0f)] public float castSeconds;
+        [Min(0f)] public float radius;
+        [Range(0f, 1f)] public float maxHealthFraction;
+        [Range(0f, 1f)] public float selfHealMultiplier;
+        [Min(1)] public int targetCap = 1;
+        public bool excludeBoss = true;
+    }
+
     /// <summary>
     /// Configurable stats for one enemy type. Designers create these assets under
     /// ScriptableObjects/Enemies. Fields define the schema only; values set per-asset.
@@ -31,5 +60,10 @@ namespace Stonehold
         public int goldReward;
         public int xpValue;
         public int castleDamage;
+
+        [Header("Expansion Role")]
+        public EnemySpecialRole specialRole;
+        public EnemyRangedAttackSettings rangedAttack = new EnemyRangedAttackSettings();
+        public EnemyHealingPulseSettings healingPulse = new EnemyHealingPulseSettings();
     }
 }

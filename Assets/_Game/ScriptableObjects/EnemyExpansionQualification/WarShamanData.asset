@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 023039d46d0c89b45a888656b243966f, type: 3}
+  m_Name: WarShamanData
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.EnemyData
+  stableId: elite_war_shaman
+  enemyName: War Shaman
+  prefab: {fileID: 7395116199216152332, guid: 042a2083092ce7c44aa5c6c849723320, type: 3}
+  classification: 1
+  health: 75
+  moveSpeed: 1.7
+  armor: 1
+  shieldCapacity: 0
+  dodgeChance: 0
+  elementalResistances:
+    physical: 0
+    fire: 0
+    frost: 0
+    electric: 0
+    explosive: 0
+  crowdControlResistance: 0
+  goldReward: 45
+  xpValue: 40
+  castleDamage: 3
+  specialRole: 2
+  rangedAttack:
+    standOffRange: 0
+    windUpSeconds: 0
+    cooldownSeconds: 0
+    projectileSpeed: 0
+    projectilePrefab: {fileID: 0}
+  healingPulse:
+    intervalSeconds: 5
+    castSeconds: 1
+    radius: 4
+    maxHealthFraction: 0.12
+    selfHealMultiplier: 0.5
+    targetCap: 5
+    excludeBoss: 1

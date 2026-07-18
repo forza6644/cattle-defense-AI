@@ -241,6 +241,15 @@ namespace Stonehold
             {
                 issues.Add(Error("enemy.classification", $"'{enemy.name}' has an invalid classification.", enemy));
             }
+            if (enemy.prefab == null)
+            {
+                issues.Add(Error("enemy.prefab", $"'{enemy.name}' requires a prefab.", enemy));
+            }
+            if (!IsFinite(enemy.health) || enemy.health <= 0f || !IsFinite(enemy.moveSpeed) || enemy.moveSpeed <= 0f
+                || enemy.goldReward <= 0 || enemy.xpValue < 0 || enemy.castleDamage <= 0)
+            {
+                issues.Add(Error("enemy.core-stats", $"'{enemy.name}' requires positive finite combat stats and rewards.", enemy));
+            }
             if (!IsFiniteNonNegative(enemy.armor) || !IsFiniteNonNegative(enemy.shieldCapacity)
                 || !IsFiniteInRange(enemy.dodgeChance, 0f, 1f)
                 || !IsFiniteInRange(enemy.crowdControlResistance, 0f, 1f))
@@ -252,6 +261,50 @@ namespace Stonehold
             ValidateResistance(enemy.elementalResistances.frost, "frost", enemy, issues);
             ValidateResistance(enemy.elementalResistances.electric, "electric", enemy, issues);
             ValidateResistance(enemy.elementalResistances.explosive, "explosive", enemy, issues);
+            if (!Enum.IsDefined(typeof(EnemySpecialRole), enemy.specialRole))
+            {
+                issues.Add(Error("enemy.special-role", $"'{enemy.name}' has an invalid special role.", enemy));
+            }
+            else if (enemy.specialRole == EnemySpecialRole.RangedCastleAttacker)
+            {
+                EnemyRangedAttackSettings ranged = enemy.rangedAttack;
+                if (ranged == null || !IsFinite(ranged.standOffRange) || ranged.standOffRange <= 2.2f
+                    || !IsFinite(ranged.windUpSeconds) || ranged.windUpSeconds <= 0f
+                    || !IsFinite(ranged.cooldownSeconds) || ranged.cooldownSeconds <= 0f
+                    || !IsFinite(ranged.projectileSpeed) || ranged.projectileSpeed <= 0f)
+                {
+                    issues.Add(Error("enemy.ranged-stats", $"'{enemy.name}' requires valid ranged attack values.", enemy));
+                }
+                if (ranged == null || ranged.projectilePrefab == null)
+                {
+                    issues.Add(Error("enemy.ranged-projectile", $"'{enemy.name}' requires a pooled projectile prefab.", enemy));
+                }
+                if (enemy.classification != EnemyClassification.Normal)
+                {
+                    issues.Add(Error("enemy.ranged-classification", $"'{enemy.name}' must be a normal enemy.", enemy));
+                }
+            }
+            else if (enemy.specialRole == EnemySpecialRole.HealingElite)
+            {
+                EnemyHealingPulseSettings healing = enemy.healingPulse;
+                if (healing == null || !IsFinite(healing.intervalSeconds) || healing.intervalSeconds <= 0f
+                    || !IsFinite(healing.castSeconds) || healing.castSeconds <= 0f
+                    || !IsFinite(healing.radius) || healing.radius <= 0f
+                    || !IsFiniteInRange(healing.maxHealthFraction, 0.01f, 0.5f)
+                    || !IsFiniteInRange(healing.selfHealMultiplier, 0f, 1f)
+                    || healing.targetCap < 1 || healing.targetCap > 6)
+                {
+                    issues.Add(Error("enemy.healing-stats", $"'{enemy.name}' requires bounded healing pulse values.", enemy));
+                }
+                if (healing != null && !healing.excludeBoss)
+                {
+                    issues.Add(Error("enemy.healing-boss-exclusion", $"'{enemy.name}' must exclude bosses from healing.", enemy));
+                }
+                if (enemy.classification != EnemyClassification.Elite)
+                {
+                    issues.Add(Error("enemy.healing-classification", $"'{enemy.name}' must use Elite classification.", enemy));
+                }
+            }
             return issues;
         }
 

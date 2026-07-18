@@ -49,6 +49,7 @@ namespace Stonehold
 
         [SerializeField, Min(0)] private int defaultPrewarmCount = 3;
         [SerializeField, Min(0)] private int bossPrewarmCount = 1;
+        [SerializeField, Min(0)] private int elitePrewarmCount = 1;
 
         private readonly Dictionary<string, EnemyPool> poolsByKey = new Dictionary<string, EnemyPool>(StringComparer.Ordinal);
         private readonly Dictionary<Enemy, EnemyPool> ownership = new Dictionary<Enemy, EnemyPool>();
@@ -124,7 +125,9 @@ namespace Stonehold
 
             int prewarm = prewarmOverride >= 0
                 ? prewarmOverride
-                : data.classification == EnemyClassification.Boss ? bossPrewarmCount : defaultPrewarmCount;
+                : data.classification == EnemyClassification.Boss
+                    ? bossPrewarmCount
+                    : data.classification == EnemyClassification.Elite ? elitePrewarmCount : defaultPrewarmCount;
             for (int i = 0; i < prewarm; i++)
             {
                 Enemy enemy = CreateInstance(pool, false);
