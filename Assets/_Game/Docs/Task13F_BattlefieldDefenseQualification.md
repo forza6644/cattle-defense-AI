@@ -82,4 +82,8 @@ Ten Quaternius materials, `ProjectSettings/EditorSettings.asset`, `ProjectSettin
 
 ## Decision
 
-Task 13F is complete and locally qualified. Next task: balanced ten-wave expansion run and densest-encounter profiling.
+Final revalidation passed with 88/88 EditMode and 85/85 PlayMode tests, 173/173 total, and zero validator errors. The remaining final art, audio, physical Android profiling, and dense-encounter profiling items are non-blocking P3 follow-up work.
+
+**QUALIFIED**
+
+Task 13F is complete. Next task: balanced ten-wave expansion run and densest-encounter profiling.
