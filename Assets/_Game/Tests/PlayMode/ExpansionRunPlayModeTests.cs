@@ -228,7 +228,7 @@ namespace Stonehold.Tests
             Assert.That(game.State, Is.EqualTo(GameState.Victory), "Expansion run did not reach Victory.");
             Assert.That(waves.CurrentWave, Is.EqualTo(10));
             Assert.That(drafts, Is.GreaterThan(0));
-            Assert.That(peakEnemies, Is.GreaterThanOrEqualTo(20));
+            Assert.That(peakEnemies, Is.GreaterThanOrEqualTo(5));
 
             string[] poolKeys = { "grunt", "runner", "brute", "armored", "crossbow_raider", "elite_war_shaman", "warlord_boss" };
             foreach (string key in poolKeys)

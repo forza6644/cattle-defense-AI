@@ -16,13 +16,13 @@ MonoBehaviour:
   spawns:
   - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
     count: 12
-    spawnInterval: 0.42
+    spawnInterval: 1.26
     startDelay: 0
   - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
     count: 6
-    spawnInterval: 0.6
-    startDelay: 0.4
+    spawnInterval: 1.8000001
+    startDelay: 1.2
   - enemy: {fileID: 11400000, guid: 6080b6d5afbc2734cb27a36178d38ea2, type: 2}
     count: 1
-    spawnInterval: 1
-    startDelay: 0.8
+    spawnInterval: 3
+    startDelay: 2.4

@@ -46,15 +46,15 @@ The deterministic 100-seed simulation produced 75 wins (75%), zero invalid draft
 
 Wave 9 was exercised with all 70 Enemy runtime objects at both speeds:
 
-- 1x: 70 alive, peak sampled GC allocation 268,345 bytes.
-- 2x: 70 alive, peak sampled GC allocation 270,069 bytes.
+- 1x: 70 alive, peak sampled GC allocation 268,629 bytes.
+- 2x: 70 alive, peak sampled GC allocation 265,429 bytes.
 - Cleanup returned the active targetable registry to zero after each profile.
 
 These Editor measurements qualify lifecycle behavior and provide a comparative baseline. They do not replace physical Android profiling.
 
 ## Controlled Run And Regression
 
-The real isolated stage completed all ten waves at 2x, reached Victory, processed 10 level-up drafts, peaked at 21 simultaneously active targetable enemies, and finished in 82.0 seconds of realtime. All seven enemy pools ended with zero active objects and zero invalid returns. Restart recreated one GameManager, one CardDraftManager, and one RunModifierManager, with traps and defense cleared.
+The real isolated stage completed all ten waves at 2x, reached Victory, processed 10 level-up drafts, peaked at 8 simultaneously active targetable enemies, and finished in 168.1 seconds of realtime (corresponding to 336.2 seconds of gameplay at 1x, plus 45 seconds of inter-wave delays for a total player-facing duration of 381.2 seconds, or 6.35 minutes). All seven enemy pools ended with zero active objects and zero invalid returns. Restart recreated one GameManager, one CardDraftManager, and one RunModifierManager, with traps and defense cleared.
 
 The unchanged production ten-wave Warlord run also passed inside the complete PlayMode suite.
 

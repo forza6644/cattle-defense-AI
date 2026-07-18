@@ -136,7 +136,7 @@ namespace Stonehold.Editor
         }
 
         private static WaveData.SpawnEntry E(Dictionary<string, EnemyData> enemies, string id, int count, float interval, float delay) =>
-            new WaveData.SpawnEntry { enemy = enemies[id], count = count, spawnInterval = interval, startDelay = delay };
+            new WaveData.SpawnEntry { enemy = enemies[id], count = count, spawnInterval = interval * 3.0f, startDelay = delay * 3.0f };
 
         private static T Load<T>(string path) where T : UnityEngine.Object
         {

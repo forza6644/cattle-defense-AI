@@ -16,25 +16,25 @@ MonoBehaviour:
   spawns:
   - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
     count: 24
-    spawnInterval: 0.18
+    spawnInterval: 0.54
     startDelay: 0
   - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
     count: 18
-    spawnInterval: 0.24
-    startDelay: 0.35
+    spawnInterval: 0.71999997
+    startDelay: 1.05
   - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
     count: 12
-    spawnInterval: 0.4
-    startDelay: 0.45
+    spawnInterval: 1.2
+    startDelay: 1.3499999
   - enemy: {fileID: 11400000, guid: 7be3e823a92ed7a43b9adbed388ad3f2, type: 2}
     count: 12
-    spawnInterval: 0.43
-    startDelay: 0.45
+    spawnInterval: 1.29
+    startDelay: 1.3499999
   - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
     count: 2
-    spawnInterval: 0.65
-    startDelay: 0.6
+    spawnInterval: 1.9499999
+    startDelay: 1.8000001
   - enemy: {fileID: 11400000, guid: 6080b6d5afbc2734cb27a36178d38ea2, type: 2}
     count: 2
-    spawnInterval: 1.2
-    startDelay: 0.8
+    spawnInterval: 3.6000001
+    startDelay: 2.4
