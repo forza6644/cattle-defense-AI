@@ -66,22 +66,32 @@ Legacy `BuildAndroidDevelopment()` method preserved for backwards compatibility.
 
 ## Development APK Build
 
-- Result: PLACEHOLDER_DEV_RESULT
-- Size: PLACEHOLDER_DEV_SIZE
-- SHA-256: PLACEHOLDER_DEV_SHA
+- Result: INCONCLUSIVE — local artifact exists but no build-success log entry found in available Unity Editor logs
+- File: `Builds/Android/Stonehold-Development.apk`
+- Size: 73,202,668 bytes (69.81 MB)
+- SHA-256: `C9D9AA442A0A8B7644D5BFB97CB2E57F41A8FCFB5EF83FBA016039077D2102E7`
+- Last Modified: 2026-07-19 01:28:40
+- Development flag: Yes (`BuildOptions.Development`)
+- Architecture: ARM64 (configured via `ReleaseCandidateBuild.cs`)
+- Scripting backend: IL2CPP (configured via `ReleaseCandidateBuild.cs`)
 
 ## Release Candidate APK Build
 
-- Result: PLACEHOLDER_RC_RESULT
-- Size: PLACEHOLDER_RC_SIZE
-- SHA-256: PLACEHOLDER_RC_SHA
+- Result: INCONCLUSIVE — local artifact exists but no build-success log entry found in available Unity Editor logs
+- File: `Builds/Android/Stonehold-ReleaseCandidate.apk`
+- Size: 59,709,125 bytes (56.94 MB)
+- SHA-256: `D3B648EA18FAEAC6B6AD6EB3D4C1E71D9582D8FE8414F8597FECCA6770539237`
+- Last Modified: 2026-07-19 01:32:38
+- Development flag: No (`BuildOptions.None`)
+- Architecture: ARM64 (configured via `ReleaseCandidateBuild.cs`)
+- Scripting backend: IL2CPP (configured via `ReleaseCandidateBuild.cs`)
 
 ## Automated Qualification
 
-- EditMode: PLACEHOLDER_EDIT_TOTAL passed, 0 failed, 0 skipped.
-- PlayMode: PLACEHOLDER_PLAY_TOTAL passed, 0 failed, 0 skipped.
-- Total: PLACEHOLDER_TOTAL passed, 0 failed, 0 skipped.
-- New Task 13H coverage: PLACEHOLDER_NEW_EDIT EditMode tests.
+- EditMode: 172 passed, 0 failed, 0 skipped.
+- PlayMode: 96 passed, 0 failed, 0 skipped.
+- Total: 268 passed, 0 failed, 0 skipped.
+- New Task 13H coverage: 42 EditMode tests (33 AndroidReleaseHardeningTests + 9 SaveManagerMigrationTests).
 - Validator: SceneReferenceValidator confirmed attached by GameManager.Awake().
 
 ## Production And Expansion Regression
@@ -90,12 +100,12 @@ The unchanged production ten-wave Warlord run and the expansion ten-wave run bot
 
 ## Protected Local State
 
-Ten Quaternius materials, `ProjectSettings/EditorSettings.asset`, `ProjectSettings/ProjectSettings.asset`, `ProjectSettings/TimeManager.asset`, `ProjectSettings/UnityConnectSettings.asset`, and `TD catle defence.slnx` remain local and unstaged.
+Ten Quaternius enemy materials, `Assets/Settings/Mobile_RPAsset.asset`, `Assets/Settings/UniversalRenderPipelineGlobalSettings.asset`, `ProjectSettings/EditorSettings.asset`, `ProjectSettings/ProjectSettings.asset`, `ProjectSettings/TimeManager.asset`, `ProjectSettings/UnityConnectSettings.asset`, and `TD catle defence.slnx` are modified locally but remain unstaged and excluded from all commits.
 
 ## Decision
 
-Save compatibility, corrupt-save recovery, reward-once safety, restart lifecycle, portrait and safe-area validation, Android build verification, full automated suite, production and expansion regression all passed.
+Save compatibility, corrupt-save recovery, reward-once safety, restart lifecycle, portrait and safe-area validation, full automated suite (268/268), and production and expansion regression all passed. Both Android APK artifacts exist on disk with valid SHA-256 hashes, but no build-success log entry was found in available Unity Editor logs to independently confirm the builds completed without error.
 
-**QUALIFIED**
+**QUALIFIED WITH ANDROID BUILD EVIDENCE INCONCLUSIVE**
 
-Physical device profiling and final production assets remain non-blocking follow-up work.
+Physical device profiling, build log confirmation, and final production assets remain non-blocking follow-up work.
