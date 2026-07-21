@@ -305,5 +305,29 @@ namespace Stonehold
                 SetState(GameState.Defeat);
             }
         }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                PlayerPrefs.Save();
+                if (State == GameState.Playing)
+                {
+                    SetState(GameState.Paused);
+                }
+            }
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                PlayerPrefs.Save();
+                if (State == GameState.Playing)
+                {
+                    SetState(GameState.Paused);
+                }
+            }
+        }
     }
 }

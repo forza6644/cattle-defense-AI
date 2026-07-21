@@ -60,21 +60,65 @@ namespace Stonehold
             LoadProgress();
         }
 
+        public static void SaveProgress()
+        {
+            PlayerPrefs.Save();
+        }
+
         public static void LoadProgress()
         {
             EnsureSaveVersion();
 
-            BestWave = PlayerPrefs.GetInt(KeyBestWave, 0);
-            TotalWins = PlayerPrefs.GetInt(KeyTotalWins, 0);
-            TotalLosses = PlayerPrefs.GetInt(KeyTotalLosses, 0);
-            TotalRuns = PlayerPrefs.GetInt(KeyTotalRuns, 0);
-            SelectedStageIndex = PlayerPrefs.GetInt(KeySelectedStage, 0);
-            HighestStageUnlocked = PlayerPrefs.GetInt(KeyHighestStageUnlocked, 1);
+            // Load and sanitize values
+            BestWave = Mathf.Clamp(PlayerPrefs.GetInt(KeyBestWave, 0), 0, 1000);
+            TotalWins = Mathf.Max(0, PlayerPrefs.GetInt(KeyTotalWins, 0));
+            TotalLosses = Mathf.Max(0, PlayerPrefs.GetInt(KeyTotalLosses, 0));
+            TotalRuns = Mathf.Max(TotalWins + TotalLosses, PlayerPrefs.GetInt(KeyTotalRuns, 0));
+            SelectedStageIndex = Mathf.Clamp(PlayerPrefs.GetInt(KeySelectedStage, 0), 0, 100);
+            HighestStageUnlocked = Mathf.Clamp(PlayerPrefs.GetInt(KeyHighestStageUnlocked, 1), 1, 100);
             Stage1Completed = PlayerPrefs.GetInt(KeyStage1Completed, 0) == 1;
-            SelectedStartingDefenderId = PlayerPrefs.GetString(KeySelectedStartingDefender, "archer");
-            MetaGold = PlayerPrefs.GetInt(KeyMetaGold, 0);
-            AccountXp = PlayerPrefs.GetInt(KeyAccountXp, 0);
-            CoreMaterials = PlayerPrefs.GetInt(KeyCoreMaterials, 0);
+
+            string startingDefender = PlayerPrefs.GetString(KeySelectedStartingDefender, "archer");
+            if (System.Array.IndexOf(CurrentHeroIds, startingDefender) < 0)
+            {
+                startingDefender = "archer";
+            }
+            SelectedStartingDefenderId = startingDefender;
+
+            MetaGold = Mathf.Clamp(PlayerPrefs.GetInt(KeyMetaGold, 0), 0, 9999999);
+            AccountXp = Mathf.Clamp(PlayerPrefs.GetInt(KeyAccountXp, 0), 0, 9999999);
+            CoreMaterials = Mathf.Clamp(PlayerPrefs.GetInt(KeyCoreMaterials, 0), 0, 999999);
+
+            // Clean invalid/corrupt values in PlayerPrefs by writing back sanitized values
+            PlayerPrefs.SetInt(KeyBestWave, BestWave);
+            PlayerPrefs.SetInt(KeyTotalWins, TotalWins);
+            PlayerPrefs.SetInt(KeyTotalLosses, TotalLosses);
+            PlayerPrefs.SetInt(KeyTotalRuns, TotalRuns);
+            PlayerPrefs.SetInt(KeySelectedStage, SelectedStageIndex);
+            PlayerPrefs.SetInt(KeyHighestStageUnlocked, HighestStageUnlocked);
+            PlayerPrefs.SetInt(KeyStage1Completed, Stage1Completed ? 1 : 0);
+            PlayerPrefs.SetString(KeySelectedStartingDefender, SelectedStartingDefenderId);
+            PlayerPrefs.SetInt(KeyMetaGold, MetaGold);
+            PlayerPrefs.SetInt(KeyAccountXp, AccountXp);
+            PlayerPrefs.SetInt(KeyCoreMaterials, CoreMaterials);
+
+            // Sanitize hero levels
+            foreach (string heroId in CurrentHeroIds)
+            {
+                string key = "meta_level_" + heroId;
+                int lvl = Mathf.Clamp(PlayerPrefs.GetInt(key, 1), 1, 100);
+                PlayerPrefs.SetInt(key, lvl);
+            }
+
+            // Sanitize meta upgrades
+            foreach (string upgradeId in CurrentMetaUpgradeIds)
+            {
+                string key = "meta_upgrade_" + upgradeId;
+                int lvl = Mathf.Clamp(PlayerPrefs.GetInt(key, 0), 0, 10);
+                PlayerPrefs.SetInt(key, lvl);
+            }
+
+            PlayerPrefs.Save();
         }
 
         public static void BeginRunRewardSession()
@@ -105,6 +149,22 @@ namespace Stonehold
             if (savedVersion >= CurrentSaveVersion)
             {
                 return;
+            }
+
+            if (savedVersion < 1)
+            {
+                foreach (string upgradeId in CurrentMetaUpgradeIds)
+                {
+                    string key = "meta_upgrade_" + upgradeId;
+                    if (!PlayerPrefs.HasKey(key)) PlayerPrefs.SetInt(key, 0);
+                }
+            }
+            if (savedVersion < 2)
+            {
+                if (!PlayerPrefs.HasKey(KeySelectedStartingDefender))
+                {
+                    PlayerPrefs.SetString(KeySelectedStartingDefender, "archer");
+                }
             }
 
             PlayerPrefs.SetInt(KeySaveVersion, CurrentSaveVersion);
