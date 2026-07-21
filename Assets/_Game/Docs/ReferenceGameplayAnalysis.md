@@ -1,98 +1,58 @@
-# Reference Gameplay Analysis
+# Stonehold Reference Gameplay Analysis (Corrected)
 
-This document contains the detailed gameplay analysis based on the two reference videos provided:
-1. `ScreenRecording_07-21-2026 11-23-12_1.mp4.mp4` (Core Gameplay, Battles, and Town Screen)
-2. `ScreenRecording_07-21-2026 11-30-10_1.mp4.mp4` (Weapons, Heroes, and Forge Systems)
-
----
-
-## 1. Portrait Orientation & Viewport
-
-### Reference Video Observations
-* **Orientation:** Full Portrait mode (approx. 9:16 aspect ratio).
-* **Viewport:** The camera is positioned at a high top-down perspective looking slightly forward (approx. 65-70 degree tilt) down onto the battlefield.
-* **Layout:**
-  * **Bottom:** The Castle Wall stretches horizontally across the screen. On the wall, there are three slots occupied by defenders/heroes. At the very center of the wall, there is a Castle HP indicator showing numerical HP (e.g., `3203` or `6073` HP) along with a heart icon and an HP fill bar.
-  * **Middle:** The battlefield contains a path (linear/s-curve depending on the stage) leading from the top (spawner) down to the castle wall at the bottom.
-  * **Top HUD:** 
-    * Top-left: Game speed selector (1.0x / 1.5x / 2.0x cycle).
-    * Top-center: Stage display (e.g. `Canyon / Stage 86`), wave counter (e.g. `Wave 9/20`), timer (e.g. `01:18`).
-    * Top-right: Pause button.
-    * Just below the stage details is the **Battle Points / Wave Progress slider** (a progress bar showing the flow of battle between waves).
+> **Document Status**: Audit & Parity Corrected  
+> **Source Files**: `ScreenRecording_07-21-2026 11-23-12_1.mp4.mp4` (Video 1, 03:39) and `ScreenRecording_07-21-2026 11-30-10_1.mp4.mp4` (Video 2, 00:46)
 
 ---
 
-## 2. Battlefield Layout & Path
+## 1. Confirmed Reference Video Observations vs. Assumptions
 
-### Reference Video Observations
-* **Lanes / Paths:** The path is well-defined, winding down between rock cliffs. In Canyon (Stage 86), it is a single winding lane.
-* **Spawning:** Enemies spawn from the top of the path (or multiple paths at higher levels) and advance downward toward the castle.
-* **Castle Wall:** Forms the bottom boundary. It features crenellations and towers where heroes are standing.
-* **Barriers/Traps:** Spikes or barricades are placed directly on the road to slow/damage enemies.
+### Confirmed Video Observations (Empirical Evidence)
+- **Viewport & Orientation**: High-angle fixed top-down perspective, full Portrait mode (~9:16 aspect ratio).
+- **Castle & Defender Composition**: The Castle Wall spans horizontally across the bottom of the screen. There are **exactly 3 primary active defender positions (plinths)** on the wall.
+- **Wave System & Display**: Top-center HUD displays `Canyon / Stage 86`, `Wave 7/20` (and `Wave 9/20`), with a numerical timer (`00:53`, `01:18`) and a **horizontal Battle Points / Wave Progress Slider** directly beneath the stage info text. Total stage wave count shown in reference is **20 waves**.
+- **Top HUD Composition**:
+  - Top-Left: Speed-control toggle displaying multiplier (e.g. `1.3x` / `1.0x` / `2.0x` toggle cycle).
+  - Top-Center: Stage Name, Stage Number, Wave Counter (`Wave X/20`), Elapsed/Remaining Time, and Wave Progress Bar.
+  - Top-Right: Pause Button.
+- **Bottom HUD Composition**: Numerical Castle HP bar (e.g. `3203 / 6073` or `6073 HP`) with a heart icon and fill bar situated directly over the castle wall at the bottom center.
+- **Path & Spawning**: Enemies spawn from the top of a winding canyon path and advance down toward the bottom castle wall.
+- **Enemy Formations**: Enemies move in structured lines, small grid blocks, and staggered formations. Heavy shielded grunts hold shields in front.
+- **Defender Weapons**: 3 active defenders exhibit visibly distinct projectile behaviors (Fast single-target, Splash/Cannon, Control/Magic).
+- **Out-of-Battle Meta Systems** (Video 2): "Your Weapons" card library (Upgrade with gold + scrolls), Character details page ("Lawris", Level 5, Fire stats, damage, cooldown, area size), 3-to-1 Gear Fusion/Forge.
 
----
-
-## 3. Castle Defense
-
-### Reference Video Observations
-* **HP System:** Large numeric health pool (e.g., thousands of hit points).
-* **Defeat:** When enemies reach the wall, they hit the wall and deal damage. When HP reaches 0, the player loses.
-* **Defense Time:** Stages have clear time limits or duration targets (e.g., `2m 24s`).
-
----
-
-## 4. Enemy Types & Behavior
-
-### Reference Video Observations
-* **Mob/Formation Spawning:** Enemies spawn in structured clusters or lines (e.g., Grunts in a grid formation carrying shields).
-* **Visual Tiers:** Enemies range from simple melee grunts to fast-moving scouts, tanky heavy soldiers, and boss-level units.
-* **Shields and Armor:** Heavy shield grunts hold shields in front, absorbing frontal damage.
+### Assumptions & Non-Video Inferences
+- Specific monetization algorithms (e.g. exact Jackpot percentages in Lucky Trader) are meta-features outside the tactical battle loop.
+- Exact XP math per mob kill is inferred from battle progression standards rather than explicit video UI readouts.
 
 ---
 
-## 5. Defender/Tower & Hero System
+## 2. Observable Timing Breakdown
 
-### Reference Video Observations
-* **Wall Positioning:** The wall has three main circular plinths/slots where Heroes stand.
-* **Towers vs. Heroes:** In the reference, the defenders are actually unique, upgradeable **Heroes** (e.g., Lawris, ABD Monk) standing on the plinths, and they use customizable **Weapons** (e.g., Warhammer Cannon, Recurve Bow, Longbow) to fire projectiles.
-* **Combat Stats:** Each Hero has:
-  * Power (overall rating)
-  * Speed (attacks per second)
-  * Range
-  * Damage (range, e.g. `23-28`)
-  * Critical Rate (e.g., 5%)
-  * Skill (e.g., "Arrow rain")
-* **Equipment:** Heroes have 4 equipment slots: Weapon, Armor/Ring, Helmet/Amulet, Boots.
-
----
-
-## 6. Economy & Progression
-
-### Reference Video Observations
-* **Gold & Materials:** Gold is used to upgrade characters and weapons. Scrolls (e.g. Weapon Scrolls) are required alongside gold for weapon upgrades.
-* **Upgrade Mechanics:**
-  * **Hero Level Up:** Upgrades hero stats using Gold + Hero Cards (tokens).
-  * **Weapon Upgrade:** Upgrades weapon stats (e.g., `Attack +8 -> +9`) using Gold + Weapon Scrolls.
-  * **Forge/Fusion:** "Combine 3 identical gear to get 1 higher tier gear." For example, combining 3 gray/Normal bows results in 1 green/Common bow with higher base stats and level cap.
+| Timestamp | Video | Screen / Event | Observed Behavior & Timings |
+|---|---|---|---|
+| `00:00 - 00:40` | Video 1 | Town & Character Screen | Daily offers ("Lucky Trader"), Monk gear slots (Power 2015). |
+| `00:41 - 01:05` | Video 1 | Stage Select & Town | Act 4 "Scavenger Siege", Stage 87 active. 3 Star clear thresholds visible. |
+| `01:06 - 01:50` | Video 1 | Battle Start (Stage 86) | Transition to Canyon battlefield. Camera fixed high portrait angle. |
+| `01:51 - 02:25` | Video 1 | Mid-Battle (Wave 7/20) | Speed set to 1.3x. Wave 7/20 active at 00:53 timer. Enemies in structured grid formation. |
+| `02:26 - 03:00` | Video 1 | Late-Battle (Wave 9/20) | Wave 9/20 active at 01:18 timer. Shielded grunts in dense line formation. Castle HP at 3203. |
+| `03:01 - 03:39` | Video 1 | Market / Exit | Transition to Market ("Wheel of Whispers"). |
+| `00:00 - 00:15` | Video 2 | Weapons Library | 8/10 Unlocked. Shows upgrade cards with scroll requirements (e.g. 1008/3075). |
+| `00:16 - 00:30` | Video 2 | Character Detail (Lawris) | Level 5 Fire Hero, Damage 4461, Cooldown 5.8s, Area Damage 894.6, Area Size 3.9. |
+| `00:31 - 00:46` | Video 2 | Forge / Gear Fusion | 3-to-1 gear fusion interface for upgrading item rarity tier. |
 
 ---
 
-## 7. UI Flow & Menus
+## 3. Detailed System Classification Matrix
 
-### Reference Video Observations
-* **Main Town Screen:**
-  * **Top Bar:** Account Level/VIP status, Energy (`1517/30`), Gems (`634`), Gold (`29879`).
-  * **Center Panel:** Stage Info (Act 4: Scavenger Siege, Stage 76-100, Stage 87 Active) showing progress chests for 3 stars (Clear, 50% HP Clear, 100% HP Clear).
-  * **Buttons:** "Fast Raid" (cost: 7 energy) and "Battle" (cost: 7 energy).
-  * **Bottom Navigation Bar:** Shop, Character, Battles (Map), Library, Map/Forge.
-* **Weapons Listing Panel:** Displays unlocked/locked weapons, current weapon level (e.g. `Lv. 7 Warhammer`), and an upgrade button showing weapon scroll count.
-
----
-
-## 8. Gap Analysis Summary
-
-Stonehold already has a highly compatible vertical slice of this style:
-* Camera angle and aspect ratio are already matching.
-* Road layout, lane shoulder construction, and environment decoration mimic the canyon/grassland environments.
-* The 3 plinths/slots on the wall match the 3 slots in the reference.
-* The next step is to align Stage 1 gameplay configuration, wave progression, starting state, and UI values with the reference to achieve complete parity.
+| System | Classification | Reference Observed | Stonehold Current | Audit Notes |
+|---|---|---|---|---|
+| Viewport & Aspect | **MATCHED** | Portrait mode (~9:16), high-angle top-down | `CameraRig.cs` forces portrait FOV & composition | Identical angle & framing |
+| Castle HP HUD | **MATCHED** | Bottom-center over wall with heart & fill | `UIManager.cs` bottom-center HP bar | Identical placement & readout |
+| Speed Controls | **MATCHED** | Cycle button (1x / 1.5x / 2x) at top-left | `GameManager.cs` speed cycle | Identical behavior |
+| Wave Total Count | **DIFFERENT** | **20 Total Waves** shown in stage | Legacy Stage 1 has 10 waves | **Requires dedicated 20-wave parity stage** |
+| Active Defender Slots | **DIFFERENT** | **3 Primary Active Defender Slots** | Scene/Code has 6 `HeroSlot`s & 5 `TowerSlot`s | **Parity stage will use 3 primary active defender slots** |
+| Top Battle HUD | **PARTIALLY MATCHED** | Speed (top-left), Stage/Wave/Timer (center), Pause (right), Progress Bar below | Speed/Pause at top-right, Wave top-center | **Reposition top HUD elements to match reference layout** |
+| Wave Progress Bar | **MISSING** | Horizontal progress bar below stage details | Not present in legacy HUD | **Needs to be added to UIManager top bar** |
+| Card Draft System | **PARTIALLY MATCHED** | In-run upgrades with reroll | `CardDraftManager.cs` 3-card pick | Add explicit Reroll + speed restoration |
+| Out-of-Battle Forge | **MISSING** | 3-to-1 Gear Combine system (Video 2) | Meta-upgrade system only | Battle-facing parity prioritized; Forge documented for next milestone |

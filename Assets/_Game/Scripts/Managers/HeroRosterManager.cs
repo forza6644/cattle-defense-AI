@@ -64,11 +64,23 @@ namespace Stonehold
             return !string.IsNullOrEmpty(heroId) && ownedHeroIds.Contains(heroId);
         }
 
+        public int GetMaxSlotsForCurrentStage()
+        {
+            WaveManager waveManager = Object.FindFirstObjectByType<WaveManager>();
+            StageData currentStage = waveManager != null ? waveManager.ActiveStage : null;
+            if (currentStage != null && currentStage.stageId == "reference_parity_stage_01")
+            {
+                return 3;
+            }
+            return 6;
+        }
+
         public bool CanRecruit(string heroId)
         {
             return !string.IsNullOrEmpty(heroId)
                 && !ownedHeroIds.Contains(heroId)
                 && heroDefinitions.ContainsKey(heroId)
+                && ownedHeroIds.Count < GetMaxSlotsForCurrentStage()
                 && CountEmptySlots() > 0;
         }
 

@@ -248,6 +248,41 @@ namespace Stonehold
             return CardDraftSelector.Generate(cardPool, state, 3, policy, deterministicSeed);
         }
 
+        public const int RerollCost = 20;
+
+        public bool CanReroll()
+        {
+            if (!isDraftActive || isSelectionMade) return false;
+            if (EconomyManager.Instance != null && EconomyManager.Instance.Gold < RerollCost) return false;
+            return true;
+        }
+
+        public bool TryReroll()
+        {
+            if (!CanReroll()) return false;
+
+            if (EconomyManager.Instance != null && EconomyManager.Instance.Gold >= RerollCost)
+            {
+                EconomyManager.Instance.TrySpend(RerollCost);
+            }
+
+            List<DraftCardChoice> choices = GenerateDraftChoices();
+            if (choices.Count == 0) return false;
+
+            RunProgressionManager.CardChoice[] choiceStructs = new RunProgressionManager.CardChoice[3];
+            for (int i = 0; i < 3; i++)
+            {
+                choiceStructs[i] = i < choices.Count ? CreateChoice(choices[i]) : CreateFallbackChoice();
+            }
+
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.OnShowLevelUpDraft(choiceStructs);
+            }
+            Debug.Log("[CardDraftManager] Reroll executed.");
+            return true;
+        }
+
         private DraftSelectionState BuildSelectionState()
         {
             HeroRosterManager roster = HeroRosterManager.Instance;

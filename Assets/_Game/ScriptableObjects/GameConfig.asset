@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -20,6 +20,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cec3e989e4237f848a3ee7578ea50c47, type: 2}
   - {fileID: 11400000, guid: 0d2527df5daa42346b8231035ce6fb8d, type: 2}
   - {fileID: 11400000, guid: 078a2a06fed778a4bb8943557477ecda, type: 2}
+  - {fileID: 11400000, guid: b0000000000000000000000000000001, type: 2}
   waves:
   - {fileID: 11400000, guid: ca2339b7cda3a0e47976d9750e641abf, type: 2}
   - {fileID: 11400000, guid: a203b083d7c5ee04185017e607525b7e, type: 2}
@@ -34,3 +35,5 @@ MonoBehaviour:
   timeBetweenWaves: 5
   draftRunMode: 1
   defaultStartingDefender: {fileID: 0}
+
+

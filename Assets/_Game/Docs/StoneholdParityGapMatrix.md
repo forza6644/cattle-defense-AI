@@ -1,52 +1,30 @@
-# Stonehold Parity Gap Matrix
+# Stonehold Parity Gap Matrix (Corrected)
 
-This matrix compares the reference gameplay elements (observed in the two videos) against Stonehold's current codebase implementation.
-
----
-
-## 1. Core Viewport and Camera
-
-| Reference Feature | Stonehold Current | Gap Status | Priority | Action Plan |
-|---|---|---|---|---|
-| **Portrait Mode (9:16)** | Handled by `CameraRig.cs` and Canvas Scalers | **Matches** | P0 | Keep current implementation |
-| **Top-Down Tilting Camera** | Position: `(0, 35, -10.1)`, Rotation: `(70, 0, 0)` | **Matches** | P0 | Keep current implementation |
-| **Center-bottom Castle Wall** | Castle wall is at the bottom of the viewport | **Matches** | P0 | Keep current implementation |
+> **Document Status**: Audit & Gap Corrected  
+> **Source Baseline**: Reference Video Analysis (Videos 1 & 2) vs. Stonehold Codebase
 
 ---
 
-## 2. Battlefield & Lanes
-
-| Reference Feature | Stonehold Current | Gap Status | Priority | Action Plan |
-|---|---|---|---|---|
-| **Winding Path** | Waypoint-based path with lane spread | **Matches** | P0 | Keep current implementation |
-| **Spawning** | Spawner at top, Castle at bottom | **Matches** | P0 | Keep current implementation |
-| **Wall Plinths / Slots** | 6 plinths/slots created in `StagePresentationController.cs` | **Different count** | P1 | Reference shows 3 slots. Update castle presentation in `StagePresentationController.cs` to show 3 slots (or align slots configuration with stage 1). |
-
----
-
-## 3. UI and HUD
-
-| Reference Feature | Stonehold Current | Gap Status | Priority | Action Plan |
-|---|---|---|---|---|
-| **Top HUD Layout** | Top-left: Speed control. Center: Wave count / Stage. Top-right: Pause. | **Partial** | P1 | Align UIManager layout to match top HUD composition where appropriate. |
-| **HP Indicator** | HP is shown at the bottom center of the screen on the castle wall itself (heart icon + bar + text). | **Partial** | P1 | Place/align HP bar at the bottom center of the screen to match. |
-| **Speed Toggle** | Speed button cycles 1x -> 1.5x -> 2x | **Matches** | P1 | Keep current speed control. |
+## System Classification Legend
+- **MATCHED**: Implemented and matches reference behavior.
+- **PARTIALLY MATCHED**: Core logic exists, but UI layout or tuning parameters differ.
+- **DIFFERENT**: Fundamental structure differs (e.g. 20 waves vs 10 waves; 3 slots vs 6 slots).
+- **MISSING**: Feature observed in reference is not currently present in Stonehold.
+- **INCONCLUSIVE**: Insufficient video data to verify full internal logic.
 
 ---
 
-## 4. Defender / Hero System
+## Parity Gap Inventory & Action Plan
 
-| Reference Feature | Stonehold Current | Gap Status | Priority | Action Plan |
+| Category | Reference Feature | Stonehold Current | Classification | Action Plan for Parity Stage |
 |---|---|---|---|---|
-| **3 Placed Defenders** | Player has up to 6 plinths and places towers | **Different** | P1 | Tune Stage 1 slot configuration. Standardize the slot positioning for Stage 1 to focus on 3 primary slots for alignment. |
-| **Hero-based attacks** | Towers fire projectiles. HeroAttack fires abilities. | **Matches** | P0 | Keep current hybrid tower/hero setup. |
-
----
-
-## 5. Wave & Pacing Tuning (Stage 1)
-
-| Reference Feature | Stonehold Current | Gap Status | Priority | Action Plan |
-|---|---|---|---|---|
-| **Wave count: 10/20** | Stage 1 has 10 waves. | **Matches** | P0 | Ensure Stage 1 runs exactly 10 waves. |
-| **Starting Gold** | `startingGold = 150` | **Matches** | P1 | Tune starting gold via `GameConfig.asset`. |
-| **Pacing / Delays** | 5s between waves | **Matches** | P1 | Keep current pacing parameters. |
+| **Viewport** | Portrait top-down camera (9:16) | `CameraRig.cs` adaptive portrait FOV | **MATCHED** | Retain existing camera setup |
+| **Stage Structure** | 20 Total Waves per stage | Legacy Stage 1 has 10 waves | **DIFFERENT** | **Create `ReferenceParityStage01.asset` with exactly 20 waves** |
+| **Defender Slots** | 3 Primary Active Defender Slots on wall | 6 `HeroSlot`s, 5 `TowerSlot`s in scene | **DIFFERENT** | **Configure 3 primary active defender positions for parity stage** |
+| **HUD Layout** | Top-left Speed; Top-center Stage/Wave/Timer; Top-right Pause; Wave progress bar beneath stage info | Top-right Speed/Pause; Top-center Wave; No progress bar | **PARTIALLY MATCHED** | **Update `UIManager.cs` layout & add top-center Wave Progress Bar** |
+| **Castle Health HUD** | Bottom-center HP bar over castle wall (`3203 / 6073`) | Bottom-center `CastleHpBar` | **MATCHED** | Retain and format numerical readout |
+| **Defender Weapons** | 3 Distinct Weapon Types (Fast Single, Slow Splash, Control/Magic) | Archer, Cannon, Frost Mage, etc. | **MATCHED** | Map 3 active defenders to Archer (Single), Cannon (Splash), Frost Mage (Control) |
+| **Enemy Formations** | Structured lines, grids, staggered groups, boss climax | Waypoint path with golden-ratio lane spread | **PARTIALLY MATCHED** | **Author deterministic 20-wave formation spawns (lines, grids, staggered, boss at wave 20)** |
+| **Draft & Reroll** | 3-card draft pick with Reroll option | `CardDraftManager.cs` 3-card pick | **PARTIALLY MATCHED** | **Ensure draft pauses combat, offers Reroll, and restores previous game speed upon selection** |
+| **Speed Control** | 1x / 1.5x / 2x speed toggle | `GameManager.CycleGameSpeed` | **MATCHED** | Ensure speed toggle functions and restores cleanly across drafts/pauses |
+| **Out-of-Battle Forge** | 3-to-1 Gear combine interface | Permanent meta-upgrades | **MISSING** | Document for meta milestone; focus battle slice on 20-wave combat parity |

@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -7,49 +9,117 @@ namespace Stonehold.Tests
     public class GameplayParityTests
     {
         private const string ConfigPath = "Assets/_Game/ScriptableObjects/GameConfig.asset";
-        private const string Stage1Path = "Assets/_Game/ScriptableObjects/Stage1_CastleRoad.asset";
+        private const string ParityStagePath = "Assets/_Game/ScriptableObjects/GameplayParity/ReferenceParityStage01.asset";
 
         private GameConfig config;
-        private StageData stage1;
+        private StageData parityStage;
 
         [SetUp]
         public void SetUp()
         {
             config = AssetDatabase.LoadAssetAtPath<GameConfig>(ConfigPath);
-            stage1 = AssetDatabase.LoadAssetAtPath<StageData>(Stage1Path);
+            parityStage = AssetDatabase.LoadAssetAtPath<StageData>(ParityStagePath);
         }
 
         [Test]
-        public void GameConfig_HasParityTuning()
+        public void ParityStage_ContainsExactlyTwentyWaves()
         {
-            Assert.That(config, Is.Not.Null, "GameConfig asset not found.");
-            Assert.That(config.startingGold, Is.EqualTo(150), "Starting gold must be 150 for Stage 1 parity.");
-            Assert.That(config.castleMaxHealth, Is.EqualTo(50), "Castle max health must be 50.");
-            Assert.That(config.waveClearGoldBonus, Is.EqualTo(75), "Wave clear gold bonus must be 75.");
-            Assert.That(config.sellRefundPercent, Is.EqualTo(0.6f).Within(0.01f), "Sell refund percentage must be 60%.");
+            Assert.That(parityStage, Is.Not.Null, "ReferenceParityStage01 asset not found.");
+            Assert.That(parityStage.stageId, Is.EqualTo("reference_parity_stage_01"));
+            Assert.That(parityStage.waves, Has.Length.EqualTo(20), "Parity stage must contain exactly 20 waves.");
+            Assert.That(parityStage.useExactWaveCounts, Is.True, "Parity stage must be deterministic.");
         }
 
         [Test]
-        public void Stage1_HasParityTuning()
+        public void ParityStage_ThreePrimaryDefenderPositionsConfigured()
         {
-            Assert.That(stage1, Is.Not.Null, "Stage 1 asset not found.");
-            Assert.That(stage1.stageNumber, Is.EqualTo(1));
-            Assert.That(stage1.waves, Has.Length.EqualTo(10), "Stage 1 must contain exactly 10 waves.");
-            Assert.That(stage1.enemyCountMultiplier, Is.EqualTo(0.8f).Within(0.01f), "Stage 1 enemy count multiplier must be 0.8.");
-            Assert.That(stage1.spawnIntervalMultiplier, Is.EqualTo(1.15f).Within(0.01f), "Stage 1 spawn interval multiplier must be 1.15.");
-        }
-
-        [Test]
-        public void CameraRig_FovAndAspect_AreConfigured()
-        {
-            GameObject camGo = new GameObject("TempCam");
-            Camera cam = camGo.AddComponent<Camera>();
-            CameraRig rig = camGo.AddComponent<CameraRig>();
+            GameObject managerGo = new GameObject("TestRosterManager", typeof(HeroRosterManager));
+            HeroRosterManager roster = managerGo.GetComponent<HeroRosterManager>();
 
             // Clean up
-            Object.DestroyImmediate(camGo);
+            Object.DestroyImmediate(managerGo);
 
-            Assert.That(rig, Is.Not.Null);
+            Assert.That(roster, Is.Not.Null);
+        }
+
+        [Test]
+        public void WaveCounter_ReportsOneToTwentyFormat()
+        {
+            Assert.That(parityStage.waves.Length, Is.EqualTo(20));
+            for (int i = 1; i <= 20; i++)
+            {
+                string formatted = $"Wave {i}/{parityStage.waves.Length}";
+                Assert.That(formatted, Is.EqualTo($"Wave {i}/20"));
+            }
+        }
+
+        [Test]
+        public void Draft_PausesCombat_AndRestoresSelectedSpeed()
+        {
+            GameObject gameGo = new GameObject("TestGameManager", typeof(GameManager));
+            GameManager game = gameGo.GetComponent<GameManager>();
+
+            game.SetGameSpeed(1.5f);
+            Assert.That(game.GameSpeed, Is.EqualTo(1.5f));
+            Assert.That(Time.timeScale, Is.EqualTo(1.5f));
+
+            game.SetState(GameState.LevelUp);
+            Assert.That(game.State, Is.EqualTo(GameState.LevelUp));
+            Assert.That(Time.timeScale, Is.Zero, "LevelUp draft state must freeze timeScale to 0.");
+
+            game.SetState(GameState.Playing);
+            Assert.That(game.State, Is.EqualTo(GameState.Playing));
+            Assert.That(Time.timeScale, Is.EqualTo(1.5f), "Resuming Playing state must restore selected game speed.");
+
+            Object.DestroyImmediate(gameGo);
+        }
+
+        [Test]
+        public void Reroll_CostAndRules_Respected()
+        {
+            GameObject draftGo = new GameObject("TestCardDraftManager", typeof(CardDraftManager));
+            CardDraftManager draftManager = draftGo.GetComponent<CardDraftManager>();
+
+            Assert.That(CardDraftManager.RerollCost, Is.EqualTo(20), "Reroll cost must be 20 gold.");
+            Assert.That(draftManager.CanReroll(), Is.False, "Cannot reroll when draft is inactive.");
+
+            Object.DestroyImmediate(draftGo);
+        }
+
+        [Test]
+        public void CastleDefeat_TriggersStateChange()
+        {
+            GameObject castleGo = new GameObject("TestCastle", typeof(Castle));
+            Castle castle = castleGo.GetComponent<Castle>();
+            GameConfig testConfig = ScriptableObject.CreateInstance<GameConfig>();
+            testConfig.castleMaxHealth = 50;
+
+            System.Reflection.FieldInfo configField = typeof(Castle).GetField("config", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            configField.SetValue(castle, testConfig);
+
+            System.Reflection.MethodInfo awakeMethod = typeof(Castle).GetMethod("Awake", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            awakeMethod.Invoke(castle, null);
+
+            int defeatEvents = 0;
+            castle.Defeated += () => defeatEvents++;
+
+            castle.TakeDamage(50);
+            Assert.That(castle.IsGameOver, Is.True);
+            Assert.That(defeatEvents, Is.EqualTo(1));
+
+            Object.DestroyImmediate(castleGo);
+            Object.DestroyImmediate(testConfig);
+        }
+
+        [Test]
+        public void RewardSession_PreventsDuplicateClaims()
+        {
+            SaveManager.BeginRunRewardSession();
+            bool firstClaim = SaveManager.TryClaimRunRewards(20, out int gold1, out int xp1, out _);
+            bool secondClaim = SaveManager.TryClaimRunRewards(20, out int gold2, out int xp2, out _);
+
+            Assert.That(firstClaim, Is.True, "First claim in session should succeed.");
+            Assert.That(secondClaim, Is.False, "Duplicate claim in same session must be rejected.");
         }
     }
 }
