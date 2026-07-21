@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -26,6 +26,9 @@ namespace Stonehold
         // HUD
         private Text goldText;
         private Text waveText;
+        private Text timerText;
+        private RectTransform waveProgressBarFill;
+        private Image waveProgressBarFillImage;
         private Text castleHpText;
         private RectTransform castleHpFill;
         private Image castleHpFillImage;
@@ -33,6 +36,8 @@ namespace Stonehold
         private Text waveStatusText;
         private Text waveCountdownText;
         private Button startWaveButton;
+        private Button rerollButton;
+        private Text rerollButtonText;
 
         // Banner
         private CanvasGroup bannerGroup;
@@ -1110,6 +1115,16 @@ namespace Stonehold
                 }
             }
 
+            if (rerollButton != null)
+            {
+                bool canAfford = economy != null ? economy.Gold >= CardDraftManager.RerollCost : true;
+                rerollButton.interactable = canAfford;
+                if (rerollButtonText != null)
+                {
+                    rerollButtonText.text = $"Reroll ({CardDraftManager.RerollCost} Gold)";
+                }
+            }
+
             ShowPanel(levelUpPanelGroup, true);
         }
 
@@ -1143,6 +1158,20 @@ namespace Stonehold
             if (showAbilityHud)
             {
                 UpdateAbilityCooldownHUD();
+            }
+
+            if (timerText != null)
+            {
+                int totalSec = Mathf.FloorToInt(Time.timeSinceLevelLoad);
+                int minutes = totalSec / 60;
+                int seconds = totalSec % 60;
+                timerText.text = string.Format("{0:D2}:{1:D2}", minutes, seconds);
+            }
+
+            if (waveProgressBarFill != null && waves != null && waves.TotalWaves > 0)
+            {
+                float progress = Mathf.Clamp01((float)waves.CurrentWave / waves.TotalWaves);
+                waveProgressBarFill.anchorMax = new Vector2(progress, 1f);
             }
         }
 
@@ -1259,11 +1288,26 @@ namespace Stonehold
             xpText.rectTransform.offsetMin = Vector2.zero;
             xpText.rectTransform.offsetMax = Vector2.zero;
 
-            // Wave counter (top-center)
-            waveText = CreateText(safeAreaRect, "WaveText", "Wave -", 40, Color.white, TextAnchor.UpperCenter);
-            SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(400f, 60f));
+            // Wave counter & Timer (top-center)
+            waveText = CreateText(safeAreaRect, "WaveText", "Wave -", 36, Color.white, TextAnchor.UpperCenter);
+            SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -15f), new Vector2(480f, 40f));
 
-            // Hint panel background (top-center, below castle health)
+            // Wave progress bar (top-center, beneath wave details)
+            Image progressBg = CreateImage(safeAreaRect, "WaveProgressBarBg", new Color(0f, 0f, 0f, 0.6f));
+            SetAnchored(progressBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -56f), new Vector2(340f, 12f));
+            waveProgressBarFillImage = CreateImage(progressBg.rectTransform, "Fill", new Color(0.2f, 0.75f, 1f));
+            waveProgressBarFill = waveProgressBarFillImage.rectTransform;
+            waveProgressBarFill.anchorMin = Vector2.zero;
+            waveProgressBarFill.anchorMax = Vector2.one;
+            waveProgressBarFill.pivot = new Vector2(0f, 0.5f);
+            waveProgressBarFill.offsetMin = new Vector2(1f, 1f);
+            waveProgressBarFill.offsetMax = new Vector2(-1f, -1f);
+
+            // Elapsed Timer text (top-center below progress bar)
+            timerText = CreateText(safeAreaRect, "TimerText", "00:00", 20, new Color(0.85f, 0.85f, 0.9f), TextAnchor.UpperCenter);
+            SetAnchored(timerText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -72f), new Vector2(200f, 26f));
+
+            // Hint panel background (top-center, below timer)
             hintBg = CreateImage(safeAreaRect, "HintPanel", new Color(0.08f, 0.1f, 0.15f, 0.85f));
             SetAnchored(hintBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -155f), new Vector2(760f, 48f));
             hintText = CreateText(hintBg.rectTransform, "Label", "", 22, new Color(0.95f, 0.95f, 1f), TextAnchor.MiddleCenter);
@@ -1291,14 +1335,10 @@ namespace Stonehold
             castleHpText.rectTransform.offsetMin = Vector2.zero;
             castleHpText.rectTransform.offsetMax = Vector2.zero;
 
-            // Pause and speed align with the XP row.
-            CreateButton(safeAreaRect, "PauseButton", "Pause", new Vector2(95f, 36f), new Vector2(1f, 1f),
-                new Vector2(-150f, -72f), () => { if (game != null) game.TogglePause(); });
-
-            // Speed button: cycles 1x -> 1.5x -> 2x -> 1x.
+            // Speed button: top-left (1x -> 1.5x -> 2x)
             Button speedButton = CreateButton(safeAreaRect, "SpeedButton",
                 game != null ? FormatSpeed(game.GameSpeed) : "1x",
-                new Vector2(95f, 36f), new Vector2(1f, 1f), new Vector2(-50f, -72f),
+                new Vector2(95f, 42f), new Vector2(0f, 1f), new Vector2(65f, -38f),
                 () =>
                 {
                     if (game != null)
@@ -1307,6 +1347,10 @@ namespace Stonehold
                     }
                 });
             speedButtonLabel = speedButton.GetComponentInChildren<Text>();
+
+            // Pause button: top-right
+            CreateButton(safeAreaRect, "PauseButton", "Pause", new Vector2(95f, 42f), new Vector2(1f, 1f),
+                new Vector2(-65f, -38f), () => { if (game != null) game.TogglePause(); });
 
             // Wave banner (center)
             bannerText = CreateText(safeAreaRect, "WaveBanner", "", 72, Color.white, TextAnchor.MiddleCenter);
@@ -1430,10 +1474,25 @@ namespace Stonehold
                 cardTypeLabels[i].rectTransform.offsetMax = Vector2.zero;
             }
 
+            rerollButton = CreateButton(rect, "RerollButton", "Reroll (20 Gold)", new Vector2(240f, 56f), new Vector2(0.5f, 0.08f),
+                Vector2.zero, OnRerollClicked);
+            rerollButtonText = rerollButton.GetComponentInChildren<Text>();
+
             levelUpPanelGroup = dim.gameObject.AddComponent<CanvasGroup>();
             levelUpPanelGroup.alpha = 0f;
             levelUpPanelGroup.interactable = false;
             levelUpPanelGroup.blocksRaycasts = false;
+        }
+
+        private void OnRerollClicked()
+        {
+            if (CardDraftManager.Instance != null && CardDraftManager.Instance.TryReroll())
+            {
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayButton();
+                }
+            }
         }
 
         private void BuildBuildMenu()

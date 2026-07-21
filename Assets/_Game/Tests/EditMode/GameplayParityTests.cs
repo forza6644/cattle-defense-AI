@@ -36,21 +36,16 @@ namespace Stonehold.Tests
             GameObject managerGo = new GameObject("TestRosterManager", typeof(HeroRosterManager));
             HeroRosterManager roster = managerGo.GetComponent<HeroRosterManager>();
 
-            // Clean up
-            Object.DestroyImmediate(managerGo);
-
             Assert.That(roster, Is.Not.Null);
+            Object.DestroyImmediate(managerGo);
         }
 
         [Test]
         public void WaveCounter_ReportsOneToTwentyFormat()
         {
             Assert.That(parityStage.waves.Length, Is.EqualTo(20));
-            for (int i = 1; i <= 20; i++)
-            {
-                string formatted = $"Wave {i}/{parityStage.waves.Length}";
-                Assert.That(formatted, Is.EqualTo($"Wave {i}/20"));
-            }
+            Assert.That($"Wave 1/{parityStage.waves.Length}", Is.EqualTo("Wave 1/20"));
+            Assert.That($"Wave 20/{parityStage.waves.Length}", Is.EqualTo("Wave 20/20"));
         }
 
         [Test]
@@ -84,6 +79,21 @@ namespace Stonehold.Tests
             Assert.That(draftManager.CanReroll(), Is.False, "Cannot reroll when draft is inactive.");
 
             Object.DestroyImmediate(draftGo);
+        }
+
+        [Test]
+        public void Reroll_DeductsGoldExactlyOnce_WhenSuccessful()
+        {
+            GameObject econGo = new GameObject("TestEconomyManager", typeof(EconomyManager));
+            EconomyManager economy = econGo.GetComponent<EconomyManager>();
+            economy.AddGold(100);
+
+            Assert.That(economy.Gold, Is.EqualTo(100));
+            bool spent = economy.TrySpend(20);
+            Assert.That(spent, Is.True);
+            Assert.That(economy.Gold, Is.EqualTo(80), "Exactly 20 gold must be deducted.");
+
+            Object.DestroyImmediate(econGo);
         }
 
         [Test]

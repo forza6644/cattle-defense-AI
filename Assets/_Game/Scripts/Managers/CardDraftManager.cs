@@ -261,13 +261,20 @@ namespace Stonehold
         {
             if (!CanReroll()) return false;
 
-            if (EconomyManager.Instance != null && EconomyManager.Instance.Gold >= RerollCost)
+            List<DraftCardChoice> choices = GenerateDraftChoices();
+            if (choices == null || choices.Count == 0)
             {
-                EconomyManager.Instance.TrySpend(RerollCost);
+                Debug.LogWarning("[CardDraftManager] Reroll failed: no eligible card choices generated.");
+                return false;
             }
 
-            List<DraftCardChoice> choices = GenerateDraftChoices();
-            if (choices.Count == 0) return false;
+            if (EconomyManager.Instance != null && EconomyManager.Instance.Gold >= RerollCost)
+            {
+                if (!EconomyManager.Instance.TrySpend(RerollCost))
+                {
+                    return false;
+                }
+            }
 
             RunProgressionManager.CardChoice[] choiceStructs = new RunProgressionManager.CardChoice[3];
             for (int i = 0; i < 3; i++)
@@ -279,7 +286,7 @@ namespace Stonehold
             {
                 UIManager.Instance.OnShowLevelUpDraft(choiceStructs);
             }
-            Debug.Log("[CardDraftManager] Reroll executed.");
+            Debug.Log("[CardDraftManager] Reroll executed successfully.");
             return true;
         }
 

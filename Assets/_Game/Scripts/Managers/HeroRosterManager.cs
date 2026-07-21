@@ -196,6 +196,36 @@ namespace Stonehold
 
             slots.Sort(CompareSlots);
             KeepOneSlotPerName();
+
+            int maxSlots = GetMaxSlotsForCurrentStage();
+            if (maxSlots == 3 && slots.Count > 3)
+            {
+                // Select 3 evenly spaced slots: Left (-2.7), Center (-0.9 or 0.9), Right (2.7)
+                List<HeroSlot> paritySlots = new List<HeroSlot>();
+                for (int i = 0; i < slots.Count; i++)
+                {
+                    HeroSlot s = slots[i];
+                    if (i == 1 || i == 2 || i == 4) // Left, Center, Right
+                    {
+                        s.gameObject.SetActive(true);
+                        paritySlots.Add(s);
+                    }
+                    else
+                    {
+                        s.gameObject.SetActive(false);
+                    }
+                }
+                slots.Clear();
+                slots.AddRange(paritySlots);
+            }
+            else
+            {
+                for (int i = 0; i < slots.Count; i++)
+                {
+                    slots[i].gameObject.SetActive(true);
+                }
+            }
+
             ApplyCenterOutOrder();
         }
 
