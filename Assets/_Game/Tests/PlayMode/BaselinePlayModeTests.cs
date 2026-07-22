@@ -314,7 +314,16 @@ namespace Stonehold.Tests
             enemyPool.LogDiagnostics();
             yield return new WaitForSecondsRealtime(3f);
             Assert.That(SaveManager.MetaGold, Is.GreaterThanOrEqualTo(startingGold));
-            Assert.That(SaveManager.TryClaimRunRewards(10, out _, out _, out _), Is.True);
+            int goldAfterAutomaticClaim = SaveManager.MetaGold;
+            int xpAfterAutomaticClaim = SaveManager.AccountXp;
+            int materialsAfterAutomaticClaim = SaveManager.CoreMaterials;
+            Assert.That(
+                SaveManager.TryClaimRunRewards(10, out _, out _, out _),
+                Is.False,
+                "Victory rewards should already be claimed by the result flow.");
+            Assert.That(SaveManager.MetaGold, Is.EqualTo(goldAfterAutomaticClaim));
+            Assert.That(SaveManager.AccountXp, Is.EqualTo(xpAfterAutomaticClaim));
+            Assert.That(SaveManager.CoreMaterials, Is.EqualTo(materialsAfterAutomaticClaim));
 
             GameManager oldGame = game;
             oldGame.Restart();
