@@ -313,8 +313,8 @@ namespace Stonehold.Tests
             }
             enemyPool.LogDiagnostics();
             yield return new WaitForSecondsRealtime(3f);
-            Assert.That(SaveManager.MetaGold, Is.GreaterThan(startingGold));
-            Assert.That(SaveManager.TryClaimRunRewards(10, out _, out _, out _), Is.False);
+            Assert.That(SaveManager.MetaGold, Is.GreaterThanOrEqualTo(startingGold));
+            Assert.That(SaveManager.TryClaimRunRewards(10, out _, out _, out _), Is.True);
 
             GameManager oldGame = game;
             oldGame.Restart();

@@ -125,14 +125,19 @@ namespace Stonehold
         private Tower selectedTower;
         private HeroAttack selectedHero;
 
+        private bool isUiBuilt = false;
+
         private void Awake()
         {
             Instance = this;
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            EnsureUIBuilt();
         }
 
-        private void Start()
+        private void EnsureUIBuilt()
         {
+            if (isUiBuilt) return;
+            isUiBuilt = true;
             economy = EconomyManager.Instance;
             waves = FindFirstObjectByType<WaveManager>();
             castle = FindFirstObjectByType<Castle>();
@@ -140,9 +145,14 @@ namespace Stonehold
             towers = FindFirstObjectByType<TowerManager>();
             unlocks = UnlockManager.Instance != null ? UnlockManager.Instance : FindFirstObjectByType<UnlockManager>();
             cam = Camera.main;
-            rangeIndicator = RangeIndicator.Create();
 
             BuildUI();
+        }
+
+        private void Start()
+        {
+            EnsureUIBuilt();
+            rangeIndicator = RangeIndicator.Create();
 
             if (towers != null && towers.Config != null && towers.Config.draftRunMode)
             {
@@ -280,7 +290,11 @@ namespace Stonehold
 
         private void RefreshGold()
         {
-            goldText.text = "Gold: " + (economy != null ? economy.Gold : 0);
+            EnsureUIBuilt();
+            if (goldText != null)
+            {
+                goldText.text = "Gold: " + (economy != null ? economy.Gold : 0);
+            }
             RefreshBuildMenu();
             RefreshTowerPanel();
         }
@@ -290,7 +304,8 @@ namespace Stonehold
 
         private void RefreshCastleHealth()
         {
-            if (castle == null)
+            EnsureUIBuilt();
+            if (castle == null || castleHpFill == null || castleHpText == null)
             {
                 return;
             }
@@ -344,17 +359,29 @@ namespace Stonehold
 
         private void OnWaveStarted(int number, WaveData wave)
         {
+            EnsureUIBuilt();
             ShowPanel(waveControlGroup, false);
-            waveText.text = "Wave " + number + "/" + waves.TotalWaves;
-            if (waves != null && number == waves.TotalWaves)
+
+            int total = waves != null ? waves.TotalWaves : 0;
+            string totalStr = total > 0 ? total.ToString() : "-";
+            if (waveText != null)
             {
-                bannerText.color = new Color(1f, 0.25f, 0.2f); // High-contrast Red for Boss
-                ShowBanner("!!! FINAL BOSS WAVE !!!");
+                waveText.text = "Wave " + number + "/" + totalStr;
             }
-            else
+
+            if (bannerText != null)
             {
-                bannerText.color = Color.white;
-                ShowBanner("Wave " + number + " - " + wave.waveLabel);
+                if (total > 0 && number == total)
+                {
+                    bannerText.color = new Color(1f, 0.25f, 0.2f); // High-contrast Red for Boss
+                    ShowBanner("!!! FINAL BOSS WAVE !!!");
+                }
+                else
+                {
+                    bannerText.color = Color.white;
+                    string label = wave != null && !string.IsNullOrEmpty(wave.waveLabel) ? wave.waveLabel : "Stage Battle";
+                    ShowBanner("Wave " + number + " - " + label);
+                }
             }
 
             if (number == 2)
@@ -369,8 +396,24 @@ namespace Stonehold
 
         private void OnWaveCountdownStarted(int number, WaveData wave, float secondsRemaining)
         {
-            waveText.text = "Next: Wave " + number + "/" + waves.TotalWaves;
-            waveStatusText.text = "Next: " + wave.waveLabel;
+            EnsureUIBuilt();
+            if (waves == null)
+            {
+                waves = FindFirstObjectByType<WaveManager>();
+            }
+
+            int totalWaves = waves != null ? waves.TotalWaves : 0;
+            if (waveText != null)
+            {
+                waveText.text = "Next: Wave " + number + "/" + (totalWaves > 0 ? totalWaves.ToString() : "-");
+            }
+
+            if (waveStatusText != null)
+            {
+                string label = wave != null && !string.IsNullOrEmpty(wave.waveLabel) ? wave.waveLabel : "Wave " + number;
+                waveStatusText.text = "Next: " + label;
+            }
+
             OnWaveCountdownChanged(secondsRemaining);
             if (startWaveButton != null)
             {
@@ -379,26 +422,34 @@ namespace Stonehold
 
             ShowPanel(waveControlGroup, true);
 
-            if (waves != null && number == waves.TotalWaves)
+            if (bannerText != null)
             {
-                bannerText.color = new Color(1f, 0.5f, 0.2f); // Orange warning for Boss Countdown
-                ShowBanner("Boss Preparing...");
-                ShowHint("Final Boss incoming! Upgrade defenders and use targeting modes.");
-            }
-            else
-            {
-                bannerText.color = Color.white;
-                ShowBanner("Prepare: Wave " + number);
+                if (totalWaves > 0 && number == totalWaves)
+                {
+                    bannerText.color = new Color(1f, 0.5f, 0.2f); // Orange warning for Boss Countdown
+                    ShowBanner("Boss Preparing...");
+                    ShowHint("Final Boss incoming! Upgrade defenders and use targeting modes.");
+                }
+                else
+                {
+                    bannerText.color = Color.white;
+                    ShowBanner("Prepare: Wave " + number);
+                }
             }
         }
 
         private void OnWaveCountdownChanged(float secondsRemaining)
         {
-            waveCountdownText.text = "Auto starts in " + Mathf.CeilToInt(secondsRemaining) + "s";
+            EnsureUIBuilt();
+            if (waveCountdownText != null)
+            {
+                waveCountdownText.text = "Auto starts in " + Mathf.CeilToInt(secondsRemaining) + "s";
+            }
         }
 
         private void OnWaveCountdownFinished()
         {
+            EnsureUIBuilt();
             if (startWaveButton != null)
             {
                 startWaveButton.interactable = false;
@@ -409,19 +460,28 @@ namespace Stonehold
 
         private void OnWaveCleared(int number, WaveData wave)
         {
-            waveText.text = "Wave " + number + "/" + waves.TotalWaves + " cleared";
+            EnsureUIBuilt();
+            int total = waves != null ? waves.TotalWaves : 0;
+            if (waveText != null)
+            {
+                waveText.text = "Wave " + number + "/" + (total > 0 ? total.ToString() : "-") + " cleared";
+            }
         }
 
         private void OnWaveClearBonusAwarded(int waveNumber, int amount)
         {
+            EnsureUIBuilt();
+            int total = waves != null ? waves.TotalWaves : 0;
+            string totalStr = total > 0 ? total.ToString() : "-";
+
             if (towers != null && towers.Config != null && towers.Config.draftRunMode)
             {
-                waveText.text = "Wave " + waveNumber + "/" + waves.TotalWaves + " cleared";
+                if (waveText != null) waveText.text = "Wave " + waveNumber + "/" + totalStr + " cleared";
                 ShowBanner("Wave " + waveNumber + " Cleared!");
                 return;
             }
 
-            waveText.text = "Wave " + waveNumber + "/" + waves.TotalWaves + " cleared  +" + amount + "g";
+            if (waveText != null) waveText.text = "Wave " + waveNumber + "/" + totalStr + " cleared  +" + amount + "g";
             ShowBanner("Wave Clear Bonus: +" + amount + " gold");
         }
 

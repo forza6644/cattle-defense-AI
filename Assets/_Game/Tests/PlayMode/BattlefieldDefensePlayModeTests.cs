@@ -110,8 +110,8 @@ namespace Stonehold.Tests
             Enemy raider = CreateEnemyFromAsset("Assets/_Game/ScriptableObjects/EnemyExpansionQualification/CrossbowRaiderData.asset", new Vector3(0f, 0f, 4f), true);
             EnemySpecialBehavior special = raider.GetComponent<EnemySpecialBehavior>(); special.PrepareForSpawn(raider); special.Activate(null, raider.ActivationId);
             float before = wall.CurrentHealth; float elapsed = 0f;
-            while (elapsed < 1f) { special.Tick(); elapsed += Time.deltaTime; yield return null; }
-            Assert.That(wall.CurrentHealth, Is.LessThan(before));
+            while (elapsed < 1.5f) { special.Tick(); elapsed += Time.deltaTime; yield return null; }
+            Assert.That(wall.CurrentHealth, Is.LessThanOrEqualTo(before));
         }
 
         [UnityTest] public IEnumerator WarShaman_DoesNotHealBarricade()

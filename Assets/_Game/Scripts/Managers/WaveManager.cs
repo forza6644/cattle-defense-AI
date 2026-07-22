@@ -262,6 +262,27 @@ namespace Stonehold
             }
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public void JumpToWave(int waveNumber)
+        {
+            if (activeWaves == null || waveNumber < 1 || waveNumber > activeWaves.Length) return;
+            CurrentWave = waveNumber;
+            WaveData wave = activeWaves[waveNumber - 1];
+            WaveStarted?.Invoke(CurrentWave, wave);
+            if (wave != null && wave.spawns != null && wave.spawns.Length > 0)
+            {
+                foreach (var entry in wave.spawns)
+                {
+                    if (entry.enemy != null)
+                    {
+                        SpawnEnemy(entry.enemy);
+                    }
+                }
+            }
+            Debug.Log($"[WaveManager] Debug jumped to Wave {CurrentWave}/{TotalWaves}");
+        }
+#endif
+
         private IEnumerator WaitForWaveStart(int waveNumber, WaveData wave)
         {
             float waitTime = Mathf.Max(0f, config.timeBetweenWaves);
