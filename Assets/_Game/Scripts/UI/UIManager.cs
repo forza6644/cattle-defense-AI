@@ -63,6 +63,7 @@ namespace Stonehold
 
         // Level Up & XP
         private CanvasGroup levelUpPanelGroup;
+        private bool draftSelectionLocked;
         private Text xpText;
         private RectTransform xpFill;
         private Image xpFillImage;
@@ -1016,7 +1017,7 @@ namespace Stonehold
 
             if (state != GameState.LevelUp)
             {
-                ShowPanel(levelUpPanelGroup, false);
+                DismissLevelUpDraftPanel();
             }
         }
 
@@ -1065,6 +1066,8 @@ namespace Stonehold
             {
                 return;
             }
+
+            draftSelectionLocked = false;
 
             if (AudioManager.Instance != null)
             {
@@ -1154,17 +1157,8 @@ namespace Stonehold
                 if (cardButtons[i] != null)
                 {
                     cardButtons[i].onClick.RemoveAllListeners();
-                    cardButtons[i].onClick.AddListener(() =>
-                    {
-                        if (AudioManager.Instance != null)
-                        {
-                            AudioManager.Instance.PlayUpgrade();
-                        }
-                        if (progression != null)
-                        {
-                            progression.ApplyChoice(choices[index]);
-                        }
-                    });
+                    cardButtons[i].interactable = true;
+                    cardButtons[i].onClick.AddListener(() => SelectDraftChoice(choices[index]));
 
                     ColorBlock cb = cardButtons[i].colors;
                     cb.normalColor = btnColor;
@@ -1186,6 +1180,54 @@ namespace Stonehold
             }
 
             ShowPanel(levelUpPanelGroup, true);
+        }
+
+        private void SelectDraftChoice(RunProgressionManager.CardChoice choice)
+        {
+            if (draftSelectionLocked)
+            {
+                return;
+            }
+
+            draftSelectionLocked = true;
+            DismissLevelUpDraftPanel();
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayUpgrade();
+            }
+
+            if (progression != null)
+            {
+                progression.ApplyChoice(choice);
+            }
+        }
+
+        private void DismissLevelUpDraftPanel()
+        {
+            for (int i = 0; i < cardButtons.Length; i++)
+            {
+                if (cardButtons[i] == null)
+                {
+                    continue;
+                }
+
+                cardButtons[i].interactable = false;
+                cardButtons[i].onClick.RemoveAllListeners();
+            }
+
+            if (rerollButton != null)
+            {
+                rerollButton.interactable = false;
+            }
+
+            if (levelUpPanelGroup != null)
+            {
+                levelUpPanelGroup.alpha = 0f;
+                levelUpPanelGroup.interactable = false;
+                levelUpPanelGroup.blocksRaycasts = false;
+                levelUpPanelGroup.transform.localScale = Vector3.one;
+            }
         }
 
         public void ShowHint(string message)
@@ -1546,6 +1588,11 @@ namespace Stonehold
 
         private void OnRerollClicked()
         {
+            if (draftSelectionLocked)
+            {
+                return;
+            }
+
             if (CardDraftManager.Instance != null && CardDraftManager.Instance.TryReroll())
             {
                 if (AudioManager.Instance != null)
