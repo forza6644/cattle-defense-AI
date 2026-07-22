@@ -1443,16 +1443,26 @@ namespace Stonehold
                 new Vector2(95f, 42f), new Vector2(0f, 1f), new Vector2(65f, -38f),
                 () =>
                 {
-                    if (game != null)
+                    GameManager activeGame = GameManager.Instance != null ? GameManager.Instance : game;
+                    if (activeGame != null)
                     {
-                        game.CycleGameSpeed();
+                        game = activeGame;
+                        OnGameSpeedChanged(activeGame.CycleGameSpeed());
                     }
                 });
             speedButtonLabel = speedButton.GetComponentInChildren<Text>();
 
             // Pause button: top-right
             CreateButton(safeAreaRect, "PauseButton", "Pause", new Vector2(95f, 42f), new Vector2(1f, 1f),
-                new Vector2(-65f, -38f), () => { if (game != null) game.TogglePause(); });
+                new Vector2(-65f, -38f), () =>
+                {
+                    GameManager activeGame = GameManager.Instance != null ? GameManager.Instance : game;
+                    if (activeGame != null)
+                    {
+                        game = activeGame;
+                        activeGame.TogglePause();
+                    }
+                });
 
             // Wave banner (center)
             bannerText = CreateText(safeAreaRect, "WaveBanner", "", 72, Color.white, TextAnchor.MiddleCenter);
@@ -1598,6 +1608,24 @@ namespace Stonehold
                 if (AudioManager.Instance != null)
                 {
                     AudioManager.Instance.PlayButton();
+                }
+            }
+        }
+
+        public void ShowDraftFeedback(string message)
+        {
+            if (levelUpPanelGroup == null)
+            {
+                return;
+            }
+
+            Text[] texts = levelUpPanelGroup.GetComponentsInChildren<Text>(true);
+            for (int i = 0; i < texts.Length; i++)
+            {
+                if (texts[i].name == "Subtitle")
+                {
+                    texts[i].text = message;
+                    break;
                 }
             }
         }

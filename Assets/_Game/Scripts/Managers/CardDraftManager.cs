@@ -16,6 +16,8 @@ namespace Stonehold
         [SerializeField] private CardPoolDefinition poolOverride;
 
         private readonly List<CardPoolEntry> cardPool = new List<CardPoolEntry>();
+        private readonly HashSet<string> displayedCardIds = new HashSet<string>(System.StringComparer.Ordinal);
+        private System.Random draftRandom = new System.Random();
         private bool isDraftActive = false;
         private bool isSelectionMade = false;
 
@@ -91,6 +93,8 @@ namespace Stonehold
             StopAllCoroutines();
             isDraftActive = false;
             isSelectionMade = false;
+            displayedCardIds.Clear();
+            draftRandom = new System.Random();
             LoadCardPool();
         }
 
@@ -125,6 +129,7 @@ namespace Stonehold
 
             isDraftActive = true;
             isSelectionMade = false;
+            RememberDisplayedChoices(choices);
 
             // Map CardDefinition to RunProgressionManager.CardChoice
             RunProgressionManager.CardChoice[] choiceStructs = new RunProgressionManager.CardChoice[3];
@@ -245,7 +250,8 @@ namespace Stonehold
             RecruitOptionPolicy policy = poolOverride != null
                 ? poolOverride.recruitOptionPolicy
                 : RecruitOptionPolicy.Weighted;
-            return CardDraftSelector.Generate(cardPool, state, 3, policy, deterministicSeed);
+            int? seed = deterministicSeed ?? draftRandom.Next();
+            return CardDraftSelector.Generate(cardPool, state, 3, policy, seed);
         }
 
         public const int RerollCost = 20;
@@ -253,18 +259,19 @@ namespace Stonehold
         public bool CanReroll()
         {
             if (!isDraftActive || isSelectionMade) return false;
-            if (EconomyManager.Instance != null && EconomyManager.Instance.Gold < RerollCost) return false;
-            return true;
+            EconomyManager economy = EconomyManager.Instance;
+            return economy != null && economy.Gold >= RerollCost;
         }
 
         public bool TryReroll()
         {
             if (!CanReroll()) return false;
 
-            List<DraftCardChoice> choices = GenerateDraftChoices();
-            if (choices == null || choices.Count == 0)
+            if (!TryGenerateDifferentReroll(out List<DraftCardChoice> choices))
             {
-                Debug.LogWarning("[CardDraftManager] Reroll failed: no eligible card choices generated.");
+                const string message = "No alternative card set is available.";
+                UIManager.Instance?.ShowDraftFeedback(message);
+                Debug.LogWarning("[CardDraftManager] Reroll failed: " + message);
                 return false;
             }
 
@@ -282,12 +289,120 @@ namespace Stonehold
                 choiceStructs[i] = i < choices.Count ? CreateChoice(choices[i]) : CreateFallbackChoice();
             }
 
+            RememberDisplayedChoices(choices);
             if (UIManager.Instance != null)
             {
+                UIManager.Instance.ShowDraftFeedback("Choose a card to upgrade your run");
                 UIManager.Instance.OnShowLevelUpDraft(choiceStructs);
             }
             Debug.Log("[CardDraftManager] Reroll executed successfully.");
             return true;
+        }
+
+        private bool TryGenerateDifferentReroll(out List<DraftCardChoice> choices)
+        {
+            const int randomAttempts = 12;
+            for (int attempt = 0; attempt < randomAttempts; attempt++)
+            {
+                choices = GenerateDraftChoices();
+                if (choices.Count > 0 && IsDifferentFromDisplayed(choices))
+                {
+                    return true;
+                }
+            }
+
+            DraftSelectionState state = BuildSelectionState();
+            var eligible = new List<DraftCardChoice>();
+            var seen = new HashSet<string>(System.StringComparer.Ordinal);
+            for (int i = 0; i < cardPool.Count; i++)
+            {
+                CardPoolEntry entry = cardPool[i];
+                CardDefinition card = entry?.card;
+                if (card == null
+                    || !CardDraftSelector.IsEligible(card, state)
+                    || entry.weight <= 0f
+                    || float.IsNaN(entry.weight)
+                    || float.IsInfinity(entry.weight)
+                    || !seen.Add(card.id))
+                {
+                    continue;
+                }
+
+                eligible.Add(new DraftCardChoice(card, entry.rarity, entry.weight));
+            }
+
+            DraftCardChoice alternative = default;
+            bool foundAlternative = false;
+            for (int i = 0; i < eligible.Count; i++)
+            {
+                if (!displayedCardIds.Contains(eligible[i].Card.id))
+                {
+                    alternative = eligible[i];
+                    foundAlternative = true;
+                    break;
+                }
+            }
+
+            choices = GenerateDraftChoices();
+            if (!foundAlternative || choices.Count == 0)
+            {
+                return false;
+            }
+
+            int replaceIndex = choices.Count - 1;
+            int recruitCount = 0;
+            for (int i = 0; i < choices.Count; i++)
+            {
+                if (choices[i].Card.cardCategory == CardCategory.RecruitHero)
+                {
+                    recruitCount++;
+                }
+            }
+            if (recruitCount == 1
+                && choices[replaceIndex].Card.cardCategory == CardCategory.RecruitHero
+                && alternative.Card.cardCategory != CardCategory.RecruitHero)
+            {
+                for (int i = choices.Count - 1; i >= 0; i--)
+                {
+                    if (choices[i].Card.cardCategory != CardCategory.RecruitHero)
+                    {
+                        replaceIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            choices[replaceIndex] = alternative;
+            return IsDifferentFromDisplayed(choices);
+        }
+
+        private bool IsDifferentFromDisplayed(List<DraftCardChoice> choices)
+        {
+            if (displayedCardIds.Count != choices.Count)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < choices.Count; i++)
+            {
+                if (choices[i].Card == null || !displayedCardIds.Contains(choices[i].Card.id))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void RememberDisplayedChoices(List<DraftCardChoice> choices)
+        {
+            displayedCardIds.Clear();
+            for (int i = 0; i < choices.Count; i++)
+            {
+                if (choices[i].Card != null)
+                {
+                    displayedCardIds.Add(choices[i].Card.id);
+                }
+            }
         }
 
         private DraftSelectionState BuildSelectionState()
