@@ -135,6 +135,13 @@ namespace Stonehold
                 }
 
                 WaveData wave = activeWaves[w];
+                if (wave == null)
+                {
+                    Debug.LogError("WaveManager cannot start wave index " + w +
+                        ": the active stage contains a null WaveData reference.");
+                    yield break;
+                }
+
                 yield return WaitForWaveStart(w + 1, wave);
 
                 if (IsGameOver)

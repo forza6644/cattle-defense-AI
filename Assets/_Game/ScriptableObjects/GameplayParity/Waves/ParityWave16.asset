@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -17,7 +17,4 @@ MonoBehaviour:
   - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
     count: 30
     spawnInterval: 0.45
-    startDelay: 0  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
-    count: 10
-    spawnInterval: 0.8
-    startDelay: 3
+    startDelay: 0
