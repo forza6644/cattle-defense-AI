@@ -120,6 +120,7 @@ namespace Stonehold
         private Camera cam;
         private Coroutine bannerRoutine;
         private RangeIndicator rangeIndicator;
+        private bool gameEventsSubscribed;
 
         // Selection
         private TowerSlot selectedSlot;
@@ -220,11 +221,7 @@ namespace Stonehold
                 waves.WaveCleared += OnWaveCleared;
             }
             if (castle != null) castle.HealthChanged += RefreshCastleHealth;
-            if (game != null)
-            {
-                game.StateChanged += OnStateChanged;
-                game.GameSpeedChanged += OnGameSpeedChanged;
-            }
+            BindGameManagerEvents();
             if (unlocks != null)
             {
                 unlocks.UnlocksChanged += RefreshBuildMenu;
@@ -267,10 +264,11 @@ namespace Stonehold
                 waves.WaveCleared -= OnWaveCleared;
             }
             if (castle != null) castle.HealthChanged -= RefreshCastleHealth;
-            if (game != null)
+            if (gameEventsSubscribed && game != null)
             {
                 game.StateChanged -= OnStateChanged;
                 game.GameSpeedChanged -= OnGameSpeedChanged;
+                gameEventsSubscribed = false;
             }
             if (unlocks != null)
             {
@@ -988,6 +986,38 @@ namespace Stonehold
             }
         }
 
+        private void BindGameManagerEvents()
+        {
+            GameManager activeGame = GameManager.Instance != null ? GameManager.Instance : game;
+            if (gameEventsSubscribed && game == activeGame)
+            {
+                return;
+            }
+
+            if (gameEventsSubscribed && game != null)
+            {
+                game.StateChanged -= OnStateChanged;
+                game.GameSpeedChanged -= OnGameSpeedChanged;
+            }
+
+            game = activeGame;
+            gameEventsSubscribed = false;
+            if (game == null)
+            {
+                return;
+            }
+
+            game.StateChanged += OnStateChanged;
+            game.GameSpeedChanged += OnGameSpeedChanged;
+            gameEventsSubscribed = true;
+            OnGameSpeedChanged(game.GameSpeed);
+
+            if (game.State != GameState.Playing)
+            {
+                OnStateChanged(game.State);
+            }
+        }
+
         private static string FormatSpeed(float speed)
         {
             return speed.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "x";
@@ -1002,11 +1032,17 @@ namespace Stonehold
                 abilityHudContainer.gameObject.SetActive(state == GameState.Playing);
             }
 
-            if (state == GameState.Victory || state == GameState.Defeat)
+            if (state == GameState.Victory)
             {
                 ShowPanel(victoryGroup, false);
                 ShowPanel(defeatGroup, false);
-                ShowBattleResult(state == GameState.Victory);
+                ShowBattleResult(true);
+            }
+            else if (state == GameState.Defeat)
+            {
+                ShowPanel(resultPanelGroup, false);
+                ShowPanel(victoryGroup, false);
+                ShowPanel(defeatGroup, true);
             }
             else
             {
