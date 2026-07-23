@@ -38,8 +38,8 @@ namespace Stonehold
                 // view does not fall back to the old close-up camera.
                 const float referenceVerticalFov = 44f;
 
-                transform.localPosition = new Vector3(0f, 35f, -10.1f);
-                transform.localRotation = Quaternion.Euler(70f, 0f, 0f);
+                transform.localPosition = new Vector3(0f, 34f, -11.5f);
+                transform.localRotation = Quaternion.Euler(66f, 0f, 0f);
 
                 float aspect = Mathf.Max(0.01f, (float)Screen.width / Screen.height);
                 float referenceHorizontalFov = Camera.VerticalToHorizontalFieldOfView(referenceVerticalFov, referenceAspect);

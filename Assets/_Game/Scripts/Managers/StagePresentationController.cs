@@ -222,6 +222,19 @@ BuildStageIdentity(environment.transform, stageIndex);
                 CreateVisual(root, $"LaneMarker_R_{i + 1:00}", PrimitiveType.Cube, new Vector3(3.28f - inset, 0.13f, markerZ[i]), new Vector3(0.48f, 0.18f, 0.7f), stoneColor, stoneMaterial, true);
             }
 
+            // Create beautiful, subtle glowing lines on the road sides to guide the eye along the combat path (10% arcane accent)
+            Material pathGlowMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            pathGlowMaterial.name = "CombatPathGlow_RuntimeMaterial";
+            pathGlowMaterial.SetColor(BaseColorId, Color.black);
+            pathGlowMaterial.EnableKeyword("_EMISSION");
+            Color pathGlowColor = Color.Lerp(accentColor, Color.black, 0.15f); // Soft, beautiful glow
+            pathGlowMaterial.SetColor(EmissionColorId, pathGlowColor * 1.5f);
+
+            // Left guiding line along the road
+            CreateVisual(root, "CombatPathGlow_L", PrimitiveType.Cube, new Vector3(-2.82f, 0.041f, 5.25f), new Vector3(0.05f, 0.01f, 21.5f), Color.black, pathGlowMaterial, false);
+            // Right guiding line along the road
+            CreateVisual(root, "CombatPathGlow_R", PrimitiveType.Cube, new Vector3(2.82f, 0.041f, 5.25f), new Vector3(0.05f, 0.01f, 21.5f), Color.black, pathGlowMaterial, false);
+
             ConfigureCastlePresentation(environment, root, stageIndex, stoneMaterial, stoneColor, stoneDark, accentColor);
         }
 
@@ -641,10 +654,39 @@ BuildStageIdentity(environment.transform, stageIndex);
 
             CreateVisual(runtimeRoot, "HeroDeckFront", PrimitiveType.Cube, new Vector3(0f, 2.08f, -4.92f), new Vector3(13.2f, 0.22f, 0.24f), stoneDark, stoneMaterial, true);
 
-            float[] slotX = { -5.5f, -3.3f, -1.1f, 1.1f, 3.3f, 5.5f };
-            for (int i = 0; i < slotX.Length; i++)
+            // Dynamically place plinths based on active hero slots for maximum readability
+            List<float> activeSlotX = new List<float>();
+            if (stageIndex == 0) // Stage 1 (Index 0) has 3 active slots
             {
-                CreateVisual(runtimeRoot, $"HeroPlinth_{i + 1:00}", PrimitiveType.Cylinder, new Vector3(slotX[i], 2.18f, -4.4f), new Vector3(1.35f, 0.16f, 1.35f), stoneColor, stoneMaterial, true);
+                activeSlotX.Add(-3.3f);
+                activeSlotX.Add(-1.1f);
+                activeSlotX.Add(3.3f);
+            }
+            else
+            {
+                activeSlotX.Add(-5.5f);
+                activeSlotX.Add(-3.3f);
+                activeSlotX.Add(-1.1f);
+                activeSlotX.Add(1.1f);
+                activeSlotX.Add(3.3f);
+                activeSlotX.Add(5.5f);
+            }
+
+            Material glowMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            glowMaterial.name = "HeroPlinthGlow_RuntimeMaterial";
+            glowMaterial.SetColor(BaseColorId, Color.black);
+            glowMaterial.EnableKeyword("_EMISSION");
+            Color glowColor = Color.Lerp(accentColor, Color.white, 0.1f);
+            glowMaterial.SetColor(EmissionColorId, glowColor * 1.8f);
+
+            for (int i = 0; i < activeSlotX.Count; i++)
+            {
+                float x = activeSlotX[i];
+                // Spawn Base Plinth Cylinder
+                CreateVisual(runtimeRoot, $"HeroPlinth_{i + 1:00}", PrimitiveType.Cylinder, new Vector3(x, 2.18f, -4.4f), new Vector3(1.35f, 0.16f, 1.35f), stoneColor, stoneMaterial, true);
+
+                // Spawn Arcane Glow Ring under the plinth (slightly wider, very thin, no shadow, emissive)
+                CreateVisual(runtimeRoot, $"HeroPlinthGlow_{i + 1:00}", PrimitiveType.Cylinder, new Vector3(x, 2.11f, -4.4f), new Vector3(1.42f, 0.015f, 1.42f), Color.black, glowMaterial, false);
             }
 
             float[] bannerX = { -4.4f, 0f, 4.4f };
@@ -656,6 +698,56 @@ BuildStageIdentity(environment.transform, stageIndex);
 
             GameObject crest = CreateVisual(runtimeRoot, "CastleCrest", PrimitiveType.Cube, new Vector3(0f, 2.02f, -5.08f), new Vector3(0.62f, 0.62f, 0.12f), Color.Lerp(accentColor, Color.white, 0.18f), stoneMaterial, false);
             crest.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+
+            // --- LOCAL LIGHTING PASS FOR EXCEPTIONAL PORTRAIT READABILITY & VISUAL FOCUS ---
+            Color towerLightColor = Color.Lerp(accentColor, Color.white, 0.25f);
+
+            // Left and Right Castle Corner Towers point lights for dark-stone fantasy silhouettes
+            CreatePointLight(runtimeRoot, "CastleTowerLight_L", new Vector3(-5.70f, 3.5f, -4.53f), towerLightColor, 1.2f, 8f);
+            CreatePointLight(runtimeRoot, "CastleTowerLight_R", new Vector3(5.70f, 3.5f, -4.53f), towerLightColor, 1.2f, 8f);
+
+            // Front soft key light to perfectly illuminate the active heroes
+            CreatePointLight(runtimeRoot, "HeroFrontLight", new Vector3(0f, 4.2f, -2.2f), new Color(1.0f, 0.94f, 0.85f), 1.3f, 10f);
+
+            // Magical rift beacon light exactly at the enemy spawn entrance portal
+            CreatePointLight(runtimeRoot, "EnemySpawnBeacon", new Vector3(0f, 1.8f, 15.2f), towerLightColor, 1.8f, 9f);
+        }
+
+        private static void CreatePointLight(
+            Transform parent,
+            string name,
+            Vector3 localPosition,
+            Color color,
+            float intensity,
+            float range)
+        {
+            GameObject lightGo = new GameObject(name);
+            lightGo.transform.SetParent(parent, false);
+            lightGo.transform.localPosition = localPosition;
+
+            Light light = lightGo.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = color;
+            light.intensity = intensity;
+            light.range = range;
+            light.shadows = LightShadows.None;
+
+            // Dynamically resolve and add UniversalAdditionalLightData for URP compatibility
+            System.Type additionalDataType = null;
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                System.Type type = assembly.GetType("UnityEngine.Rendering.Universal.UniversalAdditionalLightData");
+                if (type != null)
+                {
+                    additionalDataType = type;
+                    break;
+                }
+            }
+
+            if (additionalDataType != null)
+            {
+                lightGo.AddComponent(additionalDataType);
+            }
         }
 }
 }
