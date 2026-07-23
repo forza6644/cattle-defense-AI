@@ -12,9 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f8a368fe325e4fbb2f112cc8a91c7, type: 3}
   m_Name: ParityWave08
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WaveData
-  waveLabel: Staggered Armored
+  waveLabel: Layered Assault
   spawns:
-  - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
-    count: 20
-    spawnInterval: 0.7
+  - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+    count: 8
+    spawnInterval: 0.45
     startDelay: 0
+  - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+    count: 10
+    spawnInterval: 0.3
+    startDelay: 0.35
+  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+    count: 6
+    spawnInterval: 0.22
+    startDelay: 0.25

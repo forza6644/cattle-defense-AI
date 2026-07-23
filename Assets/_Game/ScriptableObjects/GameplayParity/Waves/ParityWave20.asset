@@ -12,9 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f8a368fe325e4fbb2f112cc8a91c7, type: 3}
   m_Name: ParityWave20
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WaveData
-  waveLabel: Warlord Climax
+  waveLabel: Warlord and Retinue
   spawns:
-  - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
-    count: 30
-    spawnInterval: 0.4
+  - enemy: {fileID: 11400000, guid: 94490734d9d14e2d929ee334fc31ca44, type: 2}
+    count: 1
+    spawnInterval: 0.1
     startDelay: 0
+  - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+    count: 8
+    spawnInterval: 0.28
+    startDelay: 0.7
+  - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+    count: 4
+    spawnInterval: 0.4
+    startDelay: 0.35
+  - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+    count: 4
+    spawnInterval: 0.5
+    startDelay: 0.4
+  - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+    count: 2
+    spawnInterval: 0.75
+    startDelay: 0.5

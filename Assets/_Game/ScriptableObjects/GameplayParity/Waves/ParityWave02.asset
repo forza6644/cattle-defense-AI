@@ -12,9 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f8a368fe325e4fbb2f112cc8a91c7, type: 3}
   m_Name: ParityWave02
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WaveData
-  waveLabel: Scout Formation
+  waveLabel: Split Patrol
   spawns:
   - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
-    count: 12
-    spawnInterval: 1
+    count: 6
+    spawnInterval: 0.55
     startDelay: 0
+  - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+    count: 4
+    spawnInterval: 0.5
+    startDelay: 0.6
