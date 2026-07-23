@@ -31,15 +31,15 @@ namespace Stonehold
             }
             if (cam != null)
             {
-                const float referenceAspect = 9f / 16f;
+                const float referenceAspect = 1640f / 2360f;
                 // Portrait composition: full-width wall in the lower quarter, with
                 // enough vertical battlefield to read large enemy formations. Keep
                 // this composition in editor Free Aspect too, so changing the Game
                 // view does not fall back to the old close-up camera.
-                const float referenceVerticalFov = 44f;
+                const float referenceVerticalFov = 38f;
 
-                transform.localPosition = new Vector3(0f, 34f, -11.5f);
-                transform.localRotation = Quaternion.Euler(66f, 0f, 0f);
+                transform.localPosition = new Vector3(0f, 25.5f, -13.5f);
+                transform.localRotation = Quaternion.Euler(55f, 0f, 0f);
 
                 float aspect = Mathf.Max(0.01f, (float)Screen.width / Screen.height);
                 float referenceHorizontalFov = Camera.VerticalToHorizontalFieldOfView(referenceVerticalFov, referenceAspect);
