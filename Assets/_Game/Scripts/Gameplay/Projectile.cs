@@ -39,6 +39,10 @@ namespace Stonehold
         private float elapsedTravelTime;
         private bool useArc;
 
+        private Transform visualTransform;
+        private MeshRenderer visualRenderer;
+        private MeshFilter visualFilter;
+
         // Behavior upgrades fields (pierce)
         private int maxPierces;
         private int currentPierces;
@@ -490,6 +494,16 @@ namespace Stonehold
                         visualRenderer.sharedMaterial = rootMr.sharedMaterial;
                     }
                 }
+            }
+
+            if (visualRenderer == null && visualTransform != null)
+            {
+                visualRenderer = visualTransform.GetComponent<MeshRenderer>();
+            }
+
+            if (visualFilter == null && visualTransform != null)
+            {
+                visualFilter = visualTransform.GetComponent<MeshFilter>();
             }
 
             if (rootRend != null)
