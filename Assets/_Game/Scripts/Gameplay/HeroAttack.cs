@@ -371,7 +371,7 @@ namespace Stonehold
                 if (projectile != null)
                 {
                     projectile.IsAbility = true;
-                    projectile.transform.localScale = Vector3.one * 2.5f;
+                    projectile.transform.localScale = Vector3.one * 1.2f;
                     projectile.InitWithStatusEffect(
                         target,
                         damage,
@@ -395,7 +395,7 @@ namespace Stonehold
 
             if (VfxManager.Instance != null)
             {
-                VfxManager.Instance.PlayAbilityTrace(start, end, definition.id, 0.18f);
+                VfxManager.Instance.PlayAbilityTrace(start, end, definition.id, 0.10f);
             }
 
             var all = EnemyManager.All;
@@ -437,7 +437,7 @@ namespace Stonehold
                 if (projectile != null)
                 {
                     projectile.IsAbility = true;
-                    projectile.transform.localScale = Vector3.one * 2.2f;
+                    projectile.transform.localScale = Vector3.one * 1.1f;
                     projectile.InitWithStatusEffect(
                         target,
                         damage,
@@ -1056,9 +1056,9 @@ namespace Stonehold
                 case StatusEffectType.Shock:
                     return new Color(1f, 0.95f, 0.15f, 1f);
                 default:
-                    if (heroId == "sniper") return new Color(0.85f, 0.3f, 1f, 1f);
-                    if (heroId == "archer") return new Color(0.45f, 0.95f, 0.3f, 1f);
-                    return new Color(1f, 0.88f, 0.4f, 1f);
+                    if (heroId == "sniper") return new Color(0.85f, 0.3f, 1f, 0.85f);
+                    if (heroId == "archer") return new Color(0.55f, 0.92f, 0.3f, 0.75f);
+                    return new Color(1f, 0.88f, 0.4f, 0.8f);
             }
         }
 

@@ -60,8 +60,9 @@ namespace Stonehold
 
         private void Awake()
         {
-            baseScale = transform.localScale;
+            baseScale = Vector3.one;
             trail = GetComponent<TrailRenderer>();
+            EnsureVisualChild();
         }
 
         /// <summary>Gets a pooled projectile (or instantiates one) at the position.</summary>
@@ -78,13 +79,13 @@ namespace Stonehold
                 GameObject go = Instantiate(prefab, position, Quaternion.identity);
                 projectile = go.GetComponent<Projectile>();
                 projectile.sourcePrefab = prefab;
-                projectile.baseScale = go.transform.localScale;
+                projectile.baseScale = Vector3.one;
                 go.SetActive(true);
             }
             else
             {
                 projectile.transform.position = position;
-                projectile.transform.localScale = projectile.baseScale;
+                projectile.transform.localScale = Vector3.one;
                 projectile.gameObject.SetActive(true);
             }
 
@@ -149,9 +150,11 @@ namespace Stonehold
                 end.a = 0f;
                 trail.endColor = end;
                 trail.startWidth = GetTrailWidth();
-                trail.endWidth = 0.05f;
-                trail.time = 0.4f;
+                trail.endWidth = 0.02f;
+                trail.time = 0.18f;
             }
+
+            ApplyVisualScale(trailColor);
         }
 
         public void InitWithStatusEffect(
@@ -213,9 +216,11 @@ namespace Stonehold
                 end.a = 0f;
                 trail.endColor = end;
                 trail.startWidth = GetTrailWidth();
-                trail.endWidth = 0.05f;
-                trail.time = 0.4f;
+                trail.endWidth = 0.02f;
+                trail.time = 0.18f;
             }
+
+            ApplyVisualScale(trailColor);
         }
 
         public void ConfigurePiercing(int additionalTargets, Vector3 direction, float damageReductionPerPierce)
@@ -435,12 +440,119 @@ namespace Stonehold
 
         private float GetTrailWidth()
         {
-            if (splashRadius > 0f) return 0.55f;
-            if (statusEffectType == StatusEffectType.Burn) return 0.48f;
-            if (statusEffectType == StatusEffectType.Slow) return 0.42f;
-            if (statusEffectType == StatusEffectType.Shock) return 0.4f;
-            if (sourceHeroId == "sniper") return 0.24f;
-            return 0.34f;
+            if (splashRadius > 0f) return 0.24f;
+            if (statusEffectType == StatusEffectType.Burn) return 0.20f;
+            if (statusEffectType == StatusEffectType.Slow) return 0.18f;
+            if (statusEffectType == StatusEffectType.Shock) return 0.16f;
+            if (sourceHeroId == "sniper") return 0.10f;
+            if (sourceHeroId == "archer") return 0.12f;
+            return 0.14f;
+        }
+
+        private void EnsureVisualChild()
+        {
+            MeshRenderer rootRend = GetComponent<MeshRenderer>();
+            if (rootRend != null)
+            {
+                rootRend.enabled = false;
+            }
+
+            if (visualTransform == null)
+            {
+                Transform existing = transform.Find("ProjectileVisual");
+                if (existing != null)
+                {
+                    visualTransform = existing;
+                    visualRenderer = visualTransform.GetComponent<MeshRenderer>();
+                    visualFilter = visualTransform.GetComponent<MeshFilter>();
+                }
+                else
+                {
+                    GameObject visualGo = new GameObject("ProjectileVisual");
+                    visualTransform = visualGo.transform;
+                    visualTransform.SetParent(transform, false);
+                    visualTransform.localPosition = Vector3.zero;
+                    visualTransform.localRotation = Quaternion.identity;
+
+                    MeshFilter rootMf = GetComponent<MeshFilter>();
+                    MeshRenderer rootMr = GetComponent<MeshRenderer>();
+
+                    visualFilter = visualGo.AddComponent<MeshFilter>();
+                    visualRenderer = visualGo.AddComponent<MeshRenderer>();
+
+                    if (rootMf != null && rootMf.sharedMesh != null)
+                    {
+                        visualFilter.sharedMesh = rootMf.sharedMesh;
+                    }
+
+                    if (rootMr != null && rootMr.sharedMaterial != null)
+                    {
+                        visualRenderer.sharedMaterial = rootMr.sharedMaterial;
+                    }
+                }
+            }
+
+            if (rootRend != null)
+            {
+                rootRend.enabled = false;
+            }
+        }
+
+        private void ApplyVisualScale(Color color)
+        {
+            EnsureVisualChild();
+
+            float targetDiameter;
+            if (sourceHeroId == "bombardier" || splashRadius > 0f)
+            {
+                targetDiameter = 0.26f;
+            }
+            else if (sourceHeroId == "sniper")
+            {
+                targetDiameter = 0.12f;
+            }
+            else if (sourceHeroId == "archer")
+            {
+                targetDiameter = 0.14f;
+            }
+            else if (sourceHeroId == "frost_mage" || statusEffectType == StatusEffectType.Slow)
+            {
+                targetDiameter = 0.16f;
+            }
+            else if (sourceHeroId == "fire_mage" || statusEffectType == StatusEffectType.Burn)
+            {
+                targetDiameter = 0.16f;
+            }
+            else
+            {
+                targetDiameter = 0.14f;
+            }
+
+            if (IsAbility)
+            {
+                targetDiameter *= 1.4f;
+            }
+
+            if (visualTransform != null)
+            {
+                visualTransform.localScale = Vector3.one * targetDiameter;
+                visualTransform.gameObject.SetActive(true);
+            }
+
+            if (visualRenderer != null)
+            {
+                MaterialPropertyBlock block = new MaterialPropertyBlock();
+                visualRenderer.GetPropertyBlock(block);
+                block.SetColor("_BaseColor", color);
+                block.SetColor("_Color", color);
+                visualRenderer.SetPropertyBlock(block);
+            }
+
+            MeshRenderer rootRend = GetComponent<MeshRenderer>();
+            if (rootRend != null)
+            {
+                rootRend.enabled = false;
+            }
         }
 
         private void HitEnemy(Enemy enemy)

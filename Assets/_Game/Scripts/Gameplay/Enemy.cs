@@ -83,6 +83,7 @@ namespace Stonehold
         private Renderer[] renderers;
         private Rigidbody[] rigidbodies;
         private EnemySpecialBehavior specialBehavior;
+        private EnemyReadability readability;
         private BattlefieldDefenseRuntime blockingDefense;
         private float defenseAttackTimer;
 
@@ -156,6 +157,16 @@ namespace Stonehold
             {
                 specialBehavior = gameObject.AddComponent<EnemySpecialBehavior>();
             }
+            readability = GetComponent<EnemyReadability>();
+            if (readability == null)
+            {
+                readability = gameObject.AddComponent<EnemyReadability>();
+            }
+            if (data != null)
+            {
+                string enemyName = data.enemyName != null ? data.enemyName.ToLowerInvariant() : "";
+                readability.Configure(enemyName.Contains("boss") || enemyName.Contains("brute"));
+            }
             if (colliders == null) colliders = GetComponentsInChildren<Collider>(true);
             if (renderers == null) renderers = GetComponentsInChildren<Renderer>(true);
             if (rigidbodies == null) rigidbodies = GetComponentsInChildren<Rigidbody>(true);
@@ -221,6 +232,7 @@ namespace Stonehold
             statusController?.ResetController();
             animator?.ResetForReuse();
             specialBehavior?.PrepareForSpawn(this);
+            readability?.ResetReadability();
             SetRuntimeComponentsActive(true);
             healthBar.Configure(this);
         }
@@ -333,9 +345,13 @@ namespace Stonehold
             {
                 Kill();
             }
-            else if (animator != null)
+            else
             {
-                animator.PlayHit();
+                readability?.PlayHitFlash();
+                if (animator != null)
+                {
+                    animator.PlayHit();
+                }
             }
 
             return reducedAmount;
@@ -386,6 +402,7 @@ namespace Stonehold
 
             isDead = true;
             specialBehavior?.CancelPendingActions();
+            readability?.OnDeath();
             UnregisterOnce();
 
             if (!rewardClaimed && EconomyManager.Instance != null)

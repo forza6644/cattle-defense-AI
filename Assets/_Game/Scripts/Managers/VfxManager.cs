@@ -122,66 +122,63 @@ namespace Stonehold
         public void PlayExplosion(Vector3 pos, bool shakeCamera)
         {
             Color color = new Color(1f, 0.48f, 0.08f, 1f);
-            Play(explosionPrefab, pos, color, 1.25f);
-            PlayImpactRing(pos, color, 1.15f, 0.28f, 0.14f);
+            Play(explosionPrefab, pos, color, 0.7f);
+            PlayImpactRing(pos, color, 0.65f, 0.22f, 0.05f);
             if (shakeCamera && CameraRig.Instance != null)
             {
-                CameraRig.Instance.Shake(0.45f);
+                CameraRig.Instance.Shake(0.2f);
             }
         }
 
-
-        public void PlayFrost(Vector3 pos, float scale = 1.1f)
+        public void PlayFrost(Vector3 pos, float scale = 0.65f)
         {
-            Color color = new Color(0.25f, 0.86f, 1f, 1f);
+            Color color = new Color(0.35f, 0.9f, 1f, 1f);
             Play(frostPrefab, pos, color, scale);
-            PlayImpactRing(pos, color, 0.85f * (scale / 1.1f), 0.24f * (scale / 1.1f), 0.1f * (scale / 1.1f));
+            PlayImpactRing(pos, color, 0.55f * (scale / 0.65f), 0.18f * (scale / 0.65f), 0.04f * (scale / 0.65f));
         }
-        public void PlayBurn(Vector3 pos) => Play(explosionPrefab, pos, new Color(1f, 0.18f, 0.03f, 1f));
-        public void PlayShock(Vector3 pos) => Play(hitPrefab, pos, new Color(1f, 0.95f, 0.1f, 1f));
-        public void PlayHit(Vector3 pos) => Play(hitPrefab, pos, Color.white);
-        public void PlayHit(Vector3 pos, Color color) => Play(hitPrefab, pos, color);
+        public void PlayBurn(Vector3 pos) => Play(explosionPrefab, pos, new Color(1f, 0.18f, 0.03f, 1f), 0.55f);
+        public void PlayShock(Vector3 pos) => Play(hitPrefab, pos, new Color(0.2f, 0.8f, 1f, 1f), 0.5f);
+        public void PlayHit(Vector3 pos) => Play(hitPrefab, pos, Color.white, 0.4f);
+        public void PlayHit(Vector3 pos, Color color) => Play(hitPrefab, pos, color, 0.4f);
         public void PlayPlace(Vector3 pos) => Play(placePrefab, pos);
         public void PlayUpgrade(Vector3 pos) => Play(upgradePrefab, pos);
 
         public void PlayCriticalImpact(Vector3 pos)
         {
             Color goldColor = new Color(1f, 0.85f, 0.2f, 1f);
-            Play(hitPrefab, pos, goldColor, 1.4f);
-            PlayImpactRing(pos, goldColor, 0.8f, 0.22f, 0.12f);
+            Play(hitPrefab, pos, goldColor, 0.85f);
+            PlayImpactRing(pos, goldColor, 0.5f, 0.18f, 0.06f);
         }
 
         public void PlayCastleRegenFeedback(Vector3 pos)
         {
-            Play(upgradePrefab, pos, new Color(0.3f, 1f, 0.3f, 1f), 1.5f);
+            Play(upgradePrefab, pos, new Color(0.3f, 1f, 0.3f, 1f), 1.1f);
         }
 
         public void PlayFireImpact(Vector3 pos) => PlayFireImpact(pos, false);
         public void PlayFireImpact(Vector3 pos, bool shakeCamera)
         {
-            Color color = new Color(1f, 0.3f, 0.03f, 1f);
-            Play(explosionPrefab, pos, color, 0.9f);
-            PlayImpactRing(pos, color, 0.95f, 0.26f, 0.12f);
+            Color color = new Color(1f, 0.35f, 0.05f, 1f);
+            Play(explosionPrefab, pos, color, 0.6f);
+            PlayImpactRing(pos, color, 0.55f, 0.2f, 0.05f);
             if (shakeCamera && CameraRig.Instance != null)
             {
-                CameraRig.Instance.Shake(0.25f);
+                CameraRig.Instance.Shake(0.15f);
             }
         }
 
-
         public void PlayShockImpact(Vector3 pos)
         {
-            Color color = new Color(0.16f, 0.72f, 1f, 1f);
-            Play(hitPrefab, pos, color, 1.15f);
-            PlayImpactRing(pos, color, 0.72f, 0.18f, 0.08f);
+            Color color = new Color(0.2f, 0.8f, 1f, 1f);
+            Play(hitPrefab, pos, color, 0.65f);
+            PlayImpactRing(pos, color, 0.45f, 0.16f, 0.04f);
         }
-
 
         public void PlaySniperImpact(Vector3 pos)
         {
-            Color color = new Color(0.82f, 0.32f, 1f, 1f);
-            Play(hitPrefab, pos, color, 0.72f);
-            PlayImpactRing(pos, color, 0.42f, 0.14f, 0.06f);
+            Color color = new Color(0.85f, 0.35f, 1f, 1f);
+            Play(hitPrefab, pos, color, 0.5f);
+            PlayImpactRing(pos, color, 0.35f, 0.14f, 0.04f);
         }
 
 

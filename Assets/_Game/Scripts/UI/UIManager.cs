@@ -544,18 +544,17 @@ namespace Stonehold
         }
 
         // ------------------------------------------------- Damage numbers / gold
-
         private void OnEnemyDamagedDetailed(Enemy enemy, float amount, bool isCrit)
         {
             if (isCrit)
             {
-                SpawnFloatingText("CRIT\n-" + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 1.0f,
-                    new Color(1f, 0.15f, 0.15f), 38);
+                SpawnFloatingText("-" + Mathf.RoundToInt(amount) + "!", enemy.transform.position + Vector3.up * 1.5f,
+                    new Color(1f, 0.25f, 0.25f), 26);
             }
             else
             {
-                SpawnFloatingText("-" + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 0.8f,
-                    new Color(1f, 0.55f, 0.2f), 30);
+                SpawnFloatingText("-" + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 1.3f,
+                    new Color(1f, 0.65f, 0.25f), 20);
             }
         }
 
@@ -564,13 +563,13 @@ namespace Stonehold
             if (towers != null && towers.Config != null && towers.Config.draftRunMode)
             {
                 int xpAmount = enemy.Data.xpValue > 0 ? enemy.Data.xpValue : enemy.Data.goldReward;
-                SpawnFloatingText("+" + xpAmount + " XP", enemy.transform.position + Vector3.up * 1.2f,
-                    new Color(0.7f, 0.3f, 0.9f), 34);
+                SpawnFloatingText("+" + xpAmount + " XP", enemy.transform.position + Vector3.up * 1.6f,
+                    new Color(0.75f, 0.4f, 0.95f), 22);
                 return;
             }
 
-            SpawnFloatingText("+" + gold, enemy.transform.position + Vector3.up * 1.2f,
-                new Color(1f, 0.9f, 0.2f), 34);
+            SpawnFloatingText("+" + gold, enemy.transform.position + Vector3.up * 1.6f,
+                new Color(1f, 0.9f, 0.3f), 22);
         }
 
         private void SpawnFloatingText(string message, Vector3 worldPos, Color color, int size)
@@ -588,7 +587,7 @@ namespace Stonehold
             }
             else
             {
-                text = CreateText(floatingRoot, "Floating", "", 30, color, TextAnchor.MiddleCenter);
+                text = CreateText(floatingRoot, "Floating", "", 20, color, TextAnchor.MiddleCenter);
                 text.fontStyle = FontStyle.Bold;
                 text.raycastTarget = false;
             }
@@ -598,7 +597,7 @@ namespace Stonehold
             text.color = color;
             RectTransform rect = text.rectTransform;
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(200f, 50f);
+            rect.sizeDelta = new Vector2(160f, 36f);
             rect.anchoredPosition = local;
             rect.localScale = Vector3.one;
             StartCoroutine(AnimateFloatingText(text));
@@ -608,9 +607,9 @@ namespace Stonehold
         {
             RectTransform rect = text.rectTransform;
             Vector2 start = rect.anchoredPosition;
-            float driftX = Random.Range(-28f, 28f);
+            float driftX = Random.Range(-12f, 12f);
             Color color = text.color;
-            const float duration = 0.85f;
+            const float duration = 0.5f;
 
             for (float t = 0f; t < duration; t += Time.deltaTime)
             {
@@ -620,10 +619,10 @@ namespace Stonehold
                 }
 
                 float k = t / duration;
-                float pop = k < 0.15f ? Mathf.Lerp(0.3f, 1.25f, k / 0.15f) : Mathf.Lerp(1.25f, 1f, (k - 0.15f) / 0.85f);
+                float pop = k < 0.15f ? Mathf.Lerp(0.5f, 1.08f, k / 0.15f) : Mathf.Lerp(1.08f, 1f, (k - 0.15f) / 0.85f);
                 rect.localScale = Vector3.one * pop;
                 float ease = 1f - (1f - k) * (1f - k); // ease-out
-                rect.anchoredPosition = start + new Vector2(driftX * ease, 85f * ease);
+                rect.anchoredPosition = start + new Vector2(driftX * ease, 35f * ease);
                 color.a = 1f - k * k;
                 text.color = color;
                 yield return null;
