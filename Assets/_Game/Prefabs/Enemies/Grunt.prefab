@@ -464,7 +464,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage:
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -947,7 +947,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.682, y: 0.682, z: 0.682}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6453713096346077166}
@@ -1150,11 +1150,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b9bd446c0e387764b9446b3c8829f342, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.Enemy
   data: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
   arriveDistance: 0.1
-  castleAttackInterval: 1.25
 --- !u!114 &6585282491749967732
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1165,7 +1164,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 589f93b4b85a1444db56dcfbf96ccd9c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.ProceduralAnimator
   model: {fileID: 3134584443686443500}
   idleBobAmp: 0.05
@@ -1183,9 +1182,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 11f7d658eec0d674ea33054e20afa743, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.ArtAdapter
-  visualScale: {x: 0.52, y: 0.52, z: 0.52}
+  visualScale: {x: 0.682, y: 0.682, z: 0.682}
   visualRotation: {x: 0, y: 0, z: 0}
   visualOffset: {x: 0, y: 0, z: 0}
   visualRoot: {fileID: 3134584443686443500}

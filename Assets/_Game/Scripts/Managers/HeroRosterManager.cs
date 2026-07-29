@@ -158,32 +158,8 @@ namespace Stonehold
             }
 
             ownedHeroIds.Clear();
-
-            string startingHeroId = SaveManager.SelectedStartingDefenderId;
-            if (string.IsNullOrEmpty(startingHeroId))
-            {
-                startingHeroId = DefaultHeroId;
-            }
-
-            if (!heroDefinitions.TryGetValue(startingHeroId, out HeroDefinition startingHero))
-            {
-                // Fallback to archer
-                startingHeroId = DefaultHeroId;
-                if (!heroDefinitions.TryGetValue(startingHeroId, out startingHero))
-                {
-                    Debug.LogWarning("[HeroRosterManager] Starting hero definition not found.");
-                    initialized = true;
-                    return;
-                }
-            }
-
-            HeroSlot firstSlot = FindNextEmptySlot();
-            if (firstSlot != null && firstSlot.SpawnHero(startingHero))
-            {
-                ownedHeroIds.Add(startingHeroId);
-            }
-
             initialized = true;
+            Debug.Log("[HeroRosterManager] Run roster initialized with 0 owned heroes and 6 empty HeroSlots.");
         }
 
         private void RefreshSlots()

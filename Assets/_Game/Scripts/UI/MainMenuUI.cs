@@ -13,7 +13,7 @@ namespace Stonehold
     /// </summary>
     public class MainMenuUI : MonoBehaviour
     {
-        [SerializeField] private string gameSceneName = "GameScene";
+        [SerializeField] private string gameSceneName = "GameplayIntegration_V2";
 
         private Font font;
         private RectTransform canvasRect;
@@ -48,6 +48,9 @@ namespace Stonehold
         private Text upgradeDefenderBtnLabel;
         private int currentDefenderIndex = 0;
         private GameObject activePreviewInstance;
+
+        private Button[] crystalButtons;
+        private Text[] crystalButtonLabels;
 
         private Text[] metaUpgradeNameTexts = new Text[5];
         private Button[] metaUpgradeButtons = new Button[5];
@@ -97,13 +100,14 @@ namespace Stonehold
 
         private void Play()
         {
+            string targetScene = string.IsNullOrEmpty(gameSceneName) || gameSceneName == "GameScene" ? "GameplayIntegration_V2" : gameSceneName;
             if (SceneFader.Instance != null)
             {
-                SceneFader.Instance.FadeToScene(gameSceneName);
+                SceneFader.Instance.FadeToScene(targetScene);
             }
             else
             {
-                SceneManager.LoadScene(gameSceneName);
+                SceneManager.LoadScene(targetScene);
             }
         }
 
@@ -293,7 +297,7 @@ namespace Stonehold
             nextStageBtn = CreateButton(stageBg.rectTransform, "NextStage", ">", new Vector2(46f, 46f),
                 new Vector2(1f, 0.5f), new Vector2(-30f, 0f), () => CycleStage(1));
 
-            // 5. Starting Defender Panel
+            // 5. Starter Crystal Selection Panel
             Image defenderBg = CreateImage(safeAreaRect, "DefenderPanel", new Color(0.12f, 0.16f, 0.24f, 0.7f));
             if (isPortrait)
             {
@@ -304,51 +308,38 @@ namespace Stonehold
                 Place(defenderBg.rectTransform, new Vector2(0.5f, 0.40f), new Vector2(0f, -20f), new Vector2(800f, 280f));
             }
 
-            Text defenderTitleText = CreateText(defenderBg.rectTransform, "DefenderTitle", "STARTING DEFENDER", 16, new Color(1f, 0.85f, 0.35f));
+            Text defenderTitleText = CreateText(defenderBg.rectTransform, "DefenderTitle", "FORTRESS STARTER CRYSTAL", 16, new Color(1f, 0.85f, 0.35f));
             Place(defenderTitleText.rectTransform, new Vector2(0.5f, 0.90f), Vector2.zero, new Vector2(700f, 24f));
 
-            defenderNameText = CreateText(defenderBg.rectTransform, "DefenderName", "", 26, Color.white);
-            Place(defenderNameText.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(700f, 36f));
+            defenderNameText = CreateText(defenderBg.rectTransform, "DefenderName", "", 24, Color.white);
+            Place(defenderNameText.rectTransform, new Vector2(0.5f, 0.54f), Vector2.zero, new Vector2(700f, 36f));
 
-            prevDefenderBtn = CreateButton(defenderBg.rectTransform, "PrevDefender", "<", new Vector2(46f, 46f),
-                new Vector2(0f, 0.78f), new Vector2(30f, 0f), () => CycleDefender(-1));
-
-            nextDefenderBtn = CreateButton(defenderBg.rectTransform, "NextDefender", ">", new Vector2(46f, 46f),
-                new Vector2(1f, 0.78f), new Vector2(-30f, 0f), () => CycleDefender(1));
-
-            defenderStatsText = CreateText(defenderBg.rectTransform, "DefenderStatsText", "", 18, Color.white);
+            defenderStatsText = CreateText(defenderBg.rectTransform, "DefenderStatsText", "", 17, Color.white);
             defenderStatsText.alignment = TextAnchor.MiddleCenter;
-            Place(defenderStatsText.rectTransform, new Vector2(0.5f, 0.52f), Vector2.zero, new Vector2(740f, 90f));
+            Place(defenderStatsText.rectTransform, new Vector2(0.5f, 0.26f), Vector2.zero, new Vector2(740f, 90f));
 
-            metaLevelText = CreateText(defenderBg.rectTransform, "MetaLevelText", "", 20, new Color(0.85f, 0.85f, 0.9f));
-            Place(metaLevelText.rectTransform, new Vector2(0.5f, 0.28f), Vector2.zero, new Vector2(700f, 30f));
+            string[] cIds = { "crystal_fire", "crystal_ice", "crystal_lightning", "crystal_stone", "crystal_shadow" };
+            string[] cLabels = { "FIRE", "ICE", "LIGHTNING", "STONE", "SHADOW" };
+            crystalButtons = new Button[5];
+            crystalButtonLabels = new Text[5];
 
-            upgradeCostText = CreateText(defenderBg.rectTransform, "UpgradeCostText", "", 20, new Color(0.7f, 0.7f, 0.75f));
-            upgradeCostText.alignment = TextAnchor.MiddleLeft;
-            Place(upgradeCostText.rectTransform, new Vector2(0.35f, 0.11f), Vector2.zero, new Vector2(400f, 30f));
+            float spacingX = 145f;
+            float startX = -(cIds.Length - 1) * spacingX / 2f;
 
-            upgradeDefenderBtn = CreateButton(defenderBg.rectTransform, "UpgradeDefenderBtn", "UPGRADE", new Vector2(200f, 50f),
-                new Vector2(0.78f, 0.11f), Vector2.zero, OnUpgradeDefenderClicked);
-            upgradeDefenderBtnLabel = upgradeDefenderBtn.GetComponentInChildren<Text>();
-            upgradeDefenderBtnLabel.fontSize = 20;
-            upgradeDefenderBtnLabel.fontStyle = FontStyle.Bold;
-
-            // Initialize starting defender index from saved settings
-            string savedId = SaveManager.SelectedStartingDefenderId;
-            currentDefenderIndex = 0;
-            if (heroDefinitions != null && heroDefinitions.Length > 0)
+            for (int i = 0; i < cIds.Length; i++)
             {
-                for (int i = 0; i < heroDefinitions.Length; i++)
-                {
-                    if (heroDefinitions[i] != null && heroDefinitions[i].id == savedId)
-                    {
-                        currentDefenderIndex = i;
-                        break;
-                    }
-                }
+                string id = cIds[i];
+                string label = cLabels[i];
+                int idx = i;
+                Button btn = CreateButton(defenderBg.rectTransform, "CrystalBtn_" + id, label, new Vector2(135f, 44f),
+                    new Vector2(0.5f, 0.74f), new Vector2(startX + i * spacingX, 0f), () => OnCrystalSelected(id));
+                crystalButtons[idx] = btn;
+                crystalButtonLabels[idx] = btn.GetComponentInChildren<Text>();
+                crystalButtonLabels[idx].fontSize = 15;
+                crystalButtonLabels[idx].fontStyle = FontStyle.Bold;
             }
-            RefreshDefenderSelection();
-            RefreshMetaUpgradeUI();
+
+            RefreshCrystalSelection();
 
             // 6. Large Premium Battle Button
             if (isPortrait)
@@ -789,43 +780,106 @@ namespace Stonehold
             RefreshMetaUpgradeUI();
         }
 
+        private void OnCrystalSelected(string crystalId)
+        {
+            SaveManager.SetSelectedStarterCrystal(crystalId);
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayButton();
+            }
+            RefreshCrystalSelection();
+        }
+
+        private void RefreshCrystalSelection()
+        {
+            string selectedId = SaveManager.SelectedStarterCrystalId;
+            if (string.IsNullOrEmpty(selectedId))
+            {
+                selectedId = "crystal_lightning";
+            }
+
+            string[] cIds = { "crystal_fire", "crystal_ice", "crystal_lightning", "crystal_stone", "crystal_shadow" };
+            Color[] cColors = {
+                new Color(1.0f, 0.4f, 0.1f),   // Fire
+                new Color(0.2f, 0.8f, 1.0f),   // Ice
+                new Color(1.0f, 0.85f, 0.2f),  // Lightning
+                new Color(0.7f, 0.6f, 0.5f),   // Stone
+                new Color(0.8f, 0.4f, 1.0f)    // Shadow
+            };
+
+            for (int i = 0; i < cIds.Length; i++)
+            {
+                if (crystalButtons != null && i < crystalButtons.Length && crystalButtons[i] != null)
+                {
+                    bool isSelected = cIds[i] == selectedId;
+                    ColorBlock cb = crystalButtons[i].colors;
+                    if (isSelected)
+                    {
+                        cb.normalColor = cColors[i];
+                        cb.highlightedColor = cColors[i] * 1.15f;
+                        cb.pressedColor = cColors[i] * 0.85f;
+                        cb.selectedColor = cColors[i];
+                        if (crystalButtonLabels != null && i < crystalButtonLabels.Length && crystalButtonLabels[i] != null)
+                        {
+                            crystalButtonLabels[i].color = Color.white;
+                        }
+                    }
+                    else
+                    {
+                        cb.normalColor = new Color(0.18f, 0.22f, 0.30f, 0.95f);
+                        cb.highlightedColor = new Color(0.26f, 0.32f, 0.42f, 1f);
+                        cb.pressedColor = new Color(0.14f, 0.18f, 0.24f, 1f);
+                        cb.selectedColor = new Color(0.18f, 0.22f, 0.30f, 0.95f);
+                        if (crystalButtonLabels != null && i < crystalButtonLabels.Length && crystalButtonLabels[i] != null)
+                        {
+                            crystalButtonLabels[i].color = new Color(0.8f, 0.8f, 0.85f);
+                        }
+                    }
+                    crystalButtons[i].colors = cb;
+                }
+            }
+
+            if (defenderNameText != null && defenderStatsText != null)
+            {
+                switch (selectedId)
+                {
+                    case "crystal_fire":
+                        defenderNameText.text = "<color=#ff6600><b>FIRE CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
+                        defenderStatsText.text = "Element: <b>Fire</b> | Target Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>14</b> | Fire Rate: <b>1.0/s</b> | Target Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Infernal Splash & Burn</b></color> - Deals area splash damage & applies Burn DoT over 3s.";
+                        break;
+                    case "crystal_ice":
+                        defenderNameText.text = "<color=#33ccff><b>ICE CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
+                        defenderStatsText.text = "Element: <b>Ice</b> | Target Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>12</b> | Fire Rate: <b>1.1/s</b> | Target Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Glacial Slow</b></color> - Applies 40% movement Slow status for 3.5s.";
+                        break;
+                    case "crystal_lightning":
+                        defenderNameText.text = "<color=#ffd726><b>LIGHTNING CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
+                        defenderStatsText.text = "Element: <b>Lightning</b> | Target Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>15</b> | Fire Rate: <b>1.4/s</b> | Target Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Chain Storm</b></color> - Electric arcs bounce across up to 3 nearby targets.";
+                        break;
+                    case "crystal_stone":
+                        defenderNameText.text = "<color=#bfa68f><b>STONE CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
+                        defenderStatsText.text = "Element: <b>Stone</b> | Target Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>28</b> | Fire Rate: <b>0.6/s</b> | Target Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Heavy Cataclysm</b></color> - Heavy boulder deals high single-target & splash damage.";
+                        break;
+                    case "crystal_shadow":
+                        defenderNameText.text = "<color=#cc66ff><b>SHADOW CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
+                        defenderStatsText.text = "Element: <b>Shadow</b> | Target Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>13</b> | Fire Rate: <b>1.0/s</b> | Target Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Dark Curse</b></color> - Dark energy inflicts piercing shadow curse over 4s.";
+                        break;
+                }
+            }
+        }
+
         private void RefreshDefenderSelection()
         {
-            if (heroDefinitions == null || heroDefinitions.Length == 0 || currentDefenderIndex >= heroDefinitions.Length) return;
-
-            HeroDefinition hd = heroDefinitions[currentDefenderIndex];
-            if (hd == null) return;
-
-            if (defenderNameText != null)
-            {
-                string colorHex = "#d9d9f2"; // Common
-                string rarity = GetHeroRarity(hd.id);
-                if (rarity == "Rare")
-                {
-                    colorHex = "#66ccff";
-                }
-                else if (rarity == "Epic")
-                {
-                    colorHex = "#d980ff";
-                }
-
-                defenderNameText.text = $"<color={colorHex}><b>{hd.displayName}</b></color> <size=16>({rarity})</size> <color=#45ff70><size=16>[SELECTED]</size></color>";
-            }
-
-            if (defenderStatsText != null)
-            {
-                string attackType = GetAttackIdentityDescription(hd);
-                string targetSpecialty = GetTargetingModeDisplayName(hd.defaultTargetingMode);
-                string abilityName = GetAbilityDisplayName(hd.abilityType);
-                string abilityDesc = GetAbilityDescription(hd.abilityType);
-
-                defenderStatsText.text =
-                    $"Type: <b>{attackType}</b> | Target Priority: <b>{targetSpecialty}</b>\n" +
-                    $"Dmg: <b>{hd.baseDamage}</b> | Speed: <b>{hd.baseFireRate}/s</b> | Range: <b>{hd.baseRange}</b>\n" +
-                    $"Ability: <color=#ffd759><b>{abilityName}</b></color> - {abilityDesc}";
-            }
-
-            UpdateHeroPreview();
+            RefreshCrystalSelection();
         }
 
         private void RefreshCurrencies()
@@ -1013,43 +1067,6 @@ namespace Stonehold
                 Destroy(activePreviewInstance);
                 activePreviewInstance = null;
             }
-
-            if (heroDefinitions == null || currentDefenderIndex < 0 || currentDefenderIndex >= heroDefinitions.Length)
-            {
-                return;
-            }
-
-            HeroDefinition hd = heroDefinitions[currentDefenderIndex];
-            if (hd == null || hd.heroPrefab == null)
-            {
-                return;
-            }
-
-            activePreviewInstance = Instantiate(hd.heroPrefab, transform);
-            activePreviewInstance.name = "HeroPreview_" + hd.id;
-            activePreviewInstance.transform.position = new Vector3(0f, -0.6f, -6.5f);
-            activePreviewInstance.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
-            activePreviewInstance.transform.localScale = Vector3.one * 1.8f;
-
-            Collider[] colliders = activePreviewInstance.GetComponentsInChildren<Collider>(true);
-            foreach (var col in colliders)
-            {
-                Destroy(col);
-            }
-
-            if (hd.id == "bombardier")
-            {
-                Transform sword = FindTransformRecursiveInPreview(activePreviewInstance.transform, "Warrior_Sword");
-                if (sword != null) sword.gameObject.SetActive(false);
-            }
-            else if (hd.id == "sniper")
-            {
-                Transform dagger = FindTransformRecursiveInPreview(activePreviewInstance.transform, "Rogue_Dagger");
-                if (dagger != null) dagger.gameObject.SetActive(false);
-            }
-
-            Color accentColor = GetHeroAccentColor(hd.id);
-            CreatePreviewWeaponProp(hd.id, activePreviewInstance.transform, accentColor);
         }
 
         private void CleanupGeneratedMenuObjects()

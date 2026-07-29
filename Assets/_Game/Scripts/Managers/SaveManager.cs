@@ -17,6 +17,7 @@ namespace Stonehold
         private const string KeyHighestStageUnlocked = "stats_highest_stage_unlocked";
         private const string KeyStage1Completed = "stats_stage_1_completed";
         private const string KeySelectedStartingDefender = "lobby_selected_starting_defender";
+        private const string KeySelectedStarterCrystal = "lobby_selected_starter_crystal";
         private const string KeyMetaGold = "stats_meta_gold";
         private const string KeyAccountXp = "stats_account_xp";
         private const string KeyCoreMaterials = "stats_core_materials";
@@ -50,6 +51,7 @@ namespace Stonehold
         public static int HighestStageUnlocked { get; private set; }
         public static bool Stage1Completed { get; private set; }
         public static string SelectedStartingDefenderId { get; private set; }
+        public static string SelectedStarterCrystalId { get; private set; }
         public static int MetaGold { get; private set; }
         public static int Coins => MetaGold;
         public static int AccountXp { get; private set; }
@@ -85,6 +87,8 @@ namespace Stonehold
             }
             SelectedStartingDefenderId = startingDefender;
 
+            SelectedStarterCrystalId = PlayerPrefs.GetString(KeySelectedStarterCrystal, "crystal_lightning");
+
             MetaGold = Mathf.Clamp(PlayerPrefs.GetInt(KeyMetaGold, 0), 0, 9999999);
             AccountXp = Mathf.Clamp(PlayerPrefs.GetInt(KeyAccountXp, 0), 0, 9999999);
             CoreMaterials = Mathf.Clamp(PlayerPrefs.GetInt(KeyCoreMaterials, 0), 0, 999999);
@@ -98,6 +102,7 @@ namespace Stonehold
             PlayerPrefs.SetInt(KeyHighestStageUnlocked, HighestStageUnlocked);
             PlayerPrefs.SetInt(KeyStage1Completed, Stage1Completed ? 1 : 0);
             PlayerPrefs.SetString(KeySelectedStartingDefender, SelectedStartingDefenderId);
+            PlayerPrefs.SetString(KeySelectedStarterCrystal, SelectedStarterCrystalId);
             PlayerPrefs.SetInt(KeyMetaGold, MetaGold);
             PlayerPrefs.SetInt(KeyAccountXp, AccountXp);
             PlayerPrefs.SetInt(KeyCoreMaterials, CoreMaterials);
@@ -182,6 +187,14 @@ namespace Stonehold
         {
             SelectedStartingDefenderId = defenderId;
             PlayerPrefs.SetString(KeySelectedStartingDefender, SelectedStartingDefenderId);
+            PlayerPrefs.Save();
+        }
+
+        public static void SetSelectedStarterCrystal(string crystalId)
+        {
+            if (string.IsNullOrEmpty(crystalId)) crystalId = "crystal_lightning";
+            SelectedStarterCrystalId = crystalId;
+            PlayerPrefs.SetString(KeySelectedStarterCrystal, SelectedStarterCrystalId);
             PlayerPrefs.Save();
         }
 
