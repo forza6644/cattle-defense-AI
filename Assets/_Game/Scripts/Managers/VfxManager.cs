@@ -772,7 +772,7 @@ namespace Stonehold
 
 
 
-        private void PlayImpactRing(Vector3 position, Color color, float radius, float duration, float width)
+        public void PlayImpactRing(Vector3 position, Color color, float radius, float duration, float width)
         {
             if (activeImpactRings >= MaxImpactRings)
             {

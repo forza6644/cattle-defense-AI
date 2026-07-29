@@ -844,34 +844,34 @@ namespace Stonehold
                 switch (selectedId)
                 {
                     case "crystal_fire":
-                        defenderNameText.text = "<color=#ff6600><b>FIRE CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
-                        defenderStatsText.text = "Element: <b>Fire</b> | Target Priority: <b>Closest to Keep</b>\n" +
-                            "Base Dmg: <b>14</b> | Fire Rate: <b>1.0/s</b> | Target Range: <b>Full Battlefield</b>\n" +
-                            "Special: <color=#ffd759><b>Infernal Splash & Burn</b></color> - Deals area splash damage & applies Burn DoT over 3s.";
+                        defenderNameText.text = "<color=#ff6600><b>FIRE CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>  <color=#ffb380>(Splash + Burn)</color>";
+                        defenderStatsText.text = "Element: <b>Fire</b> | Identity: <color=#ff6600><b>Splash + Burn</b></color> | Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>14</b> | Fire Rate: <b>1.0/s</b> | Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Infernal Splash & Burn</b></color> - Area splash & persistent Burn DoT.";
                         break;
                     case "crystal_ice":
-                        defenderNameText.text = "<color=#33ccff><b>ICE CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
-                        defenderStatsText.text = "Element: <b>Ice</b> | Target Priority: <b>Closest to Keep</b>\n" +
-                            "Base Dmg: <b>12</b> | Fire Rate: <b>1.1/s</b> | Target Range: <b>Full Battlefield</b>\n" +
-                            "Special: <color=#ffd759><b>Glacial Slow</b></color> - Applies 40% movement Slow status for 3.5s.";
+                        defenderNameText.text = "<color=#33ccff><b>ICE CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>  <color=#99ebff>(Damage + Slow)</color>";
+                        defenderStatsText.text = "Element: <b>Ice</b> | Identity: <color=#33ccff><b>Damage + Slow</b></color> | Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>12</b> | Fire Rate: <b>1.1/s</b> | Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Glacial Slow</b></color> - 40% movement Slow status effect.";
                         break;
                     case "crystal_lightning":
-                        defenderNameText.text = "<color=#ffd726><b>LIGHTNING CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
-                        defenderStatsText.text = "Element: <b>Lightning</b> | Target Priority: <b>Closest to Keep</b>\n" +
-                            "Base Dmg: <b>15</b> | Fire Rate: <b>1.4/s</b> | Target Range: <b>Full Battlefield</b>\n" +
-                            "Special: <color=#ffd759><b>Chain Storm</b></color> - Electric arcs bounce across up to 3 nearby targets.";
+                        defenderNameText.text = "<color=#ffd726><b>LIGHTNING CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>  <color=#fffa99>(Fast + Chain)</color>";
+                        defenderStatsText.text = "Element: <b>Lightning</b> | Identity: <color=#ffd726><b>Fast + Chain</b></color> | Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>15</b> | Fire Rate: <b>1.4/s</b> | Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Chain Storm</b></color> - Fast arcs bounce across up to 3 targets.";
                         break;
                     case "crystal_stone":
-                        defenderNameText.text = "<color=#bfa68f><b>STONE CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
-                        defenderStatsText.text = "Element: <b>Stone</b> | Target Priority: <b>Closest to Keep</b>\n" +
-                            "Base Dmg: <b>28</b> | Fire Rate: <b>0.6/s</b> | Target Range: <b>Full Battlefield</b>\n" +
-                            "Special: <color=#ffd759><b>Heavy Cataclysm</b></color> - Heavy boulder deals high single-target & splash damage.";
+                        defenderNameText.text = "<color=#bfa68f><b>STONE CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>  <color=#dfd0c0>(Heavy + Impact)</color>";
+                        defenderStatsText.text = "Element: <b>Stone</b> | Identity: <color=#bfa68f><b>Heavy + Impact</b></color> | Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>28</b> | Fire Rate: <b>0.6/s</b> | Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Heavy Cataclysm</b></color> - High single-target & ground impact ring.";
                         break;
                     case "crystal_shadow":
-                        defenderNameText.text = "<color=#cc66ff><b>SHADOW CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>";
-                        defenderStatsText.text = "Element: <b>Shadow</b> | Target Priority: <b>Closest to Keep</b>\n" +
-                            "Base Dmg: <b>13</b> | Fire Rate: <b>1.0/s</b> | Target Range: <b>Full Battlefield</b>\n" +
-                            "Special: <color=#ffd759><b>Dark Curse</b></color> - Dark energy inflicts piercing shadow curse over 4s.";
+                        defenderNameText.text = "<color=#cc66ff><b>SHADOW CRYSTAL</b></color> <color=#45ff70><size=16>[SELECTED]</size></color>  <color=#e6b3ff>(Curse + DoT)</color>";
+                        defenderStatsText.text = "Element: <b>Shadow</b> | Identity: <color=#cc66ff><b>Curse + DoT</b></color> | Priority: <b>Closest to Keep</b>\n" +
+                            "Base Dmg: <b>13</b> | Fire Rate: <b>1.0/s</b> | Range: <b>Full Battlefield</b>\n" +
+                            "Special: <color=#ffd759><b>Dark Curse</b></color> - Piercing shadow curse DoT & purple mark.";
                         break;
                 }
             }
