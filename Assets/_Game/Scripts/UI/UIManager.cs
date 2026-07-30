@@ -19,6 +19,8 @@ namespace Stonehold
         public static UIManager Instance { get; private set; }
 
         private const float PanelFadeSeconds = 0.15f;
+        private static readonly Color HudPanelColor = new Color(0.075f, 0.07f, 0.065f, 0.9f);
+        private static readonly Color HudPanelOutlineColor = new Color(0.62f, 0.48f, 0.26f, 0.34f);
 
         private Font font;
         private RectTransform canvasRect;
@@ -100,6 +102,7 @@ namespace Stonehold
             public Image Fill;
             public Text LevelText;
             public Text TimerText;
+            public Text RoleText;
             public string HeroId;
         }
         private RectTransform abilityHudContainer;
@@ -108,6 +111,8 @@ namespace Stonehold
         // Floating combat text
         private RectTransform floatingRoot;
         private RectTransform safeAreaRect;
+        private Rect lastSafeArea;
+        private Vector2Int lastSafeAreaScreenSize;
         private readonly Queue<Text> floatingPool = new Queue<Text>();
         private int normalDamageLane;
         private int criticalDamageLane;
@@ -202,18 +207,6 @@ namespace Stonehold
             rangeIndicator = RangeIndicator.Create("Defender Range Indicator");
             priorityTargetIndicator = RangeIndicator.Create("Priority Target Indicator");
 
-            if (towers != null && towers.Config != null && towers.Config.draftRunMode)
-            {
-                if (goldText != null)
-                {
-                    goldText.gameObject.SetActive(false);
-                }
-                if (xpBgImage != null)
-                {
-                    xpBgImage.rectTransform.anchoredPosition = new Vector2(175f, -72f);
-                }
-            }
-
             // Enhance gate, lane, and wall visibility programmatically
             GameObject gate = GameObject.Find("CastleGate_Wood");
             if (gate != null)
@@ -283,7 +276,7 @@ namespace Stonehold
             {
                 OnXpChanged(progression.CurrentXp, progression.GetXpNeededForNextLevel(), progression.CurrentLevel);
             }
-            waveText.text = "Wave -/" + (waves != null ? waves.TotalWaves.ToString() : "-");
+            waveText.text = "WAVE  - / " + (waves != null ? waves.TotalWaves.ToString() : "-");
 
             ShowHint("Build Arrow Defenders to stop the first Grunts.");
         }
@@ -338,7 +331,7 @@ namespace Stonehold
             EnsureUIBuilt();
             if (goldText != null)
             {
-                goldText.text = "Gold: " + (economy != null ? economy.Gold : 0);
+                goldText.text = "GOLD  " + (economy != null ? economy.Gold : 0);
             }
             RefreshBuildMenu();
             RefreshTowerPanel();
@@ -411,7 +404,7 @@ namespace Stonehold
             string totalStr = total > 0 ? total.ToString() : "-";
             if (waveText != null)
             {
-                waveText.text = "Wave " + number + "/" + totalStr;
+                waveText.text = "WAVE  " + number + " / " + totalStr;
             }
 
             if (bannerText != null)
@@ -450,7 +443,7 @@ namespace Stonehold
             int totalWaves = waves != null ? waves.TotalWaves : 0;
             if (waveText != null)
             {
-                waveText.text = "Next: Wave " + number + "/" + (totalWaves > 0 ? totalWaves.ToString() : "-");
+                waveText.text = "NEXT  " + number + " / " + (totalWaves > 0 ? totalWaves.ToString() : "-");
             }
 
             if (waveStatusText != null)
@@ -509,7 +502,7 @@ namespace Stonehold
             int total = waves != null ? waves.TotalWaves : 0;
             if (waveText != null)
             {
-                waveText.text = "Wave " + number + "/" + (total > 0 ? total.ToString() : "-") + " cleared";
+                waveText.text = "WAVE  " + number + " / " + (total > 0 ? total.ToString() : "-") + "  CLEAR";
             }
         }
 
@@ -521,12 +514,12 @@ namespace Stonehold
 
             if (towers != null && towers.Config != null && towers.Config.draftRunMode)
             {
-                if (waveText != null) waveText.text = "Wave " + waveNumber + "/" + totalStr + " cleared";
+                if (waveText != null) waveText.text = "WAVE  " + waveNumber + " / " + totalStr + "  CLEAR";
                 ShowBanner("Wave " + waveNumber + " Cleared!");
                 return;
             }
 
-            if (waveText != null) waveText.text = "Wave " + waveNumber + "/" + totalStr + " cleared  +" + amount + "g";
+            if (waveText != null) waveText.text = "WAVE  " + waveNumber + " / " + totalStr + "  +" + amount + "G";
             ShowBanner("Wave Clear Bonus: +" + amount + " gold");
         }
 
@@ -1397,6 +1390,8 @@ namespace Stonehold
 
         private void Update()
         {
+            RefreshSafeAreaIfNeeded();
+
             if (hintBg != null && hintBg.gameObject.activeSelf)
             {
                 hintTimer -= Time.deltaTime;
@@ -1527,77 +1522,46 @@ namespace Stonehold
             // Safe Area Container
             safeAreaRect = CreateSafeArea(canvasRect);
 
-            // Gold (top-left)
-            goldText = CreateText(safeAreaRect, "GoldText", "Gold: 0", 40, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
-            SetAnchored(goldText.rectTransform, new Vector2(0f, 1f), new Vector2(25f, -20f), new Vector2(400f, 60f));
+            // Secondary resource information remains compact in the upper-left.
+            Image goldPanel = CreateHudPanel(safeAreaRect, "GoldPanel");
+            SetAnchored(goldPanel.rectTransform, new Vector2(0f, 1f), new Vector2(20f, -22f), new Vector2(188f, 44f));
+            goldText = CreateText(goldPanel.rectTransform, "GoldText", "GOLD  0", 22, new Color(1f, 0.8f, 0.34f), TextAnchor.MiddleLeft);
+            goldText.fontStyle = FontStyle.Bold;
+            goldText.rectTransform.anchorMin = Vector2.zero;
+            goldText.rectTransform.anchorMax = Vector2.one;
+            goldText.rectTransform.offsetMin = new Vector2(14f, 0f);
+            goldText.rectTransform.offsetMax = new Vector2(-10f, 0f);
 
-            // XP and combat controls share one clean row below the primary counters.
-            xpBgImage = CreateImage(safeAreaRect, "XpBarBg", new Color(0f, 0f, 0f, 0.6f));
-            SetAnchored(xpBgImage.rectTransform, new Vector2(0f, 1f), new Vector2(175f, -72f), new Vector2(300f, 28f));
-            xpFillImage = CreateImage(xpBgImage.rectTransform, "XpFill", new Color(0.6f, 0.25f, 0.85f));
-            xpFill = xpFillImage.rectTransform;
-            xpFill.anchorMin = Vector2.zero;
-            xpFill.anchorMax = Vector2.one;
-            xpFill.pivot = new Vector2(0f, 0.5f);
-            xpFill.offsetMin = new Vector2(2f, 2f);
-            xpFill.offsetMax = new Vector2(-2f, -2f);
-            xpText = CreateText(xpBgImage.rectTransform, "XpText", "Lv.1  XP: 0 / 100", 18, Color.white, TextAnchor.MiddleCenter);
-            xpText.rectTransform.anchorMin = Vector2.zero;
-            xpText.rectTransform.anchorMax = Vector2.one;
-            xpText.rectTransform.offsetMin = Vector2.zero;
-            xpText.rectTransform.offsetMax = Vector2.zero;
+            // Primary wave information gets the visual center at the top of the screen.
+            Image wavePanel = CreateHudPanel(safeAreaRect, "WavePanel");
+            SetAnchored(wavePanel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(300f, 44f));
+            waveText = CreateText(wavePanel.rectTransform, "WaveText", "WAVE  - / -", 26, Color.white, TextAnchor.MiddleCenter);
+            waveText.fontStyle = FontStyle.Bold;
+            waveText.rectTransform.anchorMin = Vector2.zero;
+            waveText.rectTransform.anchorMax = Vector2.one;
+            waveText.rectTransform.offsetMin = Vector2.zero;
+            waveText.rectTransform.offsetMax = Vector2.zero;
 
-            // Wave counter & Timer (top-center)
-            waveText = CreateText(safeAreaRect, "WaveText", "Wave -", 36, Color.white, TextAnchor.UpperCenter);
-            SetAnchored(waveText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -15f), new Vector2(480f, 40f));
-
-            // Wave progress bar (top-center, beneath wave details)
-            Image progressBg = CreateImage(safeAreaRect, "WaveProgressBarBg", new Color(0f, 0f, 0f, 0.6f));
-            SetAnchored(progressBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -56f), new Vector2(340f, 12f));
-            waveProgressBarFillImage = CreateImage(progressBg.rectTransform, "Fill", new Color(0.2f, 0.75f, 1f));
+            // Wave progress sits directly under the wave, thin enough to leave the battlefield open.
+            Image progressBg = CreateHudPanel(safeAreaRect, "WaveProgressBarBg");
+            SetAnchored(progressBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -74f), new Vector2(270f, 10f));
+            waveProgressBarFillImage = CreateImage(progressBg.rectTransform, "Fill", new Color(0.28f, 0.72f, 0.92f));
             waveProgressBarFill = waveProgressBarFillImage.rectTransform;
             waveProgressBarFill.anchorMin = Vector2.zero;
             waveProgressBarFill.anchorMax = Vector2.one;
             waveProgressBarFill.pivot = new Vector2(0f, 0.5f);
-            waveProgressBarFill.offsetMin = new Vector2(1f, 1f);
-            waveProgressBarFill.offsetMax = new Vector2(-1f, -1f);
+            waveProgressBarFill.offsetMin = new Vector2(2f, 2f);
+            waveProgressBarFill.offsetMax = new Vector2(-2f, -2f);
 
-            // Elapsed Timer text (top-center below progress bar)
-            timerText = CreateText(safeAreaRect, "TimerText", "00:00", 20, new Color(0.85f, 0.85f, 0.9f), TextAnchor.UpperCenter);
-            SetAnchored(timerText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -72f), new Vector2(200f, 26f));
+            timerText = CreateText(safeAreaRect, "TimerText", "00:00", 18, new Color(0.9f, 0.9f, 0.94f), TextAnchor.UpperCenter);
+            SetAnchored(timerText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -90f), new Vector2(180f, 22f));
 
-            // Hint panel background (top-center, below timer)
-            hintBg = CreateImage(safeAreaRect, "HintPanel", new Color(0.08f, 0.1f, 0.15f, 0.85f));
-            SetAnchored(hintBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -155f), new Vector2(760f, 48f));
-            hintText = CreateText(hintBg.rectTransform, "Label", "", 22, new Color(0.95f, 0.95f, 1f), TextAnchor.MiddleCenter);
-            hintText.rectTransform.anchorMin = Vector2.zero;
-            hintText.rectTransform.anchorMax = Vector2.one;
-            hintText.rectTransform.offsetMin = Vector2.zero;
-            hintText.rectTransform.offsetMax = Vector2.zero;
-            hintBg.gameObject.SetActive(false);
-
-            BuildWaveControl();
-
-            // Castle HP sits with the castle at the bottom of the battlefield.
-            Image hpBg = CreateImage(safeAreaRect, "CastleHpBar", new Color(0f, 0f, 0f, 0.6f));
-            SetAnchored(hpBg.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 52f), new Vector2(680f, 46f));
-            castleHpFillImage = CreateImage(hpBg.rectTransform, "Fill", new Color(0.25f, 0.8f, 0.3f));
-            castleHpFill = castleHpFillImage.rectTransform;
-            castleHpFill.anchorMin = Vector2.zero;
-            castleHpFill.anchorMax = Vector2.one;
-            castleHpFill.pivot = new Vector2(0f, 0.5f);
-            castleHpFill.offsetMin = new Vector2(2f, 2f);
-            castleHpFill.offsetMax = new Vector2(-2f, -2f);
-            castleHpText = CreateText(hpBg.rectTransform, "Label", "CASTLE  10 / 10", 24, Color.white, TextAnchor.MiddleCenter);
-            castleHpText.rectTransform.anchorMin = Vector2.zero;
-            castleHpText.rectTransform.anchorMax = Vector2.one;
-            castleHpText.rectTransform.offsetMin = Vector2.zero;
-            castleHpText.rectTransform.offsetMax = Vector2.zero;
-
-            // Speed button: top-left (1x -> 1.5x -> 2x)
-            Button speedButton = CreateButton(safeAreaRect, "SpeedButton",
+            // Utility controls remain paired and receive matching touch targets.
+            Image utilityPanel = CreateHudPanel(safeAreaRect, "UtilityControls");
+            SetAnchored(utilityPanel.rectTransform, new Vector2(1f, 1f), new Vector2(-20f, -22f), new Vector2(238f, 50f));
+            Button speedButton = CreateButton(utilityPanel.rectTransform, "SpeedButton",
                 game != null ? FormatSpeed(game.GameSpeed) : "1x",
-                new Vector2(95f, 42f), new Vector2(0f, 1f), new Vector2(65f, -38f),
+                new Vector2(108f, 40f), new Vector2(0f, 0.5f), new Vector2(5f, 0f),
                 () =>
                 {
                     GameManager activeGame = GameManager.Instance != null ? GameManager.Instance : game;
@@ -1608,10 +1572,8 @@ namespace Stonehold
                     }
                 });
             speedButtonLabel = speedButton.GetComponentInChildren<Text>();
-
-            // Pause button: top-right
-            CreateButton(safeAreaRect, "PauseButton", "Pause", new Vector2(95f, 42f), new Vector2(1f, 1f),
-                new Vector2(-65f, -38f), () =>
+            CreateButton(utilityPanel.rectTransform, "PauseButton", "Pause", new Vector2(108f, 40f), new Vector2(1f, 0.5f),
+                new Vector2(-5f, 0f), () =>
                 {
                     GameManager activeGame = GameManager.Instance != null ? GameManager.Instance : game;
                     if (activeGame != null)
@@ -1620,6 +1582,52 @@ namespace Stonehold
                         activeGame.TogglePause();
                     }
                 });
+
+            // Player progression lives above the castle health, not in the upper combat frame.
+            xpBgImage = CreateHudPanel(safeAreaRect, "XpBarBg");
+            SetAnchored(xpBgImage.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 110f), new Vector2(420f, 28f));
+            xpFillImage = CreateImage(xpBgImage.rectTransform, "XpFill", new Color(0.6f, 0.25f, 0.85f));
+            xpFill = xpFillImage.rectTransform;
+            xpFill.anchorMin = Vector2.zero;
+            xpFill.anchorMax = Vector2.one;
+            xpFill.pivot = new Vector2(0f, 0.5f);
+            xpFill.offsetMin = new Vector2(2f, 2f);
+            xpFill.offsetMax = new Vector2(-2f, -2f);
+            xpText = CreateText(xpBgImage.rectTransform, "XpText", "Lv.1  XP: 0 / 100", 17, Color.white, TextAnchor.MiddleCenter);
+            xpText.fontStyle = FontStyle.Bold;
+            xpText.rectTransform.anchorMin = Vector2.zero;
+            xpText.rectTransform.anchorMax = Vector2.one;
+            xpText.rectTransform.offsetMin = Vector2.zero;
+            xpText.rectTransform.offsetMax = Vector2.zero;
+
+            // Context hints are reserved for short guidance and remain below the primary frame.
+            hintBg = CreateHudPanel(safeAreaRect, "HintPanel");
+            SetAnchored(hintBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -210f), new Vector2(600f, 42f));
+            hintText = CreateText(hintBg.rectTransform, "Label", "", 18, new Color(0.92f, 0.92f, 0.95f), TextAnchor.MiddleCenter);
+            hintText.rectTransform.anchorMin = Vector2.zero;
+            hintText.rectTransform.anchorMax = Vector2.one;
+            hintText.rectTransform.offsetMin = Vector2.zero;
+            hintText.rectTransform.offsetMax = Vector2.zero;
+            hintBg.gameObject.SetActive(false);
+
+            BuildWaveControl();
+
+            // Castle health stays visible at the base but remains compact.
+            Image hpBg = CreateHudPanel(safeAreaRect, "CastleHpBar");
+            SetAnchored(hpBg.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 52f), new Vector2(540f, 42f));
+            castleHpFillImage = CreateImage(hpBg.rectTransform, "Fill", new Color(0.25f, 0.8f, 0.3f));
+            castleHpFill = castleHpFillImage.rectTransform;
+            castleHpFill.anchorMin = Vector2.zero;
+            castleHpFill.anchorMax = Vector2.one;
+            castleHpFill.pivot = new Vector2(0f, 0.5f);
+            castleHpFill.offsetMin = new Vector2(2f, 2f);
+            castleHpFill.offsetMax = new Vector2(-2f, -2f);
+            castleHpText = CreateText(hpBg.rectTransform, "Label", "CASTLE  10 / 10", 21, Color.white, TextAnchor.MiddleCenter);
+            castleHpText.fontStyle = FontStyle.Bold;
+            castleHpText.rectTransform.anchorMin = Vector2.zero;
+            castleHpText.rectTransform.anchorMax = Vector2.one;
+            castleHpText.rectTransform.offsetMin = Vector2.zero;
+            castleHpText.rectTransform.offsetMax = Vector2.zero;
 
             // Wave banner (center)
             bannerText = CreateText(safeAreaRect, "WaveBanner", "", 72, Color.white, TextAnchor.MiddleCenter);
@@ -1795,7 +1803,7 @@ namespace Stonehold
             bool twoRows = count > 3;
             if (twoRows)
             {
-                SetAnchored(panel, new Vector2(0.5f, 0f), new Vector2(0f, 125f), new Vector2(760f, 230f));
+                SetAnchored(panel, new Vector2(0.5f, 0f), new Vector2(0f, 158f), new Vector2(760f, 230f));
             }
 
             CreateText(panel, "Title", "Build Defender", 26, Color.white, TextAnchor.UpperCenter)
@@ -1861,19 +1869,19 @@ namespace Stonehold
 
         private void BuildWaveControl()
         {
-            Image bg = CreateImage(safeAreaRect != null ? safeAreaRect : canvasRect, "WaveControl", new Color(0.08f, 0.08f, 0.12f, 0.9f));
+            Image bg = CreateHudPanel(safeAreaRect != null ? safeAreaRect : canvasRect, "WaveControl");
             RectTransform panel = bg.rectTransform;
-            SetAnchored(panel, new Vector2(0.5f, 1f), new Vector2(0f, -108f), new Vector2(560f, 96f));
+            SetAnchored(panel, new Vector2(0.5f, 1f), new Vector2(0f, -118f), new Vector2(440f, 84f));
 
-            waveStatusText = CreateText(panel, "Status", "Next Wave", 24, Color.white, TextAnchor.UpperLeft);
+            waveStatusText = CreateText(panel, "Status", "Next Wave", 20, Color.white, TextAnchor.UpperLeft);
             waveStatusText.fontStyle = FontStyle.Bold;
-            SetAnchored(waveStatusText.rectTransform, new Vector2(0f, 1f), new Vector2(22f, -14f), new Vector2(350f, 34f));
+            SetAnchored(waveStatusText.rectTransform, new Vector2(0f, 1f), new Vector2(18f, -12f), new Vector2(265f, 28f));
 
-            waveCountdownText = CreateText(panel, "Countdown", "Auto starts in 5s", 22, new Color(1f, 0.85f, 0.2f), TextAnchor.UpperLeft);
-            SetAnchored(waveCountdownText.rectTransform, new Vector2(0f, 1f), new Vector2(22f, -48f), new Vector2(350f, 30f));
+            waveCountdownText = CreateText(panel, "Countdown", "Auto starts in 5s", 17, new Color(0.94f, 0.77f, 0.34f), TextAnchor.UpperLeft);
+            SetAnchored(waveCountdownText.rectTransform, new Vector2(0f, 1f), new Vector2(18f, -42f), new Vector2(265f, 24f));
 
-            startWaveButton = CreateButton(panel, "StartNextWaveButton", "Start", new Vector2(150f, 48f), new Vector2(1f, 0.5f),
-                new Vector2(-94f, 0f), OnStartNextWaveClicked);
+            startWaveButton = CreateButton(panel, "StartNextWaveButton", "Start", new Vector2(132f, 42f), new Vector2(1f, 0.5f),
+                new Vector2(-14f, 0f), OnStartNextWaveClicked);
 
             waveControlGroup = bg.gameObject.AddComponent<CanvasGroup>();
             waveControlGroup.alpha = 0f;
@@ -1884,9 +1892,9 @@ namespace Stonehold
 
         private CanvasGroup CreateBottomPanel(string name, out RectTransform panel)
         {
-            Image bg = CreateImage(safeAreaRect != null ? safeAreaRect : canvasRect, name, new Color(0.08f, 0.08f, 0.12f, 0.92f));
+            Image bg = CreateHudPanel(safeAreaRect != null ? safeAreaRect : canvasRect, name);
             panel = bg.rectTransform;
-            SetAnchored(panel, new Vector2(0.5f, 0f), new Vector2(0f, 105f), new Vector2(720f, 190f));
+            SetAnchored(panel, new Vector2(0.5f, 0f), new Vector2(0f, 158f), new Vector2(720f, 190f));
 
             CanvasGroup group = bg.gameObject.AddComponent<CanvasGroup>();
             group.alpha = 0f;
@@ -2199,6 +2207,16 @@ namespace Stonehold
             return image;
         }
 
+        private static Image CreateHudPanel(RectTransform parent, string name)
+        {
+            Image panel = CreateImage(parent, name, HudPanelColor);
+            Outline outline = panel.gameObject.AddComponent<Outline>();
+            outline.effectColor = HudPanelOutlineColor;
+            outline.effectDistance = new Vector2(1f, -1f);
+            outline.useGraphicAlpha = false;
+            return panel;
+        }
+
         private Button CreateButton(RectTransform parent, string name, string label, Vector2 size,
             Vector2 anchor, Vector2 position, UnityEngine.Events.UnityAction onClick)
         {
@@ -2210,12 +2228,17 @@ namespace Stonehold
             button.targetGraphic = bg;
             button.transition = Selectable.Transition.ColorTint;
 
+            Outline outline = bg.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.68f, 0.54f, 0.30f, 0.38f);
+            outline.effectDistance = new Vector2(1f, -1f);
+            outline.useGraphicAlpha = false;
+
             ColorBlock cb = button.colors;
-            cb.normalColor = new Color(0.20f, 0.24f, 0.32f, 0.95f);
-            cb.highlightedColor = new Color(0.28f, 0.34f, 0.45f, 1f);
-            cb.pressedColor = new Color(0.14f, 0.18f, 0.24f, 1f);
-            cb.selectedColor = new Color(0.24f, 0.28f, 0.38f, 1f);
-            cb.disabledColor = new Color(0.12f, 0.14f, 0.18f, 0.6f);
+            cb.normalColor = new Color(0.19f, 0.17f, 0.15f, 0.98f);
+            cb.highlightedColor = new Color(0.31f, 0.26f, 0.18f, 1f);
+            cb.pressedColor = new Color(0.11f, 0.10f, 0.09f, 1f);
+            cb.selectedColor = new Color(0.25f, 0.21f, 0.16f, 1f);
+            cb.disabledColor = new Color(0.11f, 0.1f, 0.09f, 0.55f);
             button.colors = cb;
 
             button.onClick.AddListener(() =>
@@ -2228,7 +2251,8 @@ namespace Stonehold
                 onClick();
             });
 
-            Text text = CreateText(bg.rectTransform, "Label", label, 24, Color.white, TextAnchor.MiddleCenter);
+            Text text = CreateText(bg.rectTransform, "Label", label, 21, new Color(0.95f, 0.93f, 0.88f), TextAnchor.MiddleCenter);
+            text.fontStyle = FontStyle.Bold;
             text.rectTransform.anchorMin = Vector2.zero;
             text.rectTransform.anchorMax = Vector2.one;
             text.rectTransform.offsetMin = Vector2.zero;
@@ -2392,12 +2416,41 @@ namespace Stonehold
             return rt;
         }
 
+        private void RefreshSafeAreaIfNeeded()
+        {
+            if (safeAreaRect == null)
+            {
+                return;
+            }
+
+            Rect safeArea = Screen.safeArea;
+            Vector2Int screenSize = new Vector2Int(Screen.width, Screen.height);
+            if (screenSize == lastSafeAreaScreenSize && safeArea == lastSafeArea)
+            {
+                return;
+            }
+
+            if (screenSize.x <= 0 || screenSize.y <= 0)
+            {
+                return;
+            }
+
+            safeAreaRect.anchorMin = new Vector2(safeArea.x / screenSize.x, safeArea.y / screenSize.y);
+            safeAreaRect.anchorMax = new Vector2(
+                (safeArea.x + safeArea.width) / screenSize.x,
+                (safeArea.y + safeArea.height) / screenSize.y);
+            safeAreaRect.offsetMin = Vector2.zero;
+            safeAreaRect.offsetMax = Vector2.zero;
+            lastSafeArea = safeArea;
+            lastSafeAreaScreenSize = screenSize;
+        }
+
         private void BuildAbilityCooldownHUD()
         {
             GameObject containerObj = new GameObject("AbilityCooldownHUD", typeof(RectTransform));
             abilityHudContainer = containerObj.GetComponent<RectTransform>();
             abilityHudContainer.SetParent(safeAreaRect, false);
-            SetAnchored(abilityHudContainer, new Vector2(1f, 1f), new Vector2(-60f, -145f), new Vector2(90f, 600f));
+            SetAnchored(abilityHudContainer, new Vector2(1f, 1f), new Vector2(-48f, -104f), new Vector2(78f, 500f));
         }
 
         private void CreateAbilityCooldownUIItem()
@@ -2405,9 +2458,9 @@ namespace Stonehold
             GameObject rootObj = new GameObject("Slot_" + abilityUiItems.Count, typeof(RectTransform));
             RectTransform rootRt = rootObj.GetComponent<RectTransform>();
             rootRt.SetParent(abilityHudContainer, false);
-            SetAnchored(rootRt, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(70f, 70f));
+            SetAnchored(rootRt, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(64f, 64f));
 
-            Image bg = CreateImage(rootRt, "Border", new Color(0.12f, 0.15f, 0.2f, 0.9f));
+            Image bg = CreateHudPanel(rootRt, "Border");
             bg.rectTransform.anchorMin = Vector2.zero;
             bg.rectTransform.anchorMax = Vector2.one;
             bg.rectTransform.offsetMin = Vector2.zero;
@@ -2429,19 +2482,26 @@ namespace Stonehold
             fill.rectTransform.offsetMin = new Vector2(4f, 4f);
             fill.rectTransform.offsetMax = new Vector2(-4f, -4f);
 
-            Text timerText = CreateText(rootRt, "TimerText", "READY", 14, new Color(0.3f, 1f, 0.3f), TextAnchor.MiddleCenter);
+            Text timerText = CreateText(rootRt, "TimerText", "READY", 12, new Color(0.3f, 1f, 0.3f), TextAnchor.MiddleCenter);
             timerText.fontStyle = FontStyle.Bold;
             timerText.rectTransform.anchorMin = Vector2.zero;
             timerText.rectTransform.anchorMax = Vector2.one;
             timerText.rectTransform.offsetMin = Vector2.zero;
             timerText.rectTransform.offsetMax = Vector2.zero;
 
-            Text lvlText = CreateText(rootRt, "LevelText", "Lv.1", 12, Color.white, TextAnchor.LowerCenter);
+            Text roleText = CreateText(rootRt, "RoleText", "HERO", 10, new Color(0.08f, 0.08f, 0.1f), TextAnchor.UpperCenter);
+            roleText.fontStyle = FontStyle.Bold;
+            roleText.rectTransform.anchorMin = new Vector2(0f, 1f);
+            roleText.rectTransform.anchorMax = new Vector2(1f, 1f);
+            roleText.rectTransform.anchoredPosition = new Vector2(0f, -6f);
+            roleText.rectTransform.sizeDelta = new Vector2(64f, 16f);
+
+            Text lvlText = CreateText(rootRt, "LevelText", "Lv.1", 11, Color.white, TextAnchor.LowerCenter);
             lvlText.fontStyle = FontStyle.Bold;
             lvlText.rectTransform.anchorMin = new Vector2(0f, 0f);
             lvlText.rectTransform.anchorMax = new Vector2(1f, 0f);
             lvlText.rectTransform.anchoredPosition = new Vector2(0f, -12f);
-            lvlText.rectTransform.sizeDelta = new Vector2(70f, 18f);
+            lvlText.rectTransform.sizeDelta = new Vector2(64f, 16f);
 
             AbilityCooldownUIItem item = new AbilityCooldownUIItem
             {
@@ -2451,6 +2511,7 @@ namespace Stonehold
                 Fill = fill,
                 LevelText = lvlText,
                 TimerText = timerText,
+                RoleText = roleText,
                 HeroId = ""
             };
 
@@ -2487,6 +2548,7 @@ namespace Stonehold
                 uiItem.Root.SetActive(true);
                 uiItem.HeroId = hero.Definition.id;
                 uiItem.Icon.color = GetHeroColor(hero.Definition.id);
+                uiItem.RoleText.text = GetHeroHudRoleLabel(hero.Definition.id);
 
                 int metaLevel = SaveManager.GetMetaLevel(hero.Definition.id);
                 uiItem.LevelText.text = "Lv." + metaLevel;
@@ -2508,7 +2570,7 @@ namespace Stonehold
                 }
 
                 RectTransform rt = uiItem.Root.GetComponent<RectTransform>();
-                rt.anchoredPosition = new Vector2(0f, -activeSlotCount * 78f);
+                rt.anchoredPosition = new Vector2(0f, -activeSlotCount * 72f);
 
                 activeSlotCount++;
             }
@@ -2530,6 +2592,20 @@ namespace Stonehold
                 case "electric_engineer": return new Color(0.2f, 0.85f, 1f);
                 case "sniper": return new Color(0.75f, 0.4f, 1f);
                 default: return Color.white;
+            }
+        }
+
+        private static string GetHeroHudRoleLabel(string heroId)
+        {
+            switch (heroId)
+            {
+                case "archer": return "ARC";
+                case "bombardier": return "BMB";
+                case "frost_mage": return "ICE";
+                case "fire_mage": return "FIR";
+                case "electric_engineer": return "TES";
+                case "sniper": return "SNP";
+                default: return "HERO";
             }
         }
     }
