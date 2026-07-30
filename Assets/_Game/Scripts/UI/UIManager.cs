@@ -109,6 +109,50 @@ namespace Stonehold
         private RectTransform floatingRoot;
         private RectTransform safeAreaRect;
         private readonly Queue<Text> floatingPool = new Queue<Text>();
+        private int normalDamageLane;
+        private int criticalDamageLane;
+        private int secondaryFeedbackLane;
+
+        private enum FloatingTextKind
+        {
+            NormalDamage,
+            CriticalDamage,
+            Experience,
+            Reward
+        }
+
+        private struct FloatingTextStyle
+        {
+            public Color Color;
+            public int FontSize;
+            public float Duration;
+            public float Rise;
+            public float PopScale;
+            public Vector2 LaneOffset;
+        }
+
+        private static readonly Vector2[] NormalDamageLanes =
+        {
+            new Vector2(-28f, 0f),
+            new Vector2(0f, 12f),
+            new Vector2(28f, 0f),
+            new Vector2(-14f, 24f),
+            new Vector2(14f, 24f)
+        };
+
+        private static readonly Vector2[] CriticalDamageLanes =
+        {
+            new Vector2(-18f, 30f),
+            new Vector2(18f, 42f),
+            new Vector2(0f, 54f)
+        };
+
+        private static readonly Vector2[] SecondaryFeedbackLanes =
+        {
+            new Vector2(-24f, 18f),
+            new Vector2(24f, 30f),
+            new Vector2(0f, 42f)
+        };
 
         // Gameplay references
         private EconomyManager economy;
@@ -549,13 +593,13 @@ namespace Stonehold
         {
             if (isCrit)
             {
-                SpawnFloatingText("CRIT\n-" + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 1.0f,
-                    new Color(1f, 0.15f, 0.15f), 38);
+                SpawnFloatingText("CRIT " + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 1.0f,
+                    FloatingTextKind.CriticalDamage);
             }
             else
             {
                 SpawnFloatingText("-" + Mathf.RoundToInt(amount), enemy.transform.position + Vector3.up * 0.8f,
-                    new Color(1f, 0.55f, 0.2f), 30);
+                    FloatingTextKind.NormalDamage);
             }
         }
 
@@ -565,20 +609,22 @@ namespace Stonehold
             {
                 int xpAmount = enemy.Data.xpValue > 0 ? enemy.Data.xpValue : enemy.Data.goldReward;
                 SpawnFloatingText("+" + xpAmount + " XP", enemy.transform.position + Vector3.up * 1.2f,
-                    new Color(0.7f, 0.3f, 0.9f), 34);
+                    FloatingTextKind.Experience);
                 return;
             }
 
             SpawnFloatingText("+" + gold, enemy.transform.position + Vector3.up * 1.2f,
-                new Color(1f, 0.9f, 0.2f), 34);
+                FloatingTextKind.Reward);
         }
 
-        private void SpawnFloatingText(string message, Vector3 worldPos, Color color, int size)
+        private void SpawnFloatingText(string message, Vector3 worldPos, FloatingTextKind kind)
         {
             if (!TryWorldToCanvas(worldPos, out Vector2 local))
             {
                 return;
             }
+
+            FloatingTextStyle style = GetFloatingTextStyle(kind);
 
             Text text;
             if (floatingPool.Count > 0)
@@ -588,43 +634,90 @@ namespace Stonehold
             }
             else
             {
-                text = CreateText(floatingRoot, "Floating", "", 30, color, TextAnchor.MiddleCenter);
+                text = CreateText(floatingRoot, "Floating", "", style.FontSize, style.Color, TextAnchor.MiddleCenter);
                 text.fontStyle = FontStyle.Bold;
                 text.raycastTarget = false;
             }
 
             text.text = message;
-            text.fontSize = size;
-            text.color = color;
+            text.fontSize = style.FontSize;
+            text.color = style.Color;
             RectTransform rect = text.rectTransform;
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.sizeDelta = new Vector2(200f, 50f);
-            rect.anchoredPosition = local;
+            rect.anchoredPosition = local + style.LaneOffset;
             rect.localScale = Vector3.one;
-            StartCoroutine(AnimateFloatingText(text));
+            StartCoroutine(AnimateFloatingText(text, style));
         }
 
-        private IEnumerator AnimateFloatingText(Text text)
+        private FloatingTextStyle GetFloatingTextStyle(FloatingTextKind kind)
+        {
+            switch (kind)
+            {
+                case FloatingTextKind.CriticalDamage:
+                    return new FloatingTextStyle
+                    {
+                        Color = new Color(1f, 0.32f, 0.12f, 1f),
+                        FontSize = 31,
+                        Duration = 0.66f,
+                        Rise = 66f,
+                        PopScale = 1.18f,
+                        LaneOffset = CriticalDamageLanes[criticalDamageLane++ % CriticalDamageLanes.Length]
+                    };
+                case FloatingTextKind.Experience:
+                    return new FloatingTextStyle
+                    {
+                        Color = new Color(0.70f, 0.38f, 0.92f, 0.72f),
+                        FontSize = 20,
+                        Duration = 0.48f,
+                        Rise = 38f,
+                        PopScale = 1.03f,
+                        LaneOffset = SecondaryFeedbackLanes[secondaryFeedbackLane++ % SecondaryFeedbackLanes.Length]
+                    };
+                case FloatingTextKind.Reward:
+                    return new FloatingTextStyle
+                    {
+                        Color = new Color(1f, 0.84f, 0.24f, 0.76f),
+                        FontSize = 21,
+                        Duration = 0.52f,
+                        Rise = 42f,
+                        PopScale = 1.05f,
+                        LaneOffset = SecondaryFeedbackLanes[secondaryFeedbackLane++ % SecondaryFeedbackLanes.Length]
+                    };
+                default:
+                    return new FloatingTextStyle
+                    {
+                        Color = new Color(1f, 0.70f, 0.30f, 0.94f),
+                        FontSize = 25,
+                        Duration = 0.58f,
+                        Rise = 52f,
+                        PopScale = 1.08f,
+                        LaneOffset = NormalDamageLanes[normalDamageLane++ % NormalDamageLanes.Length]
+                    };
+            }
+        }
+
+        private IEnumerator AnimateFloatingText(Text text, FloatingTextStyle style)
         {
             RectTransform rect = text.rectTransform;
             Vector2 start = rect.anchoredPosition;
-            float driftX = Random.Range(-28f, 28f);
-            Color color = text.color;
-            const float duration = 0.85f;
+            Color color = style.Color;
 
-            for (float t = 0f; t < duration; t += Time.deltaTime)
+            for (float t = 0f; t < style.Duration; t += Time.deltaTime)
             {
                 if (text == null)
                 {
                     yield break;
                 }
 
-                float k = t / duration;
-                float pop = k < 0.15f ? Mathf.Lerp(0.3f, 1.25f, k / 0.15f) : Mathf.Lerp(1.25f, 1f, (k - 0.15f) / 0.85f);
+                float k = t / style.Duration;
+                float pop = k < 0.16f
+                    ? Mathf.Lerp(0.82f, style.PopScale, k / 0.16f)
+                    : Mathf.Lerp(style.PopScale, 1f, (k - 0.16f) / 0.84f);
                 rect.localScale = Vector3.one * pop;
                 float ease = 1f - (1f - k) * (1f - k); // ease-out
-                rect.anchoredPosition = start + new Vector2(driftX * ease, 85f * ease);
-                color.a = 1f - k * k;
+                rect.anchoredPosition = start + new Vector2(0f, style.Rise * ease);
+                color.a = style.Color.a * (1f - k * k);
                 text.color = color;
                 yield return null;
             }
