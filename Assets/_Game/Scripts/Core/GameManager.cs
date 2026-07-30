@@ -33,10 +33,18 @@ namespace Stonehold
         /// Global gameplay pacing applied to every selected player speed. The selected
         /// GameSpeed remains the UI-facing 1x / 1.5x / 2x value.
         /// </summary>
-        public const float GameplayPaceMultiplier = 1.10f;
+        public const float GameplayPaceMultiplier = 1.32f;
+
+        /// <summary>
+        /// Additional simulation pace reserved for the fastest player-selected tier.
+        /// The UI-facing GameSpeed remains 2x while its effective clock is 3.168x.
+        /// </summary>
+        public const float FastestSpeedMultiplier = 1.20f;
 
         /// <summary>Simulation speed while gameplay is actively running.</summary>
-        public float EffectiveGameSpeed => GameSpeed * GameplayPaceMultiplier;
+        public float EffectiveGameSpeed =>
+            GameSpeed * GameplayPaceMultiplier *
+            (Mathf.Approximately(GameSpeed, 2f) ? FastestSpeedMultiplier : 1f);
 
         private static readonly float[] SpeedSteps = { 1f, 1.5f, 2f };
 
