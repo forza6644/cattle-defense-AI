@@ -10,6 +10,7 @@ namespace Stonehold
         // How strongly hero identity color mixes over the prefab's own material colors
         // (1 = flat identity color, 0 = untouched prefab materials).
         private const float BodyTintBlend = 0.0f;
+        private const string PresentationRootName = "HeroPresentation";
 
         private HeroAttack currentHero;
 
@@ -189,8 +190,10 @@ namespace Stonehold
                 rend.SetPropertyBlock(mpb);
             }
 
-            // Apply scale variation
-            instance.transform.localScale = Vector3.Scale(instance.transform.localScale, scaleMultiplier);
+            // Keep gameplay transforms, colliders, and projectile origins untouched. Imported
+            // characters are normalized through their visual child only so every hero reads at
+            // a similar scale on the wall without changing combat behaviour.
+            NormalizeCharacterVisual(instance.transform, hero.id, scaleMultiplier);
 
             // Color the slot pad accent
             Transform padTransform = transform.Find("SlotPad_Visual");
@@ -205,7 +208,7 @@ namespace Stonehold
                 }
             }
 
-            // Hide default weapon meshes for Bombardier and Sniper
+            // Hide default weapon meshes when the presentation replaces them.
             if (hero.id == "bombardier")
             {
                 Transform sword = FindTransformRecursive(instance.transform, "Warrior_Sword");
@@ -217,112 +220,175 @@ namespace Stonehold
                 if (dagger != null) dagger.gameObject.SetActive(false);
             }
 
-            // Add a small weapon prop for visual identification
-            CreateWeaponProp(hero.id, instance.transform, accentColor);
+            CreateHeroPresentation(hero.id, instance.transform, accentColor);
         }
 
-        private void CreateWeaponProp(string heroId, Transform parent, Color color)
+        private static void NormalizeCharacterVisual(Transform heroRoot, string heroId, Vector3 profileScale)
         {
-            PrimitiveType shape;
-            Vector3 localPos;
-            Vector3 localScale;
-            Quaternion localRot = Quaternion.identity;
+            Transform visualRoot = FindTransformRecursive(heroRoot, "QuaterniusVisual");
+            if (visualRoot == null)
+            {
+                return;
+            }
+
+            // The portrait camera needs a little more body mass than the first pass,
+            // but this remains a visual-child adjustment only.
+            float normalizedScale = 1.03f;
+            switch (heroId)
+            {
+                case "bombardier": normalizedScale = 1.08f; break;
+                case "sniper": normalizedScale = 0.99f; break;
+            }
+
+            visualRoot.localScale = Vector3.Scale(visualRoot.localScale, profileScale * normalizedScale);
+        }
+
+        private void CreateHeroPresentation(string heroId, Transform heroRoot, Color accentColor)
+        {
+            Transform previous = heroRoot.Find(PresentationRootName);
+            if (previous != null)
+            {
+                Destroy(previous.gameObject);
+            }
+
+            GameObject presentation = new GameObject(PresentationRootName);
+            presentation.transform.SetParent(heroRoot);
+            presentation.transform.localPosition = Vector3.zero;
+            presentation.transform.localRotation = Quaternion.identity;
+            presentation.transform.localScale = Vector3.one;
+
+            // A restrained base ring supports recognition without competing with the
+            // character silhouette at portrait-gameplay distance.
+            CreatePresentationPiece(presentation.transform, "IdentityRing", PrimitiveType.Cylinder,
+                new Vector3(0f, 0.018f, 0f), Vector3.one * 0.30f + new Vector3(0f, -0.275f, 0f),
+                Quaternion.identity, Color.Lerp(new Color(0.16f, 0.18f, 0.22f), accentColor, 0.34f));
 
             switch (heroId)
             {
                 case "archer":
-                    shape = PrimitiveType.Cylinder;  // quiver
-                    localPos = new Vector3(-0.25f, 0.35f, -0.15f);
-                    localScale = new Vector3(0.08f, 0.25f, 0.08f);
-                    localRot = Quaternion.Euler(0f, 0f, 15f);
+                    CreateArcherPresentation(presentation.transform, accentColor);
                     break;
                 case "bombardier":
-                    shape = PrimitiveType.Sphere;    // bomb
-                    localPos = new Vector3(0.3f, 0.1f, 0f);
-                    localScale = new Vector3(0.22f, 0.22f, 0.22f);
+                    CreateBombardierPresentation(presentation.transform, accentColor);
                     break;
                 case "frost_mage":
-                    shape = PrimitiveType.Cube;      // crystal
-                    localPos = new Vector3(0.25f, 0.4f, 0f);
-                    localScale = new Vector3(0.1f, 0.15f, 0.1f);
-                    localRot = Quaternion.Euler(0f, 45f, 45f);
+                    CreateMagePresentation(presentation.transform, new Color(0.45f, 0.88f, 1f), "FrostStaff");
                     break;
                 case "fire_mage":
-                    shape = PrimitiveType.Sphere;    // glowing ember
-                    localPos = new Vector3(0.25f, 0.45f, 0f);
-                    localScale = new Vector3(0.14f, 0.14f, 0.14f);
+                    CreateMagePresentation(presentation.transform, new Color(1f, 0.3f, 0.07f), "FireStaff");
                     break;
                 case "electric_engineer":
-                    shape = PrimitiveType.Cylinder;  // tesla coil
-                    localPos = new Vector3(0f, 0.65f, 0f);
-                    localScale = new Vector3(0.06f, 0.18f, 0.06f);
+                    CreateEngineerPresentation(presentation.transform, accentColor);
                     break;
                 case "sniper":
-                    shape = PrimitiveType.Cylinder;  // rifle barrel
-                    localPos = new Vector3(0.35f, 0.3f, 0f);
-                    localScale = new Vector3(0.04f, 0.3f, 0.04f);
-                    localRot = Quaternion.Euler(0f, 0f, 90f);
+                    CreateSniperPresentation(presentation.transform, accentColor);
                     break;
-                default:
-                    return;
-            }
-
-            Transform propParent = parent;
-            if (heroId == "bombardier" || heroId == "sniper")
-            {
-                Transform weaponMount = FindTransformRecursive(parent, "Weapon.R");
-                if (weaponMount != null)
-                {
-                    propParent = weaponMount;
-                    if (heroId == "bombardier")
-                    {
-                        localPos = new Vector3(0f, 0f, 0f);
-                    }
-                    else if (heroId == "sniper")
-                    {
-                        localPos = new Vector3(0f, 0.15f, 0f);
-                        localRot = Quaternion.Euler(0f, 0f, 90f);
-                        localScale = new Vector3(0.04f, 0.35f, 0.04f);
-                    }
-                }
-            }
-
-            GameObject prop = GameObject.CreatePrimitive(shape);
-            prop.name = "WeaponProp";
-            prop.transform.SetParent(propParent);
-            prop.transform.localPosition = localPos;
-            prop.transform.localRotation = localRot;
-            prop.transform.localScale = CompensateMountedScale(localScale, parent, propParent);
-
-            // Remove collider from prop so it doesn't interfere with gameplay
-            Collider propCollider = prop.GetComponent<Collider>();
-            if (propCollider != null) Destroy(propCollider);
-
-            Renderer propRenderer = prop.GetComponent<Renderer>();
-            if (propRenderer != null)
-            {
-                // Property block only - no material instances for temporary props.
-                // Fire Mage's ember just uses a hotter color instead of true emission.
-                Color propColor = heroId == "fire_mage" ? new Color(1f, 0.45f, 0.08f) : color;
-                MaterialPropertyBlock mpb = new MaterialPropertyBlock();
-                mpb.SetColor(Shader.PropertyToID("_BaseColor"), propColor);
-                propRenderer.SetPropertyBlock(mpb);
             }
         }
 
-        private static Vector3 CompensateMountedScale(Vector3 desiredRootScale, Transform visualRoot, Transform mount)
+        private static void CreateArcherPresentation(Transform parent, Color accentColor)
         {
-            Vector3 rootScale = visualRoot.lossyScale;
-            Vector3 mountScale = mount.lossyScale;
-            return new Vector3(
-                desiredRootScale.x * SafeScaleRatio(rootScale.x, mountScale.x),
-                desiredRootScale.y * SafeScaleRatio(rootScale.y, mountScale.y),
-                desiredRootScale.z * SafeScaleRatio(rootScale.z, mountScale.z));
+            CreatePresentationPiece(parent, "BowLimbUpper", PrimitiveType.Cube,
+                new Vector3(0.25f, 0.68f, 0.18f), new Vector3(0.075f, 0.30f, 0.075f),
+                Quaternion.Euler(0f, 0f, 26f), accentColor);
+            CreatePresentationPiece(parent, "BowLimbLower", PrimitiveType.Cube,
+                new Vector3(0.25f, 0.30f, 0.18f), new Vector3(0.075f, 0.30f, 0.075f),
+                Quaternion.Euler(0f, 0f, -26f), accentColor);
+            CreatePresentationPiece(parent, "BowString", PrimitiveType.Cube,
+                new Vector3(0.37f, 0.49f, 0.18f), new Vector3(0.015f, 0.56f, 0.015f),
+                Quaternion.identity, new Color(0.86f, 0.78f, 0.58f));
+            CreatePresentationPiece(parent, "ArrowBundle", PrimitiveType.Cylinder,
+                new Vector3(-0.20f, 0.39f, -0.10f), new Vector3(0.09f, 0.28f, 0.09f),
+                Quaternion.Euler(0f, 0f, 16f), new Color(0.36f, 0.20f, 0.08f));
         }
 
-        private static float SafeScaleRatio(float rootScale, float mountScale)
+        private static void CreateBombardierPresentation(Transform parent, Color accentColor)
         {
-            return Mathf.Abs(mountScale) > 0.0001f ? Mathf.Abs(rootScale / mountScale) : 1f;
+            CreatePresentationPiece(parent, "BombLauncherBody", PrimitiveType.Cube,
+                new Vector3(0.29f, 0.48f, 0.18f), new Vector3(0.54f, 0.15f, 0.20f),
+                Quaternion.Euler(0f, 10f, 0f), new Color(0.18f, 0.20f, 0.24f));
+            CreatePresentationPiece(parent, "BombLauncherBarrel", PrimitiveType.Cylinder,
+                new Vector3(0.51f, 0.50f, 0.18f), new Vector3(0.13f, 0.30f, 0.13f),
+                Quaternion.Euler(0f, 0f, 82f), new Color(0.18f, 0.20f, 0.24f));
+            CreatePresentationPiece(parent, "LauncherMuzzle", PrimitiveType.Cylinder,
+                new Vector3(0.80f, 0.54f, 0.18f), new Vector3(0.16f, 0.04f, 0.16f),
+                Quaternion.Euler(0f, 0f, 82f), accentColor);
+            CreatePresentationPiece(parent, "BombSatchel", PrimitiveType.Sphere,
+                new Vector3(-0.22f, 0.31f, -0.06f), Vector3.one * 0.18f,
+                Quaternion.identity, new Color(0.10f, 0.11f, 0.13f));
+        }
+
+        private static void CreateMagePresentation(Transform parent, Color spellColor, string prefix)
+        {
+            CreatePresentationPiece(parent, prefix + "Shaft", PrimitiveType.Cylinder,
+                new Vector3(0.23f, 0.47f, 0.16f), new Vector3(0.055f, 0.46f, 0.055f),
+                Quaternion.Euler(0f, 0f, -12f), new Color(0.24f, 0.16f, 0.12f));
+            CreatePresentationPiece(parent, prefix + "Focus", PrimitiveType.Sphere,
+                new Vector3(0.33f, 0.90f, 0.16f), Vector3.one * 0.17f,
+                Quaternion.identity, spellColor);
+            CreatePresentationPiece(parent, prefix + "Rune", PrimitiveType.Cube,
+                new Vector3(-0.18f, 0.50f, -0.12f), new Vector3(0.16f, 0.16f, 0.16f),
+                Quaternion.Euler(45f, 45f, 45f), spellColor * 0.82f);
+        }
+
+        private static void CreateEngineerPresentation(Transform parent, Color accentColor)
+        {
+            CreatePresentationPiece(parent, "CoilPack", PrimitiveType.Cube,
+                new Vector3(-0.16f, 0.47f, -0.12f), new Vector3(0.28f, 0.30f, 0.14f),
+                Quaternion.identity, new Color(0.14f, 0.18f, 0.22f));
+            CreatePresentationPiece(parent, "EmitterRail", PrimitiveType.Cube,
+                new Vector3(0.22f, 0.53f, 0.17f), new Vector3(0.44f, 0.08f, 0.12f),
+                Quaternion.Euler(0f, 8f, 0f), new Color(0.12f, 0.15f, 0.18f));
+            CreatePresentationPiece(parent, "TeslaCoil", PrimitiveType.Cylinder,
+                new Vector3(0.25f, 0.60f, 0.17f), new Vector3(0.09f, 0.29f, 0.09f),
+                Quaternion.Euler(0f, 0f, -10f), accentColor);
+            CreatePresentationPiece(parent, "CoilTip", PrimitiveType.Sphere,
+                new Vector3(0.31f, 0.94f, 0.17f), Vector3.one * 0.12f,
+                Quaternion.identity, new Color(1f, 0.94f, 0.34f));
+        }
+
+        private static void CreateSniperPresentation(Transform parent, Color accentColor)
+        {
+            CreatePresentationPiece(parent, "LongRifle", PrimitiveType.Cube,
+                new Vector3(0.38f, 0.50f, 0.20f), new Vector3(0.82f, 0.08f, 0.10f),
+                Quaternion.Euler(0f, 12f, 0f), new Color(0.12f, 0.13f, 0.16f));
+            CreatePresentationPiece(parent, "RifleScope", PrimitiveType.Cylinder,
+                new Vector3(0.28f, 0.61f, 0.20f), new Vector3(0.065f, 0.19f, 0.065f),
+                Quaternion.Euler(0f, 0f, 90f), accentColor);
+            CreatePresentationPiece(parent, "RifleMuzzle", PrimitiveType.Cylinder,
+                new Vector3(0.88f, 0.50f, 0.20f), new Vector3(0.10f, 0.03f, 0.10f),
+                Quaternion.Euler(0f, 0f, 90f), new Color(0.40f, 0.34f, 0.50f));
+        }
+
+        private static void CreatePresentationPiece(
+            Transform parent,
+            string pieceName,
+            PrimitiveType primitiveType,
+            Vector3 localPosition,
+            Vector3 localScale,
+            Quaternion localRotation,
+            Color color)
+        {
+            GameObject piece = GameObject.CreatePrimitive(primitiveType);
+            piece.name = pieceName;
+            piece.transform.SetParent(parent);
+            piece.transform.localPosition = localPosition;
+            piece.transform.localRotation = localRotation;
+            piece.transform.localScale = localScale;
+
+            Collider collider = piece.GetComponent<Collider>();
+            if (collider != null)
+            {
+                Destroy(collider);
+            }
+
+            Renderer renderer = piece.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+                propertyBlock.SetColor(Shader.PropertyToID("_BaseColor"), color);
+                renderer.SetPropertyBlock(propertyBlock);
+            }
         }
 
         private static Transform FindTransformRecursive(Transform parent, string name)
