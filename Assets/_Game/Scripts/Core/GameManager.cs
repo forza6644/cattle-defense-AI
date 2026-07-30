@@ -29,6 +29,15 @@ namespace Stonehold
         /// </summary>
         public float GameSpeed { get; private set; } = 1f;
 
+        /// <summary>
+        /// Global gameplay pacing applied to every selected player speed. The selected
+        /// GameSpeed remains the UI-facing 1x / 1.5x / 2x value.
+        /// </summary>
+        public const float GameplayPaceMultiplier = 1.10f;
+
+        /// <summary>Simulation speed while gameplay is actively running.</summary>
+        public float EffectiveGameSpeed => GameSpeed * GameplayPaceMultiplier;
+
         private static readonly float[] SpeedSteps = { 1f, 1.5f, 2f };
 
         private Castle castle;
@@ -38,7 +47,7 @@ namespace Stonehold
         private void Awake()
         {
             Instance = this;
-            Time.timeScale = 1f;
+            Time.timeScale = EffectiveGameSpeed;
             Application.targetFrameRate = 60;
             SaveManager.BeginRunRewardSession();
             runResultRecorded = false;
@@ -195,7 +204,7 @@ namespace Stonehold
             GameSpeed = speed;
             if (State == GameState.Playing)
             {
-                Time.timeScale = GameSpeed;
+                Time.timeScale = EffectiveGameSpeed;
             }
             GameSpeedChanged?.Invoke(GameSpeed);
         }
@@ -277,7 +286,7 @@ namespace Stonehold
 
             State = newState;
             // Restore the player's selected speed on resume; any non-Playing state freezes.
-            Time.timeScale = newState == GameState.Playing ? GameSpeed : 0f;
+            Time.timeScale = newState == GameState.Playing ? EffectiveGameSpeed : 0f;
             StateChanged?.Invoke(newState);
         }
 
