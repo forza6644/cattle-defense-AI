@@ -83,6 +83,7 @@ namespace Stonehold
         private Text resultTitleText;
         private Text resultSubtitleText;
         private Text resultRewardsText;
+        private Text resultRunBuildText;
         private Text resultDamageReportText;
         private Button resultOkButton;
         private Button resultDoubleButton;
@@ -1151,9 +1152,9 @@ namespace Stonehold
             }
             else if (state == GameState.Defeat)
             {
-                ShowPanel(resultPanelGroup, false);
                 ShowPanel(victoryGroup, false);
-                ShowPanel(defeatGroup, true);
+                ShowPanel(defeatGroup, false);
+                ShowBattleResult(false);
             }
             else
             {
@@ -1992,8 +1993,8 @@ namespace Stonehold
         }
         private void BuildBattleResultPanel()
         {
-            // Dim background
-            Image dim = CreateImage(canvasRect, "BattleResultPanel", new Color(0.04f, 0.05f, 0.08f, 0.96f));
+            // Restrained dark overlay background (allows seeing battlefield faintly behind)
+            Image dim = CreateImage(canvasRect, "BattleResultPanel", new Color(0.05f, 0.06f, 0.09f, 0.78f));
             dim.raycastTarget = true;
             RectTransform rect = dim.rectTransform;
             rect.anchorMin = Vector2.zero;
@@ -2001,97 +2002,111 @@ namespace Stonehold
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
 
-            // Title (Victory/Defeat)
-            resultTitleText = CreateText(rect, "Title", "BATTLE RESULT", 72, Color.white, TextAnchor.MiddleCenter);
-            resultTitleText.fontStyle = FontStyle.Bold;
-            SetAnchored(resultTitleText.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(1000f, 100f));
-
-            // Subtitle (Wave reached, Battle number)
-            resultSubtitleText = CreateText(rect, "Subtitle", "Wave Reached: - | Run: #1", 24, new Color(0.8f, 0.8f, 0.85f), TextAnchor.MiddleCenter);
-            SetAnchored(resultSubtitleText.rectTransform, new Vector2(0.5f, 0.80f), Vector2.zero, new Vector2(1000f, 40f));
-
             bool isPortrait = Screen.width < Screen.height;
 
-            // Content Panel (center)
-            Image contentBg = CreateImage(rect, "ContentBg", new Color(0.08f, 0.10f, 0.15f, 0.9f));
+            // Structured Mobile Results Card Container (centered)
+            Image contentBg = CreateHudPanel(rect, "ContentBg");
+            RectTransform cardRt = contentBg.rectTransform;
             if (isPortrait)
             {
-                SetAnchored(contentBg.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 60f), new Vector2(900f, 760f));
+                SetAnchored(cardRt, new Vector2(0.5f, 0.5f), new Vector2(0f, 20f), new Vector2(760f, 780f));
             }
             else
             {
-                SetAnchored(contentBg.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(800f, 380f));
+                SetAnchored(cardRt, new Vector2(0.5f, 0.5f), new Vector2(0f, 10f), new Vector2(860f, 440f));
             }
 
-            // Rewards Box
-            Text rewardsTitle = CreateText(contentBg.rectTransform, "RewardsTitle", "REWARDS EARNED", 22, new Color(1f, 0.85f, 0.2f), isPortrait ? TextAnchor.MiddleCenter : TextAnchor.UpperLeft);
-            rewardsTitle.fontStyle = FontStyle.Bold;
+            // Title (VICTORY / DEFEAT)
+            resultTitleText = CreateText(contentBg.rectTransform, "Title", "VICTORY", 54, new Color(1f, 0.85f, 0.25f), TextAnchor.UpperCenter);
+            resultTitleText.fontStyle = FontStyle.Bold;
+            SetAnchored(resultTitleText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(700f, 60f));
 
-            resultRewardsText = CreateText(contentBg.rectTransform, "RewardsText", "• Gold: 0\n• XP: 0", 17, Color.white, TextAnchor.UpperLeft);
+            // Subtitle (Wave reached, Battle number)
+            resultSubtitleText = CreateText(contentBg.rectTransform, "Subtitle", "WAVE 10 / 10   |   BATTLE #1", 18, new Color(0.85f, 0.85f, 0.90f), TextAnchor.UpperCenter);
+            SetAnchored(resultSubtitleText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -76f), new Vector2(700f, 28f));
 
-            if (isPortrait)
-            {
-                SetAnchored(rewardsTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(820f, 40f));
-                SetAnchored(resultRewardsText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -80f), new Vector2(700f, 180f));
-            }
-            else
-            {
-                SetAnchored(rewardsTitle.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -40f), new Vector2(320f, 40f));
-                SetAnchored(resultRewardsText.rectTransform, new Vector2(0f, 1f), new Vector2(50f, -90f), new Vector2(320f, 260f));
-            }
-
-            // Divider line
-            Image divider = CreateImage(contentBg.rectTransform, "Divider", new Color(0.24f, 0.32f, 0.48f, 0.5f));
-            if (isPortrait)
-            {
-                SetAnchored(divider.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -280f), new Vector2(820f, 2f));
-            }
-            else
-            {
-                SetAnchored(divider.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(2f, 320f));
-            }
-
-            // Damage Report Box
-            Text damageTitle = CreateText(contentBg.rectTransform, "DamageTitle", "DAMAGE REPORT", 22, new Color(0.4f, 0.8f, 1f), isPortrait ? TextAnchor.MiddleCenter : TextAnchor.UpperLeft);
-            damageTitle.fontStyle = FontStyle.Bold;
-
-            resultDamageReportText = CreateText(contentBg.rectTransform, "DamageText", "Archer: 0 dmg (0%)\nBombardier: 0 dmg (0%)", 20, Color.white, TextAnchor.UpperLeft);
+            // Header Divider Line
+            Image headerDivider = CreateImage(contentBg.rectTransform, "HeaderDivider", new Color(0.68f, 0.54f, 0.30f, 0.35f));
+            SetAnchored(headerDivider.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -108f), new Vector2(700f, 2f));
 
             if (isPortrait)
             {
-                SetAnchored(damageTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -310f), new Vector2(820f, 40f));
-                SetAnchored(resultDamageReportText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -360f), new Vector2(700f, 360f));
+                // Section 1: REWARDS
+                Text rewardsTitle = CreateText(contentBg.rectTransform, "RewardsTitle", "REWARDS", 18, new Color(1f, 0.85f, 0.25f), TextAnchor.UpperLeft);
+                rewardsTitle.fontStyle = FontStyle.Bold;
+                SetAnchored(rewardsTitle.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -120f), new Vector2(700f, 26f));
+
+                resultRewardsText = CreateText(contentBg.rectTransform, "RewardsText", "• GOLD: +500\n• ACCOUNT XP: +20\n• CORE MATERIALS: +50", 16, Color.white, TextAnchor.UpperLeft);
+                SetAnchored(resultRewardsText.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -148f), new Vector2(700f, 85f));
+
+                // Divider 1
+                Image div1 = CreateImage(contentBg.rectTransform, "Div1", new Color(0.24f, 0.32f, 0.48f, 0.35f));
+                SetAnchored(div1.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -238f), new Vector2(700f, 2f));
+
+                // Section 2: RUN BUILD
+                Text buildTitle = CreateText(contentBg.rectTransform, "BuildTitle", "RUN BUILD", 18, new Color(0.85f, 0.88f, 0.92f), TextAnchor.UpperLeft);
+                buildTitle.fontStyle = FontStyle.Bold;
+                SetAnchored(buildTitle.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -248f), new Vector2(700f, 26f));
+
+                resultRunBuildText = CreateText(contentBg.rectTransform, "BuildText", "Defenders: Fire Mage, Sniper\nBlessings: Burning Focus", 15, new Color(0.88f, 0.90f, 0.94f), TextAnchor.UpperLeft);
+                resultRunBuildText.horizontalOverflow = HorizontalWrapMode.Wrap;
+                SetAnchored(resultRunBuildText.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -276f), new Vector2(700f, 85f));
+
+                // Divider 2
+                Image div2 = CreateImage(contentBg.rectTransform, "Div2", new Color(0.24f, 0.32f, 0.48f, 0.35f));
+                SetAnchored(div2.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -366f), new Vector2(700f, 2f));
+
+                // Section 3: DAMAGE REPORT
+                Text damageTitle = CreateText(contentBg.rectTransform, "DamageTitle", "DAMAGE REPORT", 18, new Color(0.40f, 0.82f, 1f), TextAnchor.UpperLeft);
+                damageTitle.fontStyle = FontStyle.Bold;
+                SetAnchored(damageTitle.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -376f), new Vector2(700f, 26f));
+
+                resultDamageReportText = CreateText(contentBg.rectTransform, "DamageText", "1. LIGHTNING CRYSTAL  14,556  (75.4%)\n2. Sniper  1,913  (9.9%)", 15, Color.white, TextAnchor.UpperLeft);
+                resultDamageReportText.horizontalOverflow = HorizontalWrapMode.Wrap;
+                SetAnchored(resultDamageReportText.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -404f), new Vector2(700f, 270f));
             }
             else
             {
-                SetAnchored(damageTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(50f, -40f), new Vector2(320f, 40f));
-                SetAnchored(resultDamageReportText.rectTransform, new Vector2(0.5f, 1f), new Vector2(50f, -90f), new Vector2(320f, 260f));
+                Text rewardsTitle = CreateText(contentBg.rectTransform, "RewardsTitle", "REWARDS", 18, new Color(1f, 0.85f, 0.25f), TextAnchor.UpperLeft);
+                rewardsTitle.fontStyle = FontStyle.Bold;
+                SetAnchored(rewardsTitle.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -120f), new Vector2(380f, 26f));
+
+                resultRewardsText = CreateText(contentBg.rectTransform, "RewardsText", "• GOLD: 500\n• ACCOUNT XP: 20", 15, Color.white, TextAnchor.UpperLeft);
+                SetAnchored(resultRewardsText.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -148f), new Vector2(380f, 80f));
+
+                Text buildTitle = CreateText(contentBg.rectTransform, "BuildTitle", "RUN BUILD", 18, new Color(0.85f, 0.88f, 0.92f), TextAnchor.UpperLeft);
+                buildTitle.fontStyle = FontStyle.Bold;
+                SetAnchored(buildTitle.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -232f), new Vector2(380f, 26f));
+
+                resultRunBuildText = CreateText(contentBg.rectTransform, "BuildText", "Defenders: Fire Mage\nBlessings: Burning Focus", 14, new Color(0.88f, 0.90f, 0.94f), TextAnchor.UpperLeft);
+                SetAnchored(resultRunBuildText.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -260f), new Vector2(380f, 90f));
+
+                Image vDiv = CreateImage(contentBg.rectTransform, "VDiv", new Color(0.24f, 0.32f, 0.48f, 0.35f));
+                SetAnchored(vDiv.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -40f), new Vector2(2f, 240f));
+
+                Text damageTitle = CreateText(contentBg.rectTransform, "DamageTitle", "DAMAGE REPORT", 18, new Color(0.40f, 0.82f, 1f), TextAnchor.UpperLeft);
+                damageTitle.fontStyle = FontStyle.Bold;
+                SetAnchored(damageTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(30f, -120f), new Vector2(380f, 26f));
+
+                resultDamageReportText = CreateText(contentBg.rectTransform, "DamageText", "1. LIGHTNING CRYSTAL  14,556 (75.4%)", 14, Color.white, TextAnchor.UpperLeft);
+                SetAnchored(resultDamageReportText.rectTransform, new Vector2(0.5f, 1f), new Vector2(30f, -148f), new Vector2(380f, 200f));
             }
 
-            // OK Button
-            if (isPortrait)
+            // Footer Buttons
+            resultOkButton = CreateButton(contentBg.rectTransform, "OkButton", "CONTINUE", new Vector2(240f, 60f), new Vector2(0.5f, 0f), new Vector2(-135f, 44f), () => { OnOkClicked(); });
+            Text okText = resultOkButton.GetComponentInChildren<Text>();
+            if (okText != null)
             {
-                resultOkButton = CreateButton(rect, "OkButton", "OK", new Vector2(260f, 70f), new Vector2(0.5f, 0.12f), new Vector2(-150f, 0f), () => { OnOkClicked(); });
-            }
-            else
-            {
-                resultOkButton = CreateButton(rect, "OkButton", "OK", new Vector2(240f, 60f), new Vector2(0.5f, 0.18f), new Vector2(-140f, 0f), () => { OnOkClicked(); });
+                okText.fontSize = 18;
             }
 
-            // Double Rewards Button (disabled/placeholder)
-            if (isPortrait)
-            {
-                resultDoubleButton = CreateButton(rect, "DoubleButton", "2X REWARDS (AD)", new Vector2(260f, 70f), new Vector2(0.5f, 0.12f), new Vector2(150f, 0f), () => { });
-            }
-            else
-            {
-                resultDoubleButton = CreateButton(rect, "DoubleButton", "2X REWARDS (AD)", new Vector2(240f, 60f), new Vector2(0.5f, 0.18f), new Vector2(140f, 0f), () => { });
-            }
+            resultDoubleButton = CreateButton(contentBg.rectTransform, "DoubleButton", "2X REWARDS", new Vector2(240f, 60f), new Vector2(0.5f, 0f), new Vector2(135f, 44f), () => { });
             resultDoubleButton.interactable = false; // Disabled placeholder
             Text doubleLabel = resultDoubleButton.GetComponentInChildren<Text>();
             if (doubleLabel != null)
             {
-                doubleLabel.text = "2X REWARDS (AD)";
+                doubleLabel.text = "2X REWARDS\n(WATCH AD)";
+                doubleLabel.fontSize = 13;
                 doubleLabel.color = new Color(0.6f, 0.6f, 0.6f);
             }
 
@@ -2113,6 +2128,7 @@ namespace Stonehold
         public void ShowBattleResult(bool victory)
         {
             int wave = Mathf.Max(1, waves != null ? waves.CurrentWave : 1);
+            int total = waves != null ? waves.TotalWaves : 10;
             int runNumber = Mathf.Max(1, SaveManager.TotalRuns);
 
             var rewards = RewardCalculator.CalculateRewards(wave);
@@ -2146,12 +2162,12 @@ namespace Stonehold
             if (resultTitleText != null)
             {
                 resultTitleText.text = victory ? "VICTORY" : "DEFEAT";
-                resultTitleText.color = victory ? new Color(1f, 0.85f, 0.2f) : new Color(0.95f, 0.3f, 0.25f);
+                resultTitleText.color = victory ? new Color(1f, 0.85f, 0.25f) : new Color(0.92f, 0.30f, 0.25f);
             }
 
             if (resultSubtitleText != null)
             {
-                resultSubtitleText.text = $"Wave Reached: {wave}  |  Battle: #{runNumber}";
+                resultSubtitleText.text = $"WAVE {wave} / {total}   |   BATTLE #{runNumber}";
             }
 
             if (resultRewardsText != null)
@@ -2159,9 +2175,14 @@ namespace Stonehold
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
                 foreach (var r in rewards)
                 {
-                    sb.AppendLine($"• {r.rewardName}: {r.amount}");
+                    sb.AppendLine($"• {r.rewardName.ToUpperInvariant()}: +{r.amount:N0}");
                 }
+                resultRewardsText.text = sb.ToString().TrimEnd();
+            }
 
+            if (resultRunBuildText != null)
+            {
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
                 if (HeroRosterManager.Instance != null && HeroRosterManager.Instance.OwnedHeroIds.Count > 0)
                 {
                     List<string> heroNames = new List<string>();
@@ -2169,7 +2190,11 @@ namespace Stonehold
                     {
                         heroNames.Add(GetHeroDisplayName(id));
                     }
-                    sb.AppendLine($"\nDefenders: {string.Join(", ", heroNames)}");
+                    sb.AppendLine($"• Defenders: {string.Join(", ", heroNames)}");
+                }
+                else
+                {
+                    sb.AppendLine("• Defenders: Starter Crystal");
                 }
 
                 if (RunModifierManager.Instance != null && RunModifierManager.Instance.ActiveCards.Count > 0)
@@ -2179,10 +2204,14 @@ namespace Stonehold
                     {
                         cardNames.Add(card.displayName);
                     }
-                    sb.AppendLine($"Blessings: {string.Join(", ", cardNames)}");
+                    sb.AppendLine($"• Blessings: {string.Join(", ", cardNames)}");
+                }
+                else
+                {
+                    sb.AppendLine("• Blessings: None");
                 }
 
-                resultRewardsText.text = sb.ToString();
+                resultRunBuildText.text = sb.ToString().TrimEnd();
             }
 
             if (resultDamageReportText != null)
@@ -2194,12 +2223,13 @@ namespace Stonehold
                 }
                 else
                 {
-                    foreach (var entry in damageEntries)
+                    for (int i = 0; i < damageEntries.Count; i++)
                     {
-                        sb.AppendLine($"• {entry.displayName}: {entry.damageDealt:N0} dmg ({entry.percentage:F1}%)");
+                        var entry = damageEntries[i];
+                        sb.AppendLine($"{i + 1}. {entry.displayName.ToUpperInvariant()}   {entry.damageDealt:N0} dmg ({entry.percentage:F1}%)");
                     }
                 }
-                resultDamageReportText.text = sb.ToString();
+                resultDamageReportText.text = sb.ToString().TrimEnd();
             }
 
             ShowPanel(resultPanelGroup, true);
