@@ -184,6 +184,44 @@ namespace Stonehold
             PlayImpactRing(pos, color, 0.42f, 0.14f, 0.06f);
         }
 
+        /// <summary>
+        /// Compact impact feedback for recruited heroes. This is deliberately separate
+        /// from the general impact API so Starter Crystal presentation stays unchanged.
+        /// </summary>
+        public void PlayHeroProjectileImpact(Vector3 pos, string heroId, bool isCritical)
+        {
+            Color color = GetHeroAttackColor(heroId);
+            switch (heroId)
+            {
+                case "bombardier":
+                    Play(explosionPrefab, pos, color, 0.72f);
+                    PlayRestrainedHeroImpactRing(pos, color, 0.62f);
+                    break;
+                case "frost_mage":
+                    Play(frostPrefab, pos, color, 0.64f);
+                    PlayRestrainedHeroImpactRing(pos, color, 0.44f);
+                    break;
+                case "fire_mage":
+                    Play(explosionPrefab, pos, color, 0.60f);
+                    PlayRestrainedHeroImpactRing(pos, color, 0.46f);
+                    break;
+                case "electric_engineer":
+                    Play(hitPrefab, pos, color, 0.52f);
+                    break;
+                case "sniper":
+                    Play(hitPrefab, pos, color, 0.46f);
+                    break;
+                default:
+                    Play(hitPrefab, pos, color, 0.34f);
+                    break;
+            }
+
+            if (isCritical)
+            {
+                Play(hitPrefab, pos, new Color(1f, 0.82f, 0.24f, 1f), 0.46f);
+            }
+        }
+
 
         public void PlayHeroMuzzle(Vector3 pos, string heroId)
         {
@@ -197,6 +235,27 @@ namespace Stonehold
             }
 
             Play(hitPrefab, pos, GetHeroColor(heroId), scale);
+        }
+
+        /// <summary>
+        /// A restrained muzzle flash used by recruited heroes. Kept separate from
+        /// PlayHeroMuzzle so Starter Crystal presentation can retain its own tuning.
+        /// </summary>
+        public void PlayHeroAttackMuzzle(Vector3 pos, string heroId)
+        {
+            float scale;
+            switch (heroId)
+            {
+                case "archer": scale = 0.24f; break;
+                case "bombardier": scale = 0.58f; break;
+                case "frost_mage": scale = 0.34f; break;
+                case "fire_mage": scale = 0.40f; break;
+                case "electric_engineer": scale = 0.26f; break;
+                case "sniper": scale = 0.18f; break;
+                default: scale = 0.30f; break;
+            }
+
+            Play(hitPrefab, pos, GetHeroAttackColor(heroId), scale);
         }
 
 
@@ -232,7 +291,7 @@ namespace Stonehold
                 {
                     float t = (float)i / segments;
                     Vector3 point = Vector3.Lerp(start, end, t);
-                    float offsetScale = 0.25f;
+                float offsetScale = 0.25f;
                     float offset = Random.Range(-offsetScale, offsetScale);
                     Vector3 perpendicular = (i % 2 == 0 ? 1f : -1f) * normal * offset;
                     perpendicular += Vector3.up * Random.Range(-0.1f, 0.1f);
@@ -248,7 +307,57 @@ namespace Stonehold
             }
 
             trace.enabled = true;
-            StartCoroutine(ReturnAbilityTrace(trace));
+            StartCoroutine(ReturnAbilityTrace(trace, 0.14f));
+        }
+
+        /// <summary>
+        /// Short-lived combat traces for recruited heroes only. They remain readable
+        /// at portrait distance without creating persistent bright lines across the lane.
+        /// </summary>
+        public void PlayHeroAttackTrace(Vector3 start, Vector3 end, string heroId, float width = 0.1f)
+        {
+            LineRenderer trace = GetAbilityTrace();
+            Color color = GetHeroAttackColor(heroId);
+            color.a = 0.85f;
+            trace.startColor = color;
+            Color endColor = color;
+            endColor.a = 0.08f;
+            trace.endColor = endColor;
+
+            bool isElectric = heroId == "electric_engineer";
+            bool isSniper = heroId == "sniper";
+            trace.startWidth = isSniper ? Mathf.Min(width, 0.06f) : Mathf.Min(width, isElectric ? 0.065f : 0.08f);
+            trace.endWidth = isSniper ? 0.010f : trace.startWidth * 0.22f;
+
+            if (isElectric)
+            {
+                const int segments = 4;
+                trace.positionCount = segments + 1;
+                trace.SetPosition(0, start);
+                Vector3 direction = end - start;
+                Vector3 normal = Vector3.Cross(direction, Vector3.up).normalized;
+                if (normal.sqrMagnitude < 0.01f) normal = Vector3.up;
+
+                for (int i = 1; i < segments; i++)
+                {
+                    float t = (float)i / segments;
+                    Vector3 point = Vector3.Lerp(start, end, t);
+                    float offset = Random.Range(-0.14f, 0.14f);
+                    point += (i % 2 == 0 ? 1f : -1f) * normal * offset;
+                    point += Vector3.up * Random.Range(-0.045f, 0.045f);
+                    trace.SetPosition(i, point);
+                }
+                trace.SetPosition(segments, end);
+            }
+            else
+            {
+                trace.positionCount = 2;
+                trace.SetPosition(0, start);
+                trace.SetPosition(1, end);
+            }
+
+            trace.enabled = true;
+            StartCoroutine(ReturnAbilityTrace(trace, isSniper ? 0.065f : 0.09f));
         }
 
         public static Color GetHeroColor(string heroId)
@@ -263,6 +372,13 @@ namespace Stonehold
                 case "sniper": return new Color(0.82f, 0.32f, 1f, 1f);
                 default: return Color.white;
             }
+        }
+
+        private static Color GetHeroAttackColor(string heroId)
+        {
+            return heroId == "electric_engineer"
+                ? new Color(1f, 0.90f, 0.18f, 1f)
+                : GetHeroColor(heroId);
         }
 
         // ----------------------------------------------------------- Event hooks
@@ -664,9 +780,9 @@ namespace Stonehold
             return abilityTraceMaterial;
         }
 
-        private IEnumerator ReturnAbilityTrace(LineRenderer trace)
+        private IEnumerator ReturnAbilityTrace(LineRenderer trace, float duration)
         {
-            yield return new WaitForSeconds(0.14f);
+            yield return new WaitForSeconds(duration);
             if (trace == null)
             {
                 yield break;
@@ -719,7 +835,7 @@ namespace Stonehold
                 float t = Mathf.Clamp01(elapsed / duration);
                 float currentRadius = Mathf.Lerp(radius * 0.16f, radius, t);
                 Color faded = color;
-                faded.a = 1f - t;
+                faded.a = color.a * (1f - t);
                 ring.startColor = faded;
                 ring.endColor = faded;
                 ring.startWidth = Mathf.Lerp(width, 0.01f, t);
@@ -788,6 +904,12 @@ namespace Stonehold
             ring.enabled = true;
             activeImpactRings++;
             StartCoroutine(AnimateImpactRing(ring, color, radius, duration, width));
+        }
+
+        private void PlayRestrainedHeroImpactRing(Vector3 position, Color color, float radius)
+        {
+            color.a = 0.48f;
+            PlayImpactRing(position, color, radius, 0.11f, 0.055f);
         }
 }
 }

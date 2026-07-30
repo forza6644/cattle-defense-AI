@@ -297,7 +297,7 @@ namespace Stonehold
                     HitEnemiesInRadius(primaryTarget.transform.position, abilityDamage, StatusEffectType.Slow, 0.0f, GetModifiedSlowDuration(), false);
                     if (VfxManager.Instance != null)
                     {
-                        VfxManager.Instance.PlayFrost(primaryTarget.transform.position, GetModifiedAbilityRadius() * 0.55f);
+                        VfxManager.Instance.PlayHeroProjectileImpact(primaryTarget.transform.position, "frost_mage", false);
                         if (CameraRig.Instance != null)
                         {
                             CameraRig.Instance.Shake(0.5f);
@@ -357,7 +357,7 @@ namespace Stonehold
             HitEnemiesInRadius(center, damage, StatusEffectType.Slow, 0.0f, GetModifiedSlowDuration(), false, radius);
             if (VfxManager.Instance != null)
             {
-                VfxManager.Instance.PlayFrost(center, radius * 0.55f);
+                VfxManager.Instance.PlayHeroProjectileImpact(center, "frost_mage", false);
             }
         }
 
@@ -395,7 +395,7 @@ namespace Stonehold
 
             if (VfxManager.Instance != null)
             {
-                VfxManager.Instance.PlayAbilityTrace(start, end, definition.id, 0.18f);
+                VfxManager.Instance.PlayHeroAttackTrace(start, end, definition.id, 0.18f);
             }
 
             var all = EnemyManager.All;
@@ -410,7 +410,7 @@ namespace Stonehold
                     ApplyAbilityHit(enemy, damage, StatusEffectType.None, 0f, 0f, true); // Ignore armor
                     if (VfxManager.Instance != null)
                     {
-                        VfxManager.Instance.PlaySniperImpact(enemy.transform.position);
+                        VfxManager.Instance.PlayHeroProjectileImpact(enemy.transform.position, "sniper", true);
                     }
                 }
             }
@@ -534,8 +534,8 @@ namespace Stonehold
                 Vector3 endPos = current.transform.position + Vector3.up * 0.25f;
                 if (VfxManager.Instance != null)
                 {
-                    VfxManager.Instance.PlayAbilityTrace(startSource, endPos, "electric_engineer", 0.12f);
-                    VfxManager.Instance.PlayShockImpact(current.transform.position);
+                    VfxManager.Instance.PlayHeroAttackTrace(startSource, endPos, "electric_engineer", 0.12f);
+                    VfxManager.Instance.PlayHeroProjectileImpact(current.transform.position, "electric_engineer", false);
                 }
 
                 if (AudioManager.Instance != null)
@@ -587,8 +587,8 @@ namespace Stonehold
             Vector3 startEndPos = current.transform.position + Vector3.up * 0.25f;
             if (VfxManager.Instance != null)
             {
-                VfxManager.Instance.PlayAbilityTrace(startSource, startEndPos, "electric_engineer", 0.08f);
-                VfxManager.Instance.PlayShockImpact(current.transform.position);
+                VfxManager.Instance.PlayHeroAttackTrace(startSource, startEndPos, "electric_engineer", 0.08f);
+                VfxManager.Instance.PlayHeroProjectileImpact(current.transform.position, "electric_engineer", false);
             }
 
             if (AudioManager.Instance != null)
@@ -626,8 +626,8 @@ namespace Stonehold
                         {
                             Vector3 forkStart = current.transform.position + Vector3.up * 0.25f;
                             Vector3 forkEnd = candidate.transform.position + Vector3.up * 0.25f;
-                            VfxManager.Instance.PlayAbilityTrace(forkStart, forkEnd, "electric_engineer", 0.08f);
-                            VfxManager.Instance.PlayShockImpact(candidate.transform.position);
+                            VfxManager.Instance.PlayHeroAttackTrace(forkStart, forkEnd, "electric_engineer", 0.08f);
+                            VfxManager.Instance.PlayHeroProjectileImpact(candidate.transform.position, "electric_engineer", false);
                         }
 
                         if (AudioManager.Instance != null)
@@ -664,8 +664,8 @@ namespace Stonehold
                 Vector3 endPos = nextCurrent.transform.position + Vector3.up * 0.25f;
                 if (VfxManager.Instance != null)
                 {
-                    VfxManager.Instance.PlayAbilityTrace(nextStartSource, endPos, "electric_engineer", 0.08f);
-                    VfxManager.Instance.PlayShockImpact(nextCurrent.transform.position);
+                    VfxManager.Instance.PlayHeroAttackTrace(nextStartSource, endPos, "electric_engineer", 0.08f);
+                    VfxManager.Instance.PlayHeroProjectileImpact(nextCurrent.transform.position, "electric_engineer", false);
                 }
 
                 if (AudioManager.Instance != null)
@@ -772,7 +772,7 @@ namespace Stonehold
 
             if (VfxManager.Instance != null)
             {
-                VfxManager.Instance.PlayHeroMuzzle(GetMuzzlePosition(), definition.id);
+                VfxManager.Instance.PlayHeroAttackMuzzle(GetMuzzlePosition(), definition.id);
             }
 
             if (AudioManager.Instance != null)

@@ -23,6 +23,9 @@ namespace Stonehold
         private float slowDuration;
         private string sourceHeroId;
         private TrailRenderer trail;
+        private Renderer projectileRenderer;
+        private Transform projectileVisual;
+        private Renderer projectileVisualRenderer;
         private GameObject sourcePrefab;
         private Color impactColor = Color.white;
         private bool isCrit;
@@ -62,6 +65,8 @@ namespace Stonehold
         {
             baseScale = transform.localScale;
             trail = GetComponent<TrailRenderer>();
+            projectileRenderer = GetComponent<Renderer>();
+            CreateProjectileVisual();
         }
 
         /// <summary>Gets a pooled projectile (or instantiates one) at the position.</summary>
@@ -84,6 +89,7 @@ namespace Stonehold
             else
             {
                 projectile.transform.position = position;
+                projectile.transform.rotation = Quaternion.identity;
                 projectile.transform.localScale = projectile.baseScale;
                 projectile.gameObject.SetActive(true);
             }
@@ -114,6 +120,7 @@ namespace Stonehold
 
             targetLastPosition = target != null ? GetTargetPosition(target) : transform.position;
             startPosition = transform.position;
+            OrientPresentation(targetLastPosition - startPosition);
             useArc = (damageSourceHeroId == "bombardier");
             if (useArc)
             {
@@ -140,18 +147,7 @@ namespace Stonehold
                 trail = GetComponent<TrailRenderer>();
             }
 
-            if (trail != null)
-            {
-                trail.Clear();
-                trail.emitting = true;
-                trail.startColor = trailColor;
-                Color end = trailColor;
-                end.a = 0f;
-                trail.endColor = end;
-                trail.startWidth = GetTrailWidth();
-                trail.endWidth = 0.05f;
-                trail.time = 0.4f;
-            }
+            ConfigureTrailPresentation(trailColor);
         }
 
         public void InitWithStatusEffect(
@@ -180,6 +176,7 @@ namespace Stonehold
 
             targetLastPosition = target != null ? target.transform.position : transform.position;
             startPosition = transform.position;
+            OrientPresentation(targetLastPosition - startPosition);
             useArc = (damageSourceHeroId == "bombardier");
             if (useArc)
             {
@@ -204,18 +201,7 @@ namespace Stonehold
                 trail = GetComponent<TrailRenderer>();
             }
 
-            if (trail != null)
-            {
-                trail.Clear();
-                trail.emitting = true;
-                trail.startColor = trailColor;
-                Color end = trailColor;
-                end.a = 0f;
-                trail.endColor = end;
-                trail.startWidth = GetTrailWidth();
-                trail.endWidth = 0.05f;
-                trail.time = 0.4f;
-            }
+            ConfigureTrailPresentation(trailColor);
         }
 
         public void ConfigurePiercing(int additionalTargets, Vector3 direction, float damageReductionPerPierce)
@@ -323,6 +309,8 @@ namespace Stonehold
                     float height = Mathf.Sin(t * Mathf.PI) * arcHeight;
                     currentPos.y += height;
 
+                    OrientPresentation(currentPos - transform.position);
+
                     transform.position = currentPos;
 
                     if (t >= 1.0f)
@@ -333,6 +321,7 @@ namespace Stonehold
                 }
                 else
                 {
+                    OrientPresentation(dest - transform.position);
                     transform.position = Vector3.MoveTowards(
                         transform.position,
                         dest,
@@ -351,7 +340,11 @@ namespace Stonehold
         {
             if (VfxManager.Instance != null)
             {
-                if (isCrit)
+                if (!string.IsNullOrEmpty(sourceHeroId))
+                {
+                    VfxManager.Instance.PlayHeroProjectileImpact(impactPoint, sourceHeroId, isCrit);
+                }
+                else if (isCrit)
                 {
                     VfxManager.Instance.PlayCriticalImpact(impactPoint);
                 }
@@ -433,14 +426,193 @@ namespace Stonehold
             }
         }
 
-        private float GetTrailWidth()
+        private void ConfigureTrailPresentation(Color fallbackColor, float intensity = 1f)
         {
-            if (splashRadius > 0f) return 0.55f;
-            if (statusEffectType == StatusEffectType.Burn) return 0.48f;
-            if (statusEffectType == StatusEffectType.Slow) return 0.42f;
-            if (statusEffectType == StatusEffectType.Shock) return 0.4f;
-            if (sourceHeroId == "sniper") return 0.24f;
-            return 0.34f;
+            if (trail == null)
+            {
+                trail = GetComponent<TrailRenderer>();
+            }
+
+            Color color = GetProjectilePresentationColor(fallbackColor);
+            if (trail != null)
+            {
+                GetTrailProfile(out float startWidth, out float endWidth, out float lifetime);
+                Color start = color;
+                start.a = 0.84f;
+                Color end = color;
+                end.a = 0f;
+
+                trail.Clear();
+                trail.emitting = true;
+                trail.startColor = start;
+                trail.endColor = end;
+                trail.startWidth = startWidth * intensity;
+                trail.endWidth = endWidth * intensity;
+                trail.time = lifetime;
+            }
+
+            if (projectileRenderer == null)
+            {
+                projectileRenderer = GetComponent<Renderer>();
+            }
+            ConfigureProjectileVisual(color);
+        }
+
+        private void CreateProjectileVisual()
+        {
+            if (projectileVisual != null)
+            {
+                return;
+            }
+
+            GameObject visual = new GameObject("ProjectileVisual");
+            visual.name = "ProjectileVisual";
+            visual.transform.SetParent(transform, false);
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localRotation = Quaternion.identity;
+
+            MeshFilter sourceMeshFilter = GetComponent<MeshFilter>();
+            MeshFilter visualMeshFilter = visual.AddComponent<MeshFilter>();
+            if (sourceMeshFilter != null)
+            {
+                visualMeshFilter.sharedMesh = sourceMeshFilter.sharedMesh;
+            }
+
+            projectileVisual = visual.transform;
+            projectileVisualRenderer = visual.AddComponent<MeshRenderer>();
+            if (projectileVisualRenderer != null && projectileRenderer != null)
+            {
+                projectileVisualRenderer.sharedMaterial = projectileRenderer.sharedMaterial;
+            }
+            visual.SetActive(false);
+        }
+
+        private void ConfigureProjectileVisual(Color color)
+        {
+            CreateProjectileVisual();
+            bool isHeroProjectile = IsHeroPresentationId(sourceHeroId);
+            if (!isHeroProjectile)
+            {
+                if (projectileRenderer != null) projectileRenderer.enabled = true;
+                if (projectileVisual != null) projectileVisual.gameObject.SetActive(false);
+                return;
+            }
+
+            if (projectileVisual == null)
+            {
+                return;
+            }
+
+            if (projectileRenderer != null) projectileRenderer.enabled = false;
+            projectileVisual.gameObject.SetActive(true);
+
+            Vector3 visualScale;
+            Quaternion visualRotation = Quaternion.identity;
+            switch (sourceHeroId)
+            {
+                case "archer":
+                    visualScale = new Vector3(0.055f, 0.055f, 0.34f);
+                    break;
+                case "bombardier":
+                    visualScale = new Vector3(0.21f, 0.21f, 0.30f);
+                    break;
+                case "frost_mage":
+                    visualScale = new Vector3(0.13f, 0.23f, 0.13f);
+                    visualRotation = Quaternion.Euler(45f, 45f, 45f);
+                    break;
+                case "fire_mage":
+                    visualScale = Vector3.one * 0.22f;
+                    break;
+                case "sniper":
+                    visualScale = new Vector3(0.035f, 0.035f, 0.20f);
+                    break;
+                default:
+                    visualScale = Vector3.one * 0.18f;
+                    break;
+            }
+
+            projectileVisual.localScale = visualScale;
+            projectileVisual.localRotation = visualRotation;
+            if (projectileVisualRenderer != null)
+            {
+                MaterialPropertyBlock block = new MaterialPropertyBlock();
+                projectileVisualRenderer.GetPropertyBlock(block);
+                block.SetColor(Shader.PropertyToID("_BaseColor"), color);
+                projectileVisualRenderer.SetPropertyBlock(block);
+            }
+        }
+
+        private void OrientPresentation(Vector3 direction)
+        {
+            if (direction.sqrMagnitude > 0.0001f)
+            {
+                transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            }
+        }
+
+        private static bool IsHeroPresentationId(string heroId)
+        {
+            switch (heroId)
+            {
+                case "archer":
+                case "bombardier":
+                case "frost_mage":
+                case "fire_mage":
+                case "sniper":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private void GetTrailProfile(out float startWidth, out float endWidth, out float lifetime)
+        {
+            switch (sourceHeroId)
+            {
+                case "archer":
+                    startWidth = 0.09f;
+                    endWidth = 0.014f;
+                    lifetime = 0.14f;
+                    break;
+                case "bombardier":
+                    startWidth = 0.24f;
+                    endWidth = 0.045f;
+                    lifetime = 0.20f;
+                    break;
+                case "frost_mage":
+                    startWidth = 0.14f;
+                    endWidth = 0.024f;
+                    lifetime = 0.17f;
+                    break;
+                case "fire_mage":
+                    startWidth = 0.17f;
+                    endWidth = 0.030f;
+                    lifetime = 0.18f;
+                    break;
+                case "sniper":
+                    startWidth = 0.055f;
+                    endWidth = 0.010f;
+                    lifetime = 0.075f;
+                    break;
+                default:
+                    startWidth = splashRadius > 0f ? 0.28f : 0.12f;
+                    endWidth = 0.025f;
+                    lifetime = 0.18f;
+                    break;
+            }
+        }
+
+        private Color GetProjectilePresentationColor(Color fallbackColor)
+        {
+            switch (sourceHeroId)
+            {
+                case "archer": return new Color(0.58f, 0.78f, 0.28f, 1f);
+                case "bombardier": return new Color(1f, 0.48f, 0.10f, 1f);
+                case "frost_mage": return new Color(0.28f, 0.86f, 1f, 1f);
+                case "fire_mage": return new Color(1f, 0.25f, 0.05f, 1f);
+                case "sniper": return new Color(0.72f, 0.60f, 0.96f, 1f);
+                default: return fallbackColor;
+            }
         }
 
         private void HitEnemy(Enemy enemy)
@@ -470,6 +642,7 @@ namespace Stonehold
 
             targetLastPosition = targetPos;
             startPosition = transform.position;
+            OrientPresentation(targetLastPosition - startPosition);
             useArc = true;
             float distance = Vector3.Distance(startPosition, targetLastPosition);
             travelTime = Mathf.Max(0.1f, distance / speed);
@@ -490,19 +663,7 @@ namespace Stonehold
                 hitEnemyActivationIds[i] = 0;
             }
 
-            if (trail == null) trail = GetComponent<TrailRenderer>();
-            if (trail != null)
-            {
-                trail.Clear();
-                trail.emitting = true;
-                trail.startColor = trailColor;
-                Color end = trailColor;
-                end.a = 0f;
-                trail.endColor = end;
-                trail.startWidth = GetTrailWidth() * 0.6f;
-                trail.endWidth = 0.05f;
-                trail.time = 0.3f;
-            }
+            ConfigureTrailPresentation(trailColor, 0.65f);
         }
 
         private void ResetBehaviorState()
