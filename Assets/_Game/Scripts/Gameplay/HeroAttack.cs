@@ -10,6 +10,8 @@ namespace Stonehold
         [SerializeField] private Vector3 projectileLaunchOffset = new Vector3(0f, 0.6f, 0f);
 
         private Enemy currentTarget;
+        private Enemy priorityTarget;
+        private int priorityTargetActivationId;
         private float targetRefreshTimer;
         private float fireCooldown;
         private float abilityCooldown;
@@ -43,8 +45,10 @@ namespace Stonehold
                 currentTargetingMode = value;
                 currentTarget = null;
                 targetRefreshTimer = 0f;
+                ClearPriorityTarget();
             }
         }
+        public Enemy PriorityTarget => IsPriorityTargetValid(priorityTarget) ? priorityTarget : null;
 
         private void Awake()
         {
@@ -59,7 +63,45 @@ namespace Stonehold
                 : TargetingMode.ClosestToGoal;
             abilityCooldown = definition != null ? GetModifiedAbilityCooldown() * 0.5f : 0f;
             abilityBuffTimer = 0f;
+            ClearPriorityTarget();
             enabled = definition != null && definition.weapon != null;
+        }
+
+        public bool TrySetPriorityTarget(Enemy target)
+        {
+            if (target == null || !target.IsTargetable)
+            {
+                return false;
+            }
+
+            float range = GetModifiedRange();
+            if ((target.transform.position - transform.position).sqrMagnitude > range * range)
+            {
+                return false;
+            }
+
+            priorityTarget = target;
+            priorityTargetActivationId = target.ActivationId;
+            currentTarget = target;
+            targetRefreshTimer = Mathf.Max(0.05f, targetRefreshInterval);
+            return true;
+        }
+
+        public void ClearPriorityTarget()
+        {
+            priorityTarget = null;
+            priorityTargetActivationId = 0;
+        }
+
+        private bool IsPriorityTargetValid(Enemy target)
+        {
+            if (target == null || !target.IsTargetable || !target.MatchesActivation(priorityTargetActivationId))
+            {
+                return false;
+            }
+
+            float range = GetModifiedRange();
+            return (target.transform.position - transform.position).sqrMagnitude <= range * range;
         }
 
         public float GetAbilityCooldownRemaining()
@@ -193,7 +235,18 @@ namespace Stonehold
                 abilityBuffTimer -= Time.deltaTime;
             }
 
-            if (targetRefreshTimer <= 0f)
+            if (priorityTarget != null && !IsPriorityTargetValid(priorityTarget))
+            {
+                ClearPriorityTarget();
+                currentTarget = null;
+                targetRefreshTimer = 0f;
+            }
+
+            if (priorityTarget != null)
+            {
+                currentTarget = priorityTarget;
+            }
+            else if (targetRefreshTimer <= 0f)
             {
                 currentTarget = EnemyManager.FindTarget(transform.position, GetModifiedRange(), currentTargetingMode);
                 targetRefreshTimer = Mathf.Max(0.05f, targetRefreshInterval);

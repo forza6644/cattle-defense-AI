@@ -86,6 +86,14 @@ namespace Stonehold
             }
             abilityIndicator.Configure(currentHero, GetHeroIdentityColor(hero.id));
 
+            if (instance.GetComponent<Collider>() == null)
+            {
+                CapsuleCollider selectionCollider = instance.AddComponent<CapsuleCollider>();
+                selectionCollider.center = new Vector3(0f, 0.7f, 0f);
+                selectionCollider.radius = 0.45f;
+                selectionCollider.height = 1.4f;
+            }
+
             Collider[] heroColliders = instance.GetComponentsInChildren<Collider>();
             if (heroColliders.Length == 0)
             {

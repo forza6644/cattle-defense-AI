@@ -15,6 +15,8 @@ namespace Stonehold
         private float cooldownTimer;
         private ProceduralAnimator animator;
         private TargetingMode currentTargetingMode;
+        private Enemy priorityTarget;
+        private int priorityTargetActivationId;
 
         public TowerData Data => data;
         public int Level => level;
@@ -22,8 +24,13 @@ namespace Stonehold
         public TargetingMode CurrentTargetingMode
         {
             get => currentTargetingMode;
-            set => currentTargetingMode = value;
+            set
+            {
+                currentTargetingMode = value;
+                ClearPriorityTarget();
+            }
         }
+        public Enemy PriorityTarget => IsPriorityTargetValid(priorityTarget) ? priorityTarget : null;
 
         /// <summary>The slot this tower stands on (null for pre-placed towers).</summary>
         public TowerSlot Slot { get; set; }
@@ -110,11 +117,51 @@ namespace Stonehold
             Debug.Log(data.towerName + " upgraded to level " + level + " for FREE.");
         }
 
+        public bool TrySetPriorityTarget(Enemy target)
+        {
+            if (target == null || !target.IsTargetable)
+            {
+                return false;
+            }
+
+            if ((target.transform.position - transform.position).sqrMagnitude > Range * Range)
+            {
+                return false;
+            }
+
+            priorityTarget = target;
+            priorityTargetActivationId = target.ActivationId;
+            return true;
+        }
+
+        public void ClearPriorityTarget()
+        {
+            priorityTarget = null;
+            priorityTargetActivationId = 0;
+        }
+
+        private bool IsPriorityTargetValid(Enemy target)
+        {
+            if (target == null || !target.IsTargetable || !target.MatchesActivation(priorityTargetActivationId))
+            {
+                return false;
+            }
+
+            return (target.transform.position - transform.position).sqrMagnitude <= Range * Range;
+        }
+
         private void Update()
         {
             cooldownTimer -= Time.deltaTime;
 
-            Enemy target = EnemyManager.FindTarget(transform.position, Range, currentTargetingMode);
+            if (priorityTarget != null && !IsPriorityTargetValid(priorityTarget))
+            {
+                ClearPriorityTarget();
+            }
+
+            Enemy target = priorityTarget != null
+                ? priorityTarget
+                : EnemyManager.FindTarget(transform.position, Range, currentTargetingMode);
             if (target != null && cooldownTimer <= 0f)
             {
                 Fire(target);

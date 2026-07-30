@@ -164,6 +164,7 @@ namespace Stonehold
         private Camera cam;
         private Coroutine bannerRoutine;
         private RangeIndicator rangeIndicator;
+        private RangeIndicator priorityTargetIndicator;
         private bool gameEventsSubscribed;
 
         // Selection
@@ -198,7 +199,8 @@ namespace Stonehold
         private void Start()
         {
             EnsureUIBuilt();
-            rangeIndicator = RangeIndicator.Create();
+            rangeIndicator = RangeIndicator.Create("Defender Range Indicator");
+            priorityTargetIndicator = RangeIndicator.Create("Priority Target Indicator");
 
             if (towers != null && towers.Config != null && towers.Config.draftRunMode)
             {
@@ -833,6 +835,30 @@ namespace Stonehold
             ShowPanel(buildMenuGroup, false);
             ShowPanel(towerPanelGroup, false);
             HideRangeIndicator();
+            priorityTargetIndicator?.Hide();
+        }
+
+        public void TryAssignPriorityTarget(Enemy enemy)
+        {
+            if (enemy == null)
+            {
+                return;
+            }
+
+            bool assigned = selectedHero != null
+                ? selectedHero.TrySetPriorityTarget(enemy)
+                : selectedTower != null && selectedTower.TrySetPriorityTarget(enemy);
+
+            if (!assigned)
+            {
+                ShowHint(selectedHero != null || selectedTower != null
+                    ? "Target is outside this defender's range."
+                    : "Select a defender before choosing a target.");
+                return;
+            }
+
+            priorityTargetIndicator?.Show(enemy.transform.position, 0.5f, new Color(1f, 0.72f, 0.16f));
+            ShowHint("Priority target selected.");
         }
 
         private void RefreshBuildMenu()
@@ -1391,6 +1417,8 @@ namespace Stonehold
                 UpdateAbilityCooldownHUD();
             }
 
+            RefreshPriorityTargetIndicator();
+
             if (timerText != null)
             {
                 int totalSec = Mathf.FloorToInt(Time.timeSinceLevelLoad);
@@ -1625,6 +1653,7 @@ namespace Stonehold
         private void BuildLevelUpPanel()
         {
             Image dim = CreateImage(canvasRect, "LevelUpPanel", new Color(0.04f, 0.05f, 0.08f, 0.88f));
+            dim.raycastTarget = true;
             RectTransform rect = dim.rectTransform;
             rect.anchorMin = Vector2.zero;
             rect.anchorMax = Vector2.one;
@@ -1870,6 +1899,7 @@ namespace Stonehold
             (string label, UnityEngine.Events.UnityAction action)[] buttons)
         {
             Image dim = CreateImage(canvasRect, name, new Color(0f, 0f, 0f, 0.72f));
+            dim.raycastTarget = true;
             RectTransform rect = dim.rectTransform;
             rect.anchorMin = Vector2.zero;
             rect.anchorMax = Vector2.one;
@@ -1904,6 +1934,7 @@ namespace Stonehold
         {
             // Dim background
             Image dim = CreateImage(canvasRect, "BattleResultPanel", new Color(0.04f, 0.05f, 0.08f, 0.96f));
+            dim.raycastTarget = true;
             RectTransform rect = dim.rectTransform;
             rect.anchorMin = Vector2.zero;
             rect.anchorMax = Vector2.one;
@@ -2164,6 +2195,7 @@ namespace Stonehold
             go.transform.SetParent(parent, false);
             Image image = go.AddComponent<Image>();
             image.color = color;
+            image.raycastTarget = false;
             return image;
         }
 
@@ -2299,6 +2331,25 @@ namespace Stonehold
             {
                 rangeIndicator.Hide();
             }
+        }
+
+        private void RefreshPriorityTargetIndicator()
+        {
+            if (priorityTargetIndicator == null)
+            {
+                return;
+            }
+
+            Enemy target = selectedHero != null
+                ? selectedHero.PriorityTarget
+                : selectedTower != null ? selectedTower.PriorityTarget : null;
+            if (target == null)
+            {
+                priorityTargetIndicator.Hide();
+                return;
+            }
+
+            priorityTargetIndicator.Show(target.transform.position, 0.5f, new Color(1f, 0.72f, 0.16f));
         }
 
         private static Color GetHeroRangeColor(WeaponDefinition weapon)
@@ -2493,9 +2544,9 @@ namespace Stonehold
             this.line = line;
         }
 
-        public static RangeIndicator Create()
+        public static RangeIndicator Create(string name = "Range Indicator")
         {
-            GameObject go = new GameObject("Tower Range Indicator");
+            GameObject go = new GameObject(name);
             LineRenderer renderer = go.AddComponent<LineRenderer>();
             renderer.loop = true;
             renderer.useWorldSpace = true;

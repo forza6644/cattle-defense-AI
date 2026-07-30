@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace Stonehold
 {
@@ -21,6 +23,7 @@ namespace Stonehold
         public GameConfig Config => config;
 
         private Camera cam;
+        private static readonly List<RaycastResult> UiRaycastResults = new List<RaycastResult>();
 
         private void Start()
         {
@@ -103,7 +106,7 @@ namespace Stonehold
             }
 
             // Presses on UI elements belong to the UI, not the world.
-            if (IsPointerOverUI())
+            if (IsPointerOverUI(screenPos))
             {
                 return;
             }
@@ -130,7 +133,7 @@ namespace Stonehold
             return false;
         }
 
-        private static bool IsPointerOverUI()
+        private static bool IsPointerOverUI(Vector2 screenPos)
         {
             EventSystem eventSystem = EventSystem.current;
             if (eventSystem == null)
@@ -138,22 +141,47 @@ namespace Stonehold
                 return false;
             }
 
-            if (eventSystem.IsPointerOverGameObject())
+            PointerEventData pointerData = new PointerEventData(eventSystem)
             {
-                return true;
-            }
+                position = screenPos
+            };
 
-            // Touch pointers are tracked by finger id in the UI module.
-            if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+            UiRaycastResults.Clear();
+            eventSystem.RaycastAll(pointerData, UiRaycastResults);
+            for (int i = 0; i < UiRaycastResults.Count; i++)
             {
-                int touchId = Touchscreen.current.primaryTouch.touchId.ReadValue();
-                if (eventSystem.IsPointerOverGameObject(touchId))
+                if (UiRaycastResults[i].module is GraphicRaycaster && IsBlockingUiRaycast(UiRaycastResults[i]))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private static bool IsBlockingUiRaycast(RaycastResult raycastResult)
+        {
+            CanvasGroup[] groups = raycastResult.gameObject.GetComponentsInParent<CanvasGroup>(true);
+            for (int i = 0; i < groups.Length; i++)
+            {
+                CanvasGroup group = groups[i];
+                if (!group.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                if (!group.blocksRaycasts)
+                {
+                    return false;
+                }
+
+                if (group.ignoreParentGroups)
+                {
+                    break;
+                }
+            }
+
+            return true;
         }
 
         private void HandleWorldClick(Vector2 screenPos)
@@ -169,7 +197,8 @@ namespace Stonehold
 
             Ray ray = cam.ScreenPointToRay(screenPos);
 
-            if (!Physics.Raycast(ray, out RaycastHit hit, 1000f))
+            RaycastHit[] hits = Physics.RaycastAll(ray, 1000f);
+            if (hits.Length == 0)
             {
                 if (UIManager.Instance != null)
                 {
@@ -179,20 +208,36 @@ namespace Stonehold
                 return;
             }
 
-            Tower tower = hit.collider.GetComponentInParent<Tower>();
-            if (tower != null)
+            System.Array.Sort(hits, (left, right) => left.distance.CompareTo(right.distance));
+            for (int i = 0; i < hits.Length; i++)
             {
-                if (UIManager.Instance != null)
+                Tower tower = hits[i].collider.GetComponentInParent<Tower>();
+                if (tower != null)
                 {
-                    UIManager.Instance.ShowTowerPanel(tower);
+                    UIManager.Instance?.ShowTowerPanel(tower);
+                    return;
                 }
 
-                return;
-            }
+                HeroAttack hero = hits[i].collider.GetComponentInParent<HeroAttack>();
+                if (hero != null)
+                {
+                    UIManager.Instance?.ShowHeroPanel(hero);
+                    return;
+                }
 
-            TowerSlot slot = hit.collider.GetComponentInParent<TowerSlot>();
-            if (slot != null && !slot.IsOccupied)
-            {
+                Enemy enemy = hits[i].collider.GetComponentInParent<Enemy>();
+                if (enemy != null)
+                {
+                    UIManager.Instance?.TryAssignPriorityTarget(enemy);
+                    return;
+                }
+
+                TowerSlot slot = hits[i].collider.GetComponentInParent<TowerSlot>();
+                if (slot == null || slot.IsOccupied)
+                {
+                    continue;
+                }
+
                 if (config != null && config.draftRunMode)
                 {
                     return;
