@@ -275,18 +275,8 @@ namespace Stonehold
                 }
                 for (int i = 0; i < points.Length; i++)
                 {
-                    float localJitter = i > 0 && i < points.Length - 1
-                        ? UnityEngine.Random.Range(-0.25f, 0.25f)
-                        : 0f;
-                    pathPoints[i] = points[i] + Vector3.right * (laneOffset + localJitter);
-                    if (i == 0)
-                    {
-                        pathPoints[i] += Vector3.forward * spawnDepthOffset;
-                    }
-                    else if (i == 1)
-                    {
-                        pathPoints[i] += Vector3.forward * (spawnDepthOffset * 0.45f);
-                    }
+                    float t = points.Length > 1 ? (float)i / (points.Length - 1) : 0f;
+                    pathPoints[i] = points[i] + Vector3.right * laneOffset + Vector3.forward * (spawnDepthOffset * (1f - t));
                 }
             }
             else

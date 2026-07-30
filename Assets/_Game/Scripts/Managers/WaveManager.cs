@@ -18,6 +18,8 @@ namespace Stonehold
         [SerializeField] private GameConfig config;
         [SerializeField] private GameObject spawnPoint;
         [SerializeField] private GameObject castle;
+        [SerializeField] private EnemySpawnPortal spawnPortalPresentation;
+        [SerializeField] private EnemySpawnPortal[] spawnPortals;
         [Header("Mobile Swarm Layout")]
         [SerializeField, Min(0f)] private float laneHalfWidth = 5.2f;
         [SerializeField, Min(1f)] private float enemyCountMultiplier = 1.8f;
@@ -322,6 +324,67 @@ namespace Stonehold
             WaveCountdownFinished?.Invoke();
         }
 
+        private void EnsurePortals()
+        {
+            if (enemyPool == null)
+            {
+                enemyPool = EnemyPoolManager.Instance != null
+                    ? EnemyPoolManager.Instance
+                    : FindFirstObjectByType<EnemyPoolManager>();
+            }
+
+            if (spawnPortals == null || spawnPortals.Length == 0 || spawnPortals[0] == null)
+            {
+                var found = FindObjectsByType<EnemySpawnPortal>(FindObjectsSortMode.None);
+                if (found != null && found.Length > 0)
+                {
+                    Array.Sort(found, (a, b) => a.transform.position.x.CompareTo(b.transform.position.x));
+                    spawnPortals = found;
+                }
+            }
+
+            if (spawnPortals != null)
+            {
+                for (int i = 0; i < spawnPortals.Length; i++)
+                {
+                    if (spawnPortals[i] != null && !spawnPortals[i].IsActivePortal)
+                    {
+                        spawnPortals[i].SetActiveState(true);
+                    }
+                }
+            }
+        }
+
+        private Vector3[] CreateStraightRoute(Vector3 start, Vector3 end, int pointCount = 5)
+        {
+            Vector3[] pts = new Vector3[pointCount];
+            for (int i = 0; i < pointCount; i++)
+            {
+                float t = (float)i / (pointCount - 1);
+                pts[i] = Vector3.Lerp(start, end, t);
+            }
+            return pts;
+        }
+
+        private Vector3[] GetRoutePoints(int portalIndex, Vector3 spawnPos)
+        {
+            if (portalIndex == 0) // Left Portal: direct straight diagonal to (-5.0, 0.1, 0.4)
+            {
+                Vector3 target = new Vector3(-5.0f, 0.1f, 0.4f);
+                return CreateStraightRoute(spawnPos, target, 5);
+            }
+            else if (portalIndex == 2) // Right Portal: direct straight diagonal to (5.0, 0.1, 0.4)
+            {
+                Vector3 target = new Vector3(5.0f, 0.1f, 0.4f);
+                return CreateStraightRoute(spawnPos, target, 5);
+            }
+            else // Center Portal: direct straight line to (0.0, 0.1, 0.4)
+            {
+                Vector3 target = new Vector3(0.0f, 0.1f, 0.4f);
+                return CreateStraightRoute(spawnPos, target, 5);
+            }
+        }
+
         private void SpawnEnemy(EnemyData enemyData)
         {
             if (enemyData == null || enemyData.prefab == null)
@@ -330,28 +393,48 @@ namespace Stonehold
                 return;
             }
 
-            Vector3[] points;
-            if (waypointPath != null && waypointPath.Points != null && waypointPath.Points.Length > 0)
+            EnsurePortals();
+
+            EnemySpawnPortal selectedPortal = null;
+            int portalIndex = 1;
+
+            if (spawnPortals != null && spawnPortals.Length > 0)
             {
-                points = waypointPath.Points;
+                portalIndex = UnityEngine.Random.Range(0, spawnPortals.Length);
+                selectedPortal = spawnPortals[portalIndex];
             }
-            else
+            else if (spawnPortalPresentation != null)
             {
-                points = new Vector3[] { spawnPoint.transform.position, castle.transform.position };
+                selectedPortal = spawnPortalPresentation;
+            }
+
+            Vector3 spawnPos = selectedPortal != null ? selectedPortal.SpawnAnchor.position : (spawnPoint != null ? spawnPoint.transform.position : Vector3.zero);
+            Quaternion spawnRot = selectedPortal != null ? selectedPortal.SpawnAnchor.rotation : Quaternion.identity;
+
+            Vector3[] points = GetRoutePoints(portalIndex, spawnPos);
+
+            float laneOffset = NextLaneOffset();
+            if (portalIndex != 1)
+            {
+                laneOffset *= 0.35f;
             }
 
             Enemy enemy = enemyPool.Spawn(
                 enemyData,
-                spawnPoint.transform.position,
-                Quaternion.identity,
+                spawnPos,
+                spawnRot,
                 points,
                 castleComponent,
-                NextLaneOffset(),
+                laneOffset,
                 NextDepthOffset());
+
             if (enemy == null)
             {
                 Debug.LogError($"WaveManager: failed to spawn pooled enemy '{enemyData.name}'.", enemyData);
+                return;
             }
+
+            selectedPortal?.PlaySpawnFlare();
         }
 
         private void PrewarmActiveEnemyPools()
@@ -365,10 +448,10 @@ namespace Stonehold
 
                 for (int spawnIndex = 0; spawnIndex < wave.spawns.Length; spawnIndex++)
                 {
-                    EnemyData enemyData = wave.spawns[spawnIndex].enemy;
-                    if (enemyData != null)
+                    EnemyData eData = wave.spawns[spawnIndex].enemy;
+                    if (eData != null)
                     {
-                        enemyPool.EnsurePool(enemyData);
+                        enemyPool.EnsurePool(eData);
                     }
                 }
             }
@@ -376,7 +459,6 @@ namespace Stonehold
 
         private float NextLaneOffset()
         {
-            // Golden-ratio spacing avoids repeated clumps while retaining organic variation.
             float normalized = Mathf.Repeat(spawnSequence++ * 0.61803398875f, 1f);
             float offset = Mathf.Lerp(-laneHalfWidth, laneHalfWidth, normalized);
             return Mathf.Clamp(offset + UnityEngine.Random.Range(-0.35f, 0.35f), -laneHalfWidth, laneHalfWidth);
