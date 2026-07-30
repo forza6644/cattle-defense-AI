@@ -24,7 +24,7 @@ namespace Stonehold
 
         private void Start()
         {
-            if (config != null && config.draftRunMode)
+            if (config != null && config.draftRunMode && FindFirstObjectByType<StarterCrystal>() == null)
             {
                 PlaceStartingDefender();
             }
