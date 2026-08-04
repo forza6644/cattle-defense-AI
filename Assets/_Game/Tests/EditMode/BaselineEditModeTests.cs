@@ -209,13 +209,133 @@ namespace Stonehold.Tests
             field.SetValue(target, value);
         }
 
-        private static void InvokeLifecycle(object target, string methodName)
+        [Test]
+        public void Test1_NullDefaultStartingDefender_StartsZeroHeroesSixEmptySlots()
         {
-            MethodInfo method = target.GetType().GetMethod(
-                methodName,
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(method, Is.Not.Null, "Missing lifecycle method: " + methodName);
-            method.Invoke(target, null);
+            GameObject managerObj = new GameObject("TestRosterManager");
+            HeroRosterManager manager = managerObj.AddComponent<HeroRosterManager>();
+            GameConfig config = ScriptableObject.CreateInstance<GameConfig>();
+            config.defaultStartingDefender = null;
+
+            manager.ResetRunRoster();
+
+            Assert.That(manager.OwnedHeroIds.Count, Is.EqualTo(0));
+            Assert.That(manager.EmptySlotCount, Is.EqualTo(6));
+
+            Object.DestroyImmediate(managerObj);
+            Object.DestroyImmediate(config);
+        }
+
+        [Test]
+        public void Test2_ExplicitValidStartingDefender_RecruitsExactlyThatHero()
+        {
+            GameObject managerObj = new GameObject("TestRosterManager");
+            HeroRosterManager manager = managerObj.AddComponent<HeroRosterManager>();
+            GameConfig config = ScriptableObject.CreateInstance<GameConfig>();
+
+            GameObject slotObj = new GameObject("HeroSlot_01");
+            HeroSlot slot = slotObj.AddComponent<HeroSlot>();
+
+            HeroDefinition heroDef = ScriptableObject.CreateInstance<HeroDefinition>();
+            heroDef.id = "bombardier";
+            heroDef.displayName = "Bombardier";
+            heroDef.heroPrefab = new GameObject("BombardierPrefab");
+
+            TowerData defenderData = ScriptableObject.CreateInstance<TowerData>();
+            defenderData.defenderId = "bombardier";
+            config.defaultStartingDefender = defenderData;
+
+            manager.RegisterSlot(slot);
+            manager.RegisterHeroDefinition(heroDef);
+            manager.ResetRunRoster();
+
+            Assert.That(manager.OwnedHeroIds.Count, Is.EqualTo(1));
+            Assert.That(manager.IsHeroOwned("bombardier"), Is.True);
+            Assert.That(manager.EmptySlotCount, Is.EqualTo(5));
+
+            Object.DestroyImmediate(managerObj);
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(slotObj);
+            Object.DestroyImmediate(heroDef.heroPrefab);
+            Object.DestroyImmediate(heroDef);
+            Object.DestroyImmediate(defenderData);
+        }
+
+        [Test]
+        public void Test3_InvalidConfiguredDefender_LogsWarning_StartsZeroHeroes_NoArcherFallback()
+        {
+            GameObject managerObj = new GameObject("TestRosterManager");
+            HeroRosterManager manager = managerObj.AddComponent<HeroRosterManager>();
+            GameConfig config = ScriptableObject.CreateInstance<GameConfig>();
+
+            TowerData invalidDefenderData = ScriptableObject.CreateInstance<TowerData>();
+            invalidDefenderData.defenderId = "invalid_hero_id";
+            config.defaultStartingDefender = invalidDefenderData;
+
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(".*could not be recruited.*"));
+
+            manager.ResetRunRoster();
+
+            Assert.That(manager.OwnedHeroIds.Count, Is.EqualTo(0));
+            Assert.That(manager.IsHeroOwned("archer"), Is.False);
+            Assert.That(manager.EmptySlotCount, Is.EqualTo(6));
+
+            Object.DestroyImmediate(managerObj);
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(invalidDefenderData);
+        }
+
+        [Test]
+        public void Test4_NewRunAfterPopulatedRoster_ClearsPreviousRoster_StartsAccordingToCurrentGameConfig()
+        {
+            GameObject managerObj = new GameObject("TestRosterManager");
+            HeroRosterManager manager = managerObj.AddComponent<HeroRosterManager>();
+            GameConfig config = ScriptableObject.CreateInstance<GameConfig>();
+
+            GameObject slotObj = new GameObject("HeroSlot_01");
+            HeroSlot slot = slotObj.AddComponent<HeroSlot>();
+
+            HeroDefinition heroDef = ScriptableObject.CreateInstance<HeroDefinition>();
+            heroDef.id = "bombardier";
+            heroDef.displayName = "Bombardier";
+            heroDef.heroPrefab = new GameObject("BombardierPrefab");
+
+            manager.RegisterSlot(slot);
+            manager.RegisterHeroDefinition(heroDef);
+            manager.RecruitHero("bombardier");
+
+            Assert.That(manager.OwnedHeroIds.Count, Is.EqualTo(1));
+
+            // Start new run with default null config
+            config.defaultStartingDefender = null;
+            manager.ResetRunRoster();
+
+            Assert.That(manager.OwnedHeroIds.Count, Is.EqualTo(0));
+            Assert.That(manager.IsHeroOwned("bombardier"), Is.False);
+            Assert.That(manager.EmptySlotCount, Is.EqualTo(6));
+
+            Object.DestroyImmediate(managerObj);
+            Object.DestroyImmediate(config);
+            Object.DestroyImmediate(slotObj);
+            Object.DestroyImmediate(heroDef.heroPrefab);
+            Object.DestroyImmediate(heroDef);
+        }
+
+        [Test]
+        public void Test5_StarterCrystalActive_NotIncludedInOwnedHeroIds()
+        {
+            GameObject managerObj = new GameObject("TestRosterManager");
+            HeroRosterManager manager = managerObj.AddComponent<HeroRosterManager>();
+            GameObject crystalObj = new GameObject("StarterCrystal_Test");
+            StarterCrystal crystal = crystalObj.AddComponent<StarterCrystal>();
+
+            manager.ResetRunRoster();
+
+            Assert.That(manager.OwnedHeroIds.Count, Is.EqualTo(0));
+            Assert.That(manager.OwnedHeroIds.Contains("starter_crystal"), Is.False);
+
+            Object.DestroyImmediate(managerObj);
+            Object.DestroyImmediate(crystalObj);
         }
     }
 }

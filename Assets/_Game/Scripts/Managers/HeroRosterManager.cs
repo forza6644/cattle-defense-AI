@@ -11,8 +11,6 @@ namespace Stonehold
     {
         public static HeroRosterManager Instance { get; private set; }
 
-        private const string DefaultHeroId = "archer";
-
         private readonly HashSet<string> ownedHeroIds = new HashSet<string>();
         private readonly Dictionary<string, HeroDefinition> heroDefinitions = new Dictionary<string, HeroDefinition>();
         private readonly List<HeroSlot> slots = new List<HeroSlot>();
@@ -57,6 +55,17 @@ namespace Stonehold
 
             slots.Add(slot);
             CaptureDefinition(slot.startingHero);
+        }
+
+        public void RegisterHeroDefinition(HeroDefinition hero)
+        {
+            CaptureDefinition(hero);
+        }
+
+        public void ResetRunRoster()
+        {
+            initialized = false;
+            InitializeRunRoster();
         }
 
         public bool IsHeroOwned(string heroId)
@@ -159,7 +168,36 @@ namespace Stonehold
 
             ownedHeroIds.Clear();
             initialized = true;
-            Debug.Log("[HeroRosterManager] Run roster initialized with 0 owned heroes and 6 empty HeroSlots.");
+
+            // Resolve explicit starting defender from GameConfig if configured
+            GameConfig config = null;
+            WaveManager waveManager = Object.FindFirstObjectByType<WaveManager>();
+            if (waveManager != null)
+            {
+                config = waveManager.Config;
+            }
+            if (config == null)
+            {
+                config = Resources.Load<GameConfig>("GameConfig");
+            }
+
+            if (config != null && config.defaultStartingDefender != null)
+            {
+                string defenderId = config.defaultStartingDefender.defenderId;
+                if (!string.IsNullOrEmpty(defenderId) && heroDefinitions.ContainsKey(defenderId))
+                {
+                    RecruitHero(defenderId);
+                    Debug.Log($"[HeroRosterManager] Recruited configured starting defender: {defenderId}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[HeroRosterManager] Configured default starting defender '{(config.defaultStartingDefender != null ? config.defaultStartingDefender.name : "null")}' with defenderId '{(string.IsNullOrEmpty(defenderId) ? "NULL" : defenderId)}' could not be recruited. Starting with 0 heroes.");
+                }
+            }
+            else
+            {
+                Debug.Log("[HeroRosterManager] Run roster initialized with 0 owned heroes and 6 empty HeroSlots.");
+            }
         }
 
         private void RefreshSlots()
