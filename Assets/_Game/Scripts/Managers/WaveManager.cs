@@ -45,6 +45,7 @@ namespace Stonehold
         /// <summary>Raised when the last scripted wave has been cleared.</summary>
         public event Action AllWavesCleared;
 
+        public GameConfig Config => config;
         public int CurrentWave { get; private set; }
         public int TotalWaves => activeWaves != null ? activeWaves.Length : 0;
         public bool IsWaitingForWave { get; private set; }

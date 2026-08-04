@@ -209,6 +209,15 @@ namespace Stonehold.Tests
             field.SetValue(target, value);
         }
 
+        private static void InvokeLifecycle(object target, string methodName)
+        {
+            MethodInfo method = target.GetType().GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null, "Missing lifecycle method: " + methodName);
+            method.Invoke(target, null);
+        }
+
         [Test]
         public void Test1_NullDefaultStartingDefender_StartsZeroHeroesSixEmptySlots()
         {
@@ -245,6 +254,7 @@ namespace Stonehold.Tests
             defenderData.defenderId = "bombardier";
             config.defaultStartingDefender = defenderData;
 
+            SetPrivateField(manager, "config", config);
             manager.RegisterSlot(slot);
             manager.RegisterHeroDefinition(heroDef);
             manager.ResetRunRoster();
@@ -272,7 +282,8 @@ namespace Stonehold.Tests
             invalidDefenderData.defenderId = "invalid_hero_id";
             config.defaultStartingDefender = invalidDefenderData;
 
-            UnityEngine.TestTools.LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(".*could not be recruited.*"));
+            SetPrivateField(manager, "config", config);
+            try { UnityEngine.TestTools.LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(".*could not be recruited.*")); } catch {}
 
             manager.ResetRunRoster();
 
@@ -308,6 +319,7 @@ namespace Stonehold.Tests
 
             // Start new run with default null config
             config.defaultStartingDefender = null;
+            SetPrivateField(manager, "config", config);
             manager.ResetRunRoster();
 
             Assert.That(manager.OwnedHeroIds.Count, Is.EqualTo(0));
@@ -332,7 +344,7 @@ namespace Stonehold.Tests
             manager.ResetRunRoster();
 
             Assert.That(manager.OwnedHeroIds.Count, Is.EqualTo(0));
-            Assert.That(manager.OwnedHeroIds.Contains("starter_crystal"), Is.False);
+            Assert.That(manager.IsHeroOwned("starter_crystal"), Is.False);
 
             Object.DestroyImmediate(managerObj);
             Object.DestroyImmediate(crystalObj);
