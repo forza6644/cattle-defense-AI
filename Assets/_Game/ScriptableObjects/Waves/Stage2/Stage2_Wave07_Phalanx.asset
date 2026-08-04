@@ -12,21 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f8a368fe325e4fbb2f112cc8a91c7, type: 3}
   m_Name: Stage2_Wave07_Phalanx
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WaveData
-  waveLabel: Phalanx
+  waveLabel: Highland Phalanx
   spawns:
   - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
-    count: 4
+    count: 3
     spawnInterval: 1
-    startDelay: 0
   - enemy: {fileID: 11400000, guid: 6080b6d5afbc2734cb27a36178d38ea2, type: 2}
     count: 1
     spawnInterval: 2.5
-    startDelay: 0
+  - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+    count: 2
+    spawnInterval: 0.8
   - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
     count: 3
-    spawnInterval: 0.8
-    startDelay: 0
+    spawnInterval: 1
   - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
-    count: 4
-    spawnInterval: 1.5
-    startDelay: 0
+    count: 3
+    spawnInterval: 1.6
