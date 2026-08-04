@@ -12,21 +12,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f8a368fe325e4fbb2f112cc8a91c7, type: 3}
   m_Name: Stage3_Wave08_SiegeMasters
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WaveData
-  waveLabel: Siege Masters
+  waveLabel: Frozen Siege
   spawns:
-  - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
-    count: 6
-    spawnInterval: 0.5
-    startDelay: 0
-  - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
-    count: 4
-    spawnInterval: 1.2
-    startDelay: 0
   - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
-    count: 6
-    spawnInterval: 0.8
-    startDelay: 0
+    count: 3
+    spawnInterval: 0.85
+  - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+    count: 2
+    spawnInterval: 1.5
   - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
-    count: 10
-    spawnInterval: 0.3
-    startDelay: 0
+    count: 3
+    spawnInterval: 0.32
+  - enemy: {fileID: 11400000, guid: 7be3e823a92ed7a43b9adbed388ad3f2, type: 2}
+    count: 1
+    spawnInterval: 1.25
+  - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+    count: 3
+    spawnInterval: 0.85
+  - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+    count: 2
+    spawnInterval: 1.5
+  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+    count: 3
+    spawnInterval: 0.32
+  - enemy: {fileID: 11400000, guid: 7be3e823a92ed7a43b9adbed388ad3f2, type: 2}
+    count: 1
+    spawnInterval: 1.25

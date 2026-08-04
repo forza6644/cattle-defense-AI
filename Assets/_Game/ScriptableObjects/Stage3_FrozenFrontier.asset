@@ -29,6 +29,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ed46fa68bcb41804481fb68e359de61b, type: 2}
   - {fileID: 11400000, guid: 1606efbe39267ec458c2f8861f236dfe, type: 2}
   - {fileID: 11400000, guid: b8ceac1b2e2f7fb4a839c85ce57a7c5a, type: 2}
+  useExactWaveCounts: 1
   enemyCountMultiplier: 1.12
   spawnIntervalMultiplier: 0.98
   expectedEnemyTypes:
