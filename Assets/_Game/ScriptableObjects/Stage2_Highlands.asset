@@ -18,16 +18,16 @@ MonoBehaviour:
   stageNumber: 2
   stageMode: 0
   waves:
-  - {fileID: 11400000, guid: a203b083d7c5ee04185017e607525b7e, type: 2}
-  - {fileID: 11400000, guid: 6ea2866d790b06e43a4d7b69db60a8d8, type: 2}
-  - {fileID: 11400000, guid: 3c07c5b2db61bc645a32bff61e9a64db, type: 2}
-  - {fileID: 11400000, guid: 1bd04918942a2ce48820922df5e56559, type: 2}
-  - {fileID: 11400000, guid: 31995248dd544eefb654f92efd58f6db, type: 2}
-  - {fileID: 11400000, guid: 8cf9d0e1aaff47b1b4a7701884bf6612, type: 2}
-  - {fileID: 11400000, guid: ad54c4adcaa748b7872efe454c6835f0, type: 2}
-  - {fileID: 11400000, guid: e3df568a28da4fc0a3a1481e3f3705b1, type: 2}
-  - {fileID: 11400000, guid: 6195b8b8541e43f3864bcec178dd8a8d, type: 2}
-  - {fileID: 11400000, guid: 04def31d071444c180015196452e626e, type: 2}
+  - {fileID: 11400000, guid: 39074249424dca14dbb963dbdeeb8527, type: 2}
+  - {fileID: 11400000, guid: 4b2e6b56a2e1d08408d4233c39533868, type: 2}
+  - {fileID: 11400000, guid: db4ce1b6c16d15646b24b0e2b401f742, type: 2}
+  - {fileID: 11400000, guid: 2fdac51c2f32b9e4dbc764e16fafef41, type: 2}
+  - {fileID: 11400000, guid: 61b437cfea3d9554c99ddc7e8cc5b4b8, type: 2}
+  - {fileID: 11400000, guid: 3be01a2de9a761342a234e5640c9e2fb, type: 2}
+  - {fileID: 11400000, guid: f927381a77ea330489da621d0b526131, type: 2}
+  - {fileID: 11400000, guid: 7972c1fea79d7da419a2358d6d800c0c, type: 2}
+  - {fileID: 11400000, guid: 17894f45e91855547a35a19bf91ca5b8, type: 2}
+  - {fileID: 11400000, guid: 417125c47749fe1488165a5a0072ddff, type: 2}
   enemyCountMultiplier: 1
   spawnIntervalMultiplier: 1
   expectedEnemyTypes:
