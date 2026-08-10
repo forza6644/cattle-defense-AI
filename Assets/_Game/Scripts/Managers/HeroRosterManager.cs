@@ -131,25 +131,29 @@ namespace Stonehold
 
         public bool RecruitHero(string heroId)
         {
-            if (!CanRecruit(heroId))
-            {
-                return false;
-            }
-
             HeroSlot slot = FindNextEmptySlot();
-            if (slot == null)
+            return RecruitHeroIntoSlot(heroId, slot);
+        }
+
+        public bool RecruitHeroIntoSlot(string heroId, HeroSlot targetSlot)
+        {
+            if (!CanRecruit(heroId) || targetSlot == null || targetSlot.IsOccupied)
             {
                 return false;
             }
 
-            HeroDefinition hero = heroDefinitions[heroId];
-            if (!slot.SpawnHero(hero))
+            if (!heroDefinitions.TryGetValue(heroId, out HeroDefinition hero) || hero == null)
+            {
+                return false;
+            }
+
+            if (!targetSlot.SpawnHero(hero))
             {
                 return false;
             }
 
             ownedHeroIds.Add(heroId);
-            Debug.Log($"[HeroRosterManager] Recruited hero: {heroId}");
+            Debug.Log($"[HeroRosterManager] Recruited hero '{heroId}' into slot '{targetSlot.name}'");
             return true;
         }
 
