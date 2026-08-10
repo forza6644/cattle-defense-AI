@@ -1,0 +1,70 @@
+================================================================================
+ STAGE 3 (FROZEN FRONTIER) REAL-TIME COMBAT TELEMETRY REPORT
+================================================================================
+Timestamp:                  2026-08-10 22:04:00
+Stage ID:                   stage_3_frozen_frontier
+Final Game State:           Victory
+Total Run Duration:         77.38 seconds
+Total Waves Cleared:        10 / 10
+Total Enemies Spawned:      130
+Total Enemies Defeated:     131
+Final Castle HP:            50 / 50
+Final Player Level:         10
+Final Player XP:            25
+Total Draft Triggers:       9
+Warlord Boss Spawned:       YES
+Warlord Boss Defeated:      YES
+================================================================================
+ WAVE BREAKDOWN:
+--------------------------------------------------------------------------------
+ Wave | Start (s) | End (s) | Duration (s) | Spawned | Defeated | Castle HP | XP   | Level
+--------------------------------------------------------------------------------
+    1 |       0.0 |     5.2 |          5.2 |       9 |        9 |   50/50   |   31 |     2
+    2 |       5.2 |    12.2 |          7.0 |       9 |        9 |   50/50   |   56 |     4
+    3 |      12.2 |    16.9 |          4.7 |      12 |       12 |   50/50   |   26 |     5
+    4 |      16.9 |    24.7 |          7.8 |      11 |       11 |   50/50   |   63 |     6
+    5 |      24.7 |    31.8 |          7.1 |      14 |       14 |   50/50   |   13 |     7
+    6 |      31.8 |    40.0 |          8.2 |      11 |       11 |   50/50   |  205 |     7
+    7 |      40.0 |    47.3 |          7.3 |      14 |       15 |   50/50   |   89 |     8
+    8 |      47.3 |    56.7 |          9.4 |      18 |       18 |   50/50   |  335 |     8
+    9 |      56.7 |    68.0 |         11.3 |      23 |       23 |   50/50   |  228 |     9
+   10 |      68.0 |    77.4 |          9.4 |       9 |        9 |   50/50   |   25 |    10
+================================================================================
+ DRAFT SELECTION LOG:
+--------------------------------------------------------------------------------
+ Draft #1 @ 2.6s (Level 2)
+   Offered Choices:  War Training | Forked Current | Shard Volley
+   Selected Card:    War Training
+--------------------------------------------------------------------------------
+ Draft #2 @ 7.6s (Level 3)
+   Offered Choices:  Echoing Nova | Wide Blast | Wide Blast
+   Selected Card:    Echoing Nova
+--------------------------------------------------------------------------------
+ Draft #3 @ 11.2s (Level 4)
+   Offered Choices:  Frostbite | Extended Circuit | Wide Blast
+   Selected Card:    Frostbite
+--------------------------------------------------------------------------------
+ Draft #4 @ 14.8s (Level 5)
+   Offered Choices:  War Training | Frostbite | Shard Volley
+   Selected Card:    War Training
+--------------------------------------------------------------------------------
+ Draft #5 @ 23.7s (Level 6)
+   Offered Choices:  Empowered Abilities | Fast Casting | Frostbite
+   Selected Card:    Empowered Abilities
+--------------------------------------------------------------------------------
+ Draft #6 @ 31.5s (Level 7)
+   Offered Choices:  Cluster Shells | Twin Volley | Piercing Arrows
+   Selected Card:    Cluster Shells
+--------------------------------------------------------------------------------
+ Draft #7 @ 44.7s (Level 8)
+   Offered Choices:  Frostbite | Piercing Arrows | Twin Volley
+   Selected Card:    Frostbite
+--------------------------------------------------------------------------------
+ Draft #8 @ 61.7s (Level 9)
+   Offered Choices:  Piercing Arrows | Battle Rhythm | Wide Blast
+   Selected Card:    Piercing Arrows
+--------------------------------------------------------------------------------
+ Draft #9 @ 77.1s (Level 10)
+   Offered Choices:  Empowered Abilities | War Training | Extended Circuit
+   Selected Card:    Empowered Abilities
+--------------------------------------------------------------------------------
