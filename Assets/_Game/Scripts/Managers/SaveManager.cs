@@ -67,6 +67,9 @@ namespace Stonehold
             PlayerPrefs.Save();
         }
 
+        public static void Save() => SaveProgress();
+        public static void Load() => LoadProgress();
+
         public static void LoadProgress()
         {
             EnsureSaveVersion();
@@ -205,6 +208,23 @@ namespace Stonehold
                 HighestStageUnlocked = stageNumber;
                 PlayerPrefs.SetInt(KeyHighestStageUnlocked, HighestStageUnlocked);
                 PlayerPrefs.Save();
+            }
+        }
+
+        public static void UnlockStage(string stageId)
+        {
+            if (string.IsNullOrEmpty(stageId)) return;
+            if (stageId.Contains("2") || stageId.Contains("highlands"))
+            {
+                UnlockStage(2);
+            }
+            else if (stageId.Contains("3") || stageId.Contains("frozen") || stageId.Contains("peak"))
+            {
+                UnlockStage(3);
+            }
+            else if (stageId.Contains("1") || stageId.Contains("castle") || stageId.Contains("road"))
+            {
+                UnlockStage(1);
             }
         }
 
