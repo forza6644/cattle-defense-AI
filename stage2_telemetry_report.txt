@@ -1,12 +1,12 @@
 ================================================================================
  STAGE 2 (HIGHLANDS) REAL-TIME COMBAT TELEMETRY REPORT
 ================================================================================
-Timestamp:                  2026-08-10 22:02:50
+Timestamp:                  2026-08-10 22:22:20
 Stage ID:                   stage_2_highlands
 Final Game State:           Victory
-Total Run Duration:         69.56 seconds
+Total Run Duration:         70.21 seconds
 Total Waves Cleared:        10 / 10
-Total Enemies Spawned:      116
+Total Enemies Spawned:      114
 Total Enemies Defeated:     116
 Final Castle HP:            50 / 50
 Final Player Level:         9
@@ -20,47 +20,47 @@ War Shaman Heal Pulses:     17
  Wave | Start (s) | End (s) | Duration (s) | Spawned | Defeated | Castle HP | XP   | Level
 --------------------------------------------------------------------------------
     1 |       0.0 |     3.6 |          3.6 |       6 |        6 |   50/50   |    8 |     2
-    2 |       3.6 |     7.3 |          3.7 |       8 |        8 |   50/50   |    9 |     3
-    3 |       7.3 |    13.5 |          6.2 |       9 |        9 |   50/50   |   30 |     4
-    4 |      13.5 |    18.2 |          4.6 |      11 |       11 |   50/50   |    4 |     5
-    5 |      18.2 |    26.6 |          8.5 |      10 |       10 |   50/50   |   69 |     6
-    6 |      26.6 |    31.7 |          5.1 |      14 |       14 |   50/50   |  134 |     6
-    7 |      31.7 |    41.2 |          9.5 |      12 |       12 |   50/50   |  184 |     7
-    8 |      41.2 |    49.0 |          7.8 |      17 |       17 |   50/50   |   67 |     8
-    9 |      49.0 |    59.0 |         10.0 |      20 |       20 |   50/50   |  395 |     8
-   10 |      59.0 |    69.6 |         10.6 |       9 |        9 |   50/50   |  282 |     9
+    2 |       3.6 |     6.9 |          3.2 |       8 |        8 |   50/50   |    4 |     3
+    3 |       6.9 |    13.7 |          6.8 |       9 |        9 |   50/50   |   40 |     4
+    4 |      13.7 |    17.9 |          4.2 |      11 |       11 |   50/50   |    4 |     5
+    5 |      17.9 |    26.1 |          8.3 |      10 |       10 |   50/50   |   69 |     6
+    6 |      26.1 |    30.9 |          4.7 |      14 |       14 |   50/50   |  134 |     6
+    7 |      30.9 |    40.8 |         10.0 |      12 |       12 |   50/50   |  184 |     7
+    8 |      40.8 |    48.7 |          7.8 |      16 |       17 |   50/50   |   67 |     8
+    9 |      48.7 |    60.1 |         11.5 |      19 |       20 |   50/50   |  395 |     8
+   10 |      60.1 |    70.2 |         10.1 |       9 |        9 |   50/50   |  282 |     9
 ================================================================================
  DRAFT SELECTION LOG:
 --------------------------------------------------------------------------------
  Draft #1 @ 3.1s (Level 2)
-   Offered Choices:  Echoing Nova | Battle Rhythm | Empowered Abilities
-   Selected Card:    Echoing Nova
+   Offered Choices:  Extended Circuit | Shard Volley | Empowered Abilities
+   Selected Card:    Extended Circuit
 --------------------------------------------------------------------------------
  Draft #2 @ 6.6s (Level 3)
-   Offered Choices:  Extended Circuit | Twin Volley | Frostbite
+   Offered Choices:  Cluster Shells | Piercing Arrows | Wide Blast
+   Selected Card:    Cluster Shells
+--------------------------------------------------------------------------------
+ Draft #3 @ 12.6s (Level 4)
+   Offered Choices:  Extended Circuit | Echoing Nova | Wide Blast
    Selected Card:    Extended Circuit
 --------------------------------------------------------------------------------
- Draft #3 @ 12.5s (Level 4)
-   Offered Choices:  Wide Blast | Extended Circuit | Fast Casting
+ Draft #4 @ 17.6s (Level 5)
+   Offered Choices:  Empowered Abilities | Extended Circuit | Wide Blast
+   Selected Card:    Empowered Abilities
+--------------------------------------------------------------------------------
+ Draft #5 @ 24.9s (Level 6)
+   Offered Choices:  Wide Blast | Piercing Arrows | Extended Circuit
    Selected Card:    Wide Blast
 --------------------------------------------------------------------------------
- Draft #4 @ 17.8s (Level 5)
-   Offered Choices:  War Training | Battle Rhythm | Shard Volley
-   Selected Card:    War Training
---------------------------------------------------------------------------------
- Draft #5 @ 25.3s (Level 6)
-   Offered Choices:  Extended Circuit | Forked Current | Shard Volley
-   Selected Card:    Extended Circuit
---------------------------------------------------------------------------------
- Draft #6 @ 37.1s (Level 7)
-   Offered Choices:  Wide Blast | Shard Volley | Piercing Arrows
-   Selected Card:    Wide Blast
+ Draft #6 @ 36.6s (Level 7)
+   Offered Choices:  Frostbite | Empowered Abilities | Forked Current
+   Selected Card:    Frostbite
 --------------------------------------------------------------------------------
  Draft #7 @ 46.5s (Level 8)
-   Offered Choices:  Wide Blast | Piercing Arrows | Cluster Shells
-   Selected Card:    Wide Blast
+   Offered Choices:  Fast Casting | Twin Volley | Empowered Abilities
+   Selected Card:    Fast Casting
 --------------------------------------------------------------------------------
- Draft #8 @ 63.0s (Level 9)
-   Offered Choices:  Wide Blast | Piercing Arrows | Cluster Shells
-   Selected Card:    Wide Blast
+ Draft #8 @ 64.6s (Level 9)
+   Offered Choices:  Battle Rhythm | Extended Circuit | War Training
+   Selected Card:    Battle Rhythm
 --------------------------------------------------------------------------------

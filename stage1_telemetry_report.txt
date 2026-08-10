@@ -1,12 +1,12 @@
 ================================================================================
  STAGE 1 REAL-TIME COMBAT TELEMETRY REPORT
 ================================================================================
-Timestamp:                  2026-08-10 22:01:36
+Timestamp:                  2026-08-10 22:21:06
 Stage ID:                   stage_1_castle_road
 Final Game State:           Victory
-Total Run Duration:         73.47 seconds
+Total Run Duration:         73.18 seconds
 Total Waves Cleared:        10 / 10
-Total Enemies Spawned:      118
+Total Enemies Spawned:      120
 Total Enemies Defeated:     120
 Final Castle HP:            50 / 50
 Final Player Level:         9
@@ -19,46 +19,46 @@ Total Draft Triggers:       8
 --------------------------------------------------------------------------------
     1 |       0.0 |     4.1 |          4.1 |       4 |        4 |   50/50   |    0 |     2
     2 |       4.1 |    10.7 |          6.6 |       5 |        5 |   50/50   |    0 |     3
-    3 |      10.7 |    17.8 |          7.0 |       9 |        9 |   50/50   |    3 |     4
-    4 |      17.8 |    25.2 |          7.5 |      12 |       12 |   50/50   |   24 |     5
-    5 |      25.2 |    35.6 |         10.3 |      17 |       19 |   50/50   |  109 |     6
-    6 |      35.6 |    41.8 |          6.3 |      18 |       18 |   50/50   |   55 |     7
-    7 |      41.8 |    45.0 |          3.2 |      12 |       12 |   50/50   |  103 |     7
-    8 |      45.0 |    54.0 |          9.0 |      12 |       12 |   50/50   |  108 |     8
-    9 |      54.0 |    63.8 |          9.8 |      22 |       22 |   50/50   |  288 |     8
-   10 |      63.8 |    73.5 |          9.7 |       7 |        7 |   50/50   |  128 |     9
+    3 |      10.7 |    16.5 |          5.8 |       9 |        9 |   50/50   |    3 |     4
+    4 |      16.5 |    24.6 |          8.1 |      12 |       12 |   50/50   |   24 |     5
+    5 |      24.6 |    35.4 |         10.8 |      19 |       19 |   50/50   |  109 |     6
+    6 |      35.4 |    42.1 |          6.8 |      18 |       18 |   50/50   |   55 |     7
+    7 |      42.1 |    45.2 |          3.1 |      12 |       12 |   50/50   |  103 |     7
+    8 |      45.2 |    54.6 |          9.4 |      12 |       12 |   50/50   |  108 |     8
+    9 |      54.6 |    64.0 |          9.4 |      22 |       22 |   50/50   |  288 |     8
+   10 |      64.0 |    73.2 |          9.2 |       7 |        7 |   50/50   |  128 |     9
 ================================================================================
  DRAFT SELECTION LOG:
 --------------------------------------------------------------------------------
  Draft #1 @ 3.8s (Level 2)
-   Offered Choices:  Echoing Nova | Extended Circuit | Frostbite
-   Selected Card:    Echoing Nova
---------------------------------------------------------------------------------
- Draft #2 @ 10.4s (Level 3)
-   Offered Choices:  Cluster Shells | Piercing Arrows | Wide Blast
-   Selected Card:    Cluster Shells
---------------------------------------------------------------------------------
- Draft #3 @ 17.4s (Level 4)
-   Offered Choices:  Extended Circuit | Forked Current | Wide Blast
-   Selected Card:    Extended Circuit
---------------------------------------------------------------------------------
- Draft #4 @ 24.9s (Level 5)
-   Offered Choices:  Wide Blast | War Training | Battle Rhythm
-   Selected Card:    Wide Blast
---------------------------------------------------------------------------------
- Draft #5 @ 32.3s (Level 6)
-   Offered Choices:  Battle Rhythm | Wide Blast | Empowered Abilities
+   Offered Choices:  Battle Rhythm | Piercing Arrows | Cluster Shells
    Selected Card:    Battle Rhythm
 --------------------------------------------------------------------------------
- Draft #6 @ 41.0s (Level 7)
-   Offered Choices:  Piercing Arrows | Frostbite | Battle Rhythm
-   Selected Card:    Piercing Arrows
+ Draft #2 @ 10.3s (Level 3)
+   Offered Choices:  Frostbite | Extended Circuit | Forked Current
+   Selected Card:    Frostbite
 --------------------------------------------------------------------------------
- Draft #7 @ 52.5s (Level 8)
-   Offered Choices:  Fast Casting | Piercing Arrows | Cluster Shells
+ Draft #3 @ 16.2s (Level 4)
+   Offered Choices:  Fast Casting | Empowered Abilities | Forked Current
    Selected Card:    Fast Casting
 --------------------------------------------------------------------------------
- Draft #8 @ 73.1s (Level 9)
-   Offered Choices:  Twin Volley | Empowered Abilities | Battle Rhythm
-   Selected Card:    Twin Volley
+ Draft #4 @ 24.3s (Level 5)
+   Offered Choices:  Wide Blast | Piercing Arrows | Cluster Shells
+   Selected Card:    Wide Blast
+--------------------------------------------------------------------------------
+ Draft #5 @ 31.4s (Level 6)
+   Offered Choices:  Wide Blast | Battle Rhythm | Shard Volley
+   Selected Card:    Wide Blast
+--------------------------------------------------------------------------------
+ Draft #6 @ 40.3s (Level 7)
+   Offered Choices:  War Training | Forked Current | Frostbite
+   Selected Card:    War Training
+--------------------------------------------------------------------------------
+ Draft #7 @ 53.2s (Level 8)
+   Offered Choices:  Cluster Shells | Forked Current | Wide Blast
+   Selected Card:    Cluster Shells
+--------------------------------------------------------------------------------
+ Draft #8 @ 72.9s (Level 9)
+   Offered Choices:  Shard Volley | Battle Rhythm | Wide Blast
+   Selected Card:    Shard Volley
 --------------------------------------------------------------------------------
