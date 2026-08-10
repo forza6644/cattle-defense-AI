@@ -17,10 +17,10 @@ MonoBehaviour:
   description: Fires explosive fire projectiles that inflict burn and splash damage
     to nearby enemies.
   element: 0
-  baseDamage: 14
-  attacksPerSecond: 1
-  attackRange: 13
-  splashRadius: 2.5
+  baseDamage: 11
+  attacksPerSecond: 0.9
+  attackRange: 12
+  splashRadius: 2.2
   chainTargets: 3
   statusMagnitude: 0
   statusDuration: 0

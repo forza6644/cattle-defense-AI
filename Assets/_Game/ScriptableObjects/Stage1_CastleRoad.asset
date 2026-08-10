@@ -30,8 +30,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e3df568a28da4fc0a3a1481e3f3705b1, type: 2}
   - {fileID: 11400000, guid: 04def31d071444c180015196452e626e, type: 2}
   useExactWaveCounts: 1
-  enemyCountMultiplier: 0.8
-  spawnIntervalMultiplier: 1.15
+  enemyCountMultiplier: 1
+  spawnIntervalMultiplier: 0.9
   expectedEnemyTypes:
   - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
   - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}

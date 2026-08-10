@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
@@ -218,13 +219,28 @@ namespace Stonehold.Tests
             method.Invoke(target, null);
         }
 
+        private static List<GameObject> CreateSixSlots(HeroRosterManager manager)
+        {
+            List<GameObject> slotObjs = new List<GameObject>();
+            for (int i = 1; i <= 6; i++)
+            {
+                GameObject slotObj = new GameObject($"HeroSlot_{i:D2}");
+                HeroSlot slot = slotObj.AddComponent<HeroSlot>();
+                manager.RegisterSlot(slot);
+                slotObjs.Add(slotObj);
+            }
+            return slotObjs;
+        }
+
         [Test]
         public void Test1_NullDefaultStartingDefender_StartsZeroHeroesSixEmptySlots()
         {
             GameObject managerObj = new GameObject("TestRosterManager");
             HeroRosterManager manager = managerObj.AddComponent<HeroRosterManager>();
+            List<GameObject> slotObjs = CreateSixSlots(manager);
             GameConfig config = ScriptableObject.CreateInstance<GameConfig>();
             config.defaultStartingDefender = null;
+            SetPrivateField(manager, "config", config);
 
             manager.ResetRunRoster();
 
@@ -233,29 +249,29 @@ namespace Stonehold.Tests
 
             Object.DestroyImmediate(managerObj);
             Object.DestroyImmediate(config);
+            foreach (var s in slotObjs) Object.DestroyImmediate(s);
         }
 
         [Test]
         public void Test2_ExplicitValidStartingDefender_RecruitsExactlyThatHero()
         {
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
             GameObject managerObj = new GameObject("TestRosterManager");
             HeroRosterManager manager = managerObj.AddComponent<HeroRosterManager>();
+            List<GameObject> slotObjs = CreateSixSlots(manager);
             GameConfig config = ScriptableObject.CreateInstance<GameConfig>();
-
-            GameObject slotObj = new GameObject("HeroSlot_01");
-            HeroSlot slot = slotObj.AddComponent<HeroSlot>();
 
             HeroDefinition heroDef = ScriptableObject.CreateInstance<HeroDefinition>();
             heroDef.id = "bombardier";
             heroDef.displayName = "Bombardier";
             heroDef.heroPrefab = new GameObject("BombardierPrefab");
+            heroDef.heroPrefab.AddComponent<HeroAttack>();
 
             TowerData defenderData = ScriptableObject.CreateInstance<TowerData>();
             defenderData.defenderId = "bombardier";
             config.defaultStartingDefender = defenderData;
 
             SetPrivateField(manager, "config", config);
-            manager.RegisterSlot(slot);
             manager.RegisterHeroDefinition(heroDef);
             manager.ResetRunRoster();
 
@@ -265,7 +281,7 @@ namespace Stonehold.Tests
 
             Object.DestroyImmediate(managerObj);
             Object.DestroyImmediate(config);
-            Object.DestroyImmediate(slotObj);
+            foreach (var s in slotObjs) Object.DestroyImmediate(s);
             Object.DestroyImmediate(heroDef.heroPrefab);
             Object.DestroyImmediate(heroDef);
             Object.DestroyImmediate(defenderData);
@@ -274,8 +290,10 @@ namespace Stonehold.Tests
         [Test]
         public void Test3_InvalidConfiguredDefender_LogsWarning_StartsZeroHeroes_NoArcherFallback()
         {
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
             GameObject managerObj = new GameObject("TestRosterManager");
             HeroRosterManager manager = managerObj.AddComponent<HeroRosterManager>();
+            List<GameObject> slotObjs = CreateSixSlots(manager);
             GameConfig config = ScriptableObject.CreateInstance<GameConfig>();
 
             TowerData invalidDefenderData = ScriptableObject.CreateInstance<TowerData>();
@@ -293,25 +311,26 @@ namespace Stonehold.Tests
 
             Object.DestroyImmediate(managerObj);
             Object.DestroyImmediate(config);
+            foreach (var s in slotObjs) Object.DestroyImmediate(s);
             Object.DestroyImmediate(invalidDefenderData);
         }
 
         [Test]
         public void Test4_NewRunAfterPopulatedRoster_ClearsPreviousRoster_StartsAccordingToCurrentGameConfig()
         {
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
             GameObject managerObj = new GameObject("TestRosterManager");
             HeroRosterManager manager = managerObj.AddComponent<HeroRosterManager>();
+            List<GameObject> slotObjs = CreateSixSlots(manager);
             GameConfig config = ScriptableObject.CreateInstance<GameConfig>();
-
-            GameObject slotObj = new GameObject("HeroSlot_01");
-            HeroSlot slot = slotObj.AddComponent<HeroSlot>();
 
             HeroDefinition heroDef = ScriptableObject.CreateInstance<HeroDefinition>();
             heroDef.id = "bombardier";
             heroDef.displayName = "Bombardier";
             heroDef.heroPrefab = new GameObject("BombardierPrefab");
+            heroDef.heroPrefab.AddComponent<HeroAttack>();
 
-            manager.RegisterSlot(slot);
+            SetPrivateField(manager, "config", config);
             manager.RegisterHeroDefinition(heroDef);
             manager.RecruitHero("bombardier");
 
@@ -319,7 +338,6 @@ namespace Stonehold.Tests
 
             // Start new run with default null config
             config.defaultStartingDefender = null;
-            SetPrivateField(manager, "config", config);
             manager.ResetRunRoster();
 
             Assert.That(manager.OwnedHeroIds.Count, Is.EqualTo(0));
@@ -328,7 +346,7 @@ namespace Stonehold.Tests
 
             Object.DestroyImmediate(managerObj);
             Object.DestroyImmediate(config);
-            Object.DestroyImmediate(slotObj);
+            foreach (var s in slotObjs) Object.DestroyImmediate(s);
             Object.DestroyImmediate(heroDef.heroPrefab);
             Object.DestroyImmediate(heroDef);
         }

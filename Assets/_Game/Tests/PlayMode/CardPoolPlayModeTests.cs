@@ -29,6 +29,9 @@ namespace Stonehold.Tests
             Assert.That(roster, Is.Not.Null);
             Assert.That(modifiers, Is.Not.Null);
             roster.InitializeRunRoster();
+            Assert.That(roster.OwnedHeroIds.Count, Is.EqualTo(0));
+            Assert.That(roster.IsHeroOwned("archer"), Is.False);
+            Assert.That(roster.RecruitHero("archer"), Is.True);
             Assert.That(roster.IsHeroOwned("archer"), Is.True);
 
             var created = new List<Object>();

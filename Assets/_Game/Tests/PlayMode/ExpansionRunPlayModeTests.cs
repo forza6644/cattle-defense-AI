@@ -192,6 +192,8 @@ namespace Stonehold.Tests
             Assert.That(waves.ActiveStage, Is.SameAs(stage));
 
             roster.InitializeRunRoster();
+            Assert.That(roster.OwnedHeroIds.Count, Is.EqualTo(0));
+            Assert.That(roster.RecruitHero("archer"), Is.True);
             Assert.That(roster.RecruitHero("bombardier"), Is.True);
             Assert.That(roster.RecruitHero("frost_mage"), Is.True);
             Assert.That(roster.RecruitHero("electric_engineer"), Is.True);

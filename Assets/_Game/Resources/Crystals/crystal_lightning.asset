@@ -16,9 +16,9 @@ MonoBehaviour:
   displayName: Lightning Crystal
   description: Fires rapid lightning bolts that chain between nearby enemies.
   element: 2
-  baseDamage: 15
-  attacksPerSecond: 1.4
-  attackRange: 14
+  baseDamage: 12
+  attacksPerSecond: 1.1
+  attackRange: 12
   splashRadius: 0
   chainTargets: 3
   statusMagnitude: 0

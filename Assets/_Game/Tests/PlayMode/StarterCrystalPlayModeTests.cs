@@ -22,6 +22,26 @@ namespace Stonehold.Tests
         {
             Time.timeScale = 1f;
 
+            // Clear any stale GameManager singleton left from prior scene-based tests.
+            // StarterCrystal.Update() returns early when GameManager.Instance != null
+            // and State != Playing, which prevents the crystal from ever firing.
+            if (GameManager.Instance != null)
+            {
+                var instanceProp = typeof(GameManager).GetProperty("Instance",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (instanceProp != null && instanceProp.CanWrite)
+                {
+                    instanceProp.SetValue(null, null);
+                }
+                else
+                {
+                    // Fallback: try backing field
+                    var backingField = typeof(GameManager).GetField("<Instance>k__BackingField",
+                        System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+                    if (backingField != null) backingField.SetValue(null, null);
+                }
+            }
+
             // Setup Enemy Registry
             enemyRegistryGO = new GameObject("Enemy Registry", typeof(EnemyManager));
             createdObjects.Add(enemyRegistryGO);
@@ -135,7 +155,7 @@ namespace Stonehold.Tests
             def.baseDamage = 20f;
             Enemy primary = SpawnEnemy(100f, new Vector3(0f, 0f, 2f));
             Enemy nearby = SpawnEnemy(100f, new Vector3(1f, 0f, 2f));
-            Enemy far = SpawnEnemy(100f, new Vector3(10f, 0f, 2f));
+            Enemy far = SpawnEnemy(100f, new Vector3(30f, 0f, 2f));
 
             def.attacksPerSecond = 1f;
             def.attackRange = 10f;
@@ -147,7 +167,7 @@ namespace Stonehold.Tests
             crystal.Configure(def);
             crystal.enabled = true;
 
-            yield return new WaitForSeconds(0.35f);
+            yield return new WaitForSeconds(0.8f);
 
             Assert.That(primary.CurrentHealth, Is.LessThan(100f), "Primary target takes direct fire damage.");
             Assert.That(nearby.CurrentHealth, Is.LessThan(100f), "Nearby enemy takes splash fire damage.");
@@ -180,6 +200,7 @@ namespace Stonehold.Tests
         [UnityTest]
         public IEnumerator GameplayIntegrationScene_StarterCrystal_IsPresent_AndOnlyOneActive()
         {
+            SaveManager.SetSelectedStarterCrystal("crystal_lightning");
             var sceneReq = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("GameplayIntegration_V2");
             while (!sceneReq.isDone) yield return null;
 
@@ -226,7 +247,7 @@ namespace Stonehold.Tests
             def.element = CrystalElement.Lightning;
             def.baseDamage = 20f;
             def.attacksPerSecond = 2f;
-            def.attackRange = 14f;
+            def.attackRange = 40f;
             def.chainTargets = 3;
             createdObjects.Add(def);
 

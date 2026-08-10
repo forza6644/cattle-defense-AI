@@ -308,7 +308,8 @@ namespace Stonehold
 
             if (targetRefreshTimer <= 0f)
             {
-                currentTarget = EnemyManager.FindTarget(transform.position, 1000f, TargetingMode.ClosestToGoal);
+                float range = GetModifiedRange();
+                currentTarget = EnemyManager.FindTarget(transform.position, range, TargetingMode.ClosestToGoal);
                 targetRefreshTimer = 0.15f;
             }
 

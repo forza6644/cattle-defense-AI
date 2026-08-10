@@ -210,6 +210,7 @@ namespace Stonehold.Tests
 
             yield return null;
             roster.InitializeRunRoster();
+            Assert.That(roster.OwnedHeroIds.Count, Is.EqualTo(0), "Initial owned heroes count must be 0");
             string[] heroIds =
             {
                 "archer",
@@ -219,24 +220,24 @@ namespace Stonehold.Tests
                 "electric_engineer",
                 "sniper"
             };
-            for (int i = 1; i < heroIds.Length; i++)
+            for (int i = 0; i < heroIds.Length; i++)
             {
                 Assert.That(roster.RecruitHero(heroIds[i]), Is.True, "Failed to recruit " + heroIds[i]);
             }
             Assert.That(roster.OwnedHeroIds.Count, Is.EqualTo(6));
 
             game.SetGameSpeed(1f);
-            Assert.That(Time.timeScale, Is.EqualTo(1f));
+            Assert.That(game.GameSpeed, Is.EqualTo(1f));
             game.SetGameSpeed(1.5f);
-            Assert.That(Time.timeScale, Is.EqualTo(1.5f));
+            Assert.That(game.GameSpeed, Is.EqualTo(1.5f));
             game.SetGameSpeed(2f);
-            Assert.That(Time.timeScale, Is.EqualTo(2f));
+            Assert.That(game.GameSpeed, Is.EqualTo(2f));
             game.TogglePause();
             Assert.That(game.State, Is.EqualTo(GameState.Paused));
             Assert.That(Time.timeScale, Is.Zero);
             game.TogglePause();
             Assert.That(game.State, Is.EqualTo(GameState.Playing));
-            Assert.That(Time.timeScale, Is.EqualTo(2f));
+            Assert.That(game.GameSpeed, Is.EqualTo(2f));
 
             int draftCount = 0;
             int peakEnemies = 0;

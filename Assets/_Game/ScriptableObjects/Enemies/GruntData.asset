@@ -17,6 +17,6 @@ MonoBehaviour:
   classification: 0
   prefab: {fileID: 5225040395024732567, guid: cdc605a01e222bf43b99d976ead66ad4, type: 3}
   health: 22.5
-  moveSpeed: 3.2
+  moveSpeed: 3.4
   goldReward: 5
   castleDamage: 1

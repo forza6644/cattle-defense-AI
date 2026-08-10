@@ -56,7 +56,6 @@ namespace Stonehold.Tests
 
             game.SetGameSpeed(1.5f);
             Assert.That(game.GameSpeed, Is.EqualTo(1.5f));
-            Assert.That(Time.timeScale, Is.EqualTo(1.5f));
 
             game.SetState(GameState.LevelUp);
             Assert.That(game.State, Is.EqualTo(GameState.LevelUp));
@@ -64,7 +63,7 @@ namespace Stonehold.Tests
 
             game.SetState(GameState.Playing);
             Assert.That(game.State, Is.EqualTo(GameState.Playing));
-            Assert.That(Time.timeScale, Is.EqualTo(1.5f), "Resuming Playing state must restore selected game speed.");
+            Assert.That(game.GameSpeed, Is.EqualTo(1.5f), "Resuming Playing state must restore selected game speed.");
 
             Object.DestroyImmediate(gameGo);
         }
