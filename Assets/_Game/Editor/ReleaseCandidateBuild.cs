@@ -133,5 +133,80 @@ namespace Stonehold.Editor
             if (summary.result != BuildResult.Succeeded)
                 throw new InvalidOperationException($"Win64 Build failed: {summary.result}");
         }
+
+        private const string AndroidV2OutputPath = "Builds/Android/StoneholdV2.apk";
+
+        [MenuItem("Stonehold/Android/Build Android APK")]
+        public static void BuildAndroid()
+        {
+            string[] preferredScenes = new[]
+            {
+                "Assets/_Game/Scenes/MainMenu.unity",
+                "Assets/_Game/Scenes/GameScene.unity",
+                "Assets/_Game/Scenes/V2/GameplayIntegration_V2.unity"
+            };
+
+            string[] scenes = preferredScenes.Where(File.Exists).ToArray();
+            if (scenes.Length == 0)
+            {
+                scenes = EditorBuildSettings.scenes
+                    .Where(scene => scene.enabled)
+                    .Select(scene => scene.path)
+                    .ToArray();
+            }
+
+            if (scenes.Length == 0)
+            {
+                scenes = new string[] { "Assets/_Game/Scenes/V2/GameplayIntegration_V2.unity" };
+            }
+
+            string outputPath = Path.GetFullPath(AndroidV2OutputPath);
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+
+            BuildTargetGroup originalGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+            BuildTarget originalTarget = EditorUserBuildSettings.activeBuildTarget;
+            bool originalDev = EditorUserBuildSettings.development;
+            ScriptingImplementation originalBackend = PlayerSettings.GetScriptingBackend(BuildTargetGroup.Android);
+            AndroidArchitecture originalArchitecture = PlayerSettings.Android.targetArchitectures;
+
+            try
+            {
+                EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
+                EditorUserBuildSettings.development = false;
+
+                try
+                {
+                    PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+                    PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[ReleaseCandidateBuild] IL2CPP or ARM64 setting warning: {ex.Message}");
+                    PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+                }
+
+                var options = new BuildPlayerOptions
+                {
+                    scenes = scenes,
+                    locationPathName = outputPath,
+                    target = BuildTarget.Android,
+                    options = BuildOptions.None
+                };
+
+                BuildReport report = BuildPipeline.BuildPlayer(options);
+                BuildSummary summary = report.summary;
+
+                Debug.Log($"Android Build result: {summary.result}; size: {summary.totalSize}; duration: {summary.totalTime}");
+                if (summary.result != BuildResult.Succeeded)
+                    throw new InvalidOperationException($"Android Build failed: {summary.result}");
+            }
+            finally
+            {
+                EditorUserBuildSettings.SwitchActiveBuildTarget(originalGroup, originalTarget);
+                EditorUserBuildSettings.development = originalDev;
+                PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, originalBackend);
+                PlayerSettings.Android.targetArchitectures = originalArchitecture;
+            }
+        }
     }
 }
