@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: SniperFocus
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
   id: sniper_focus
-  displayName: Archer Focus
-  description: +25% Archer damage
+  displayName: Sniper Focus
+  description: +25% Sniper damage
   icon: {fileID: 0}
   rarity: 1
   targetType: 1
-  targetHeroId: archer
+  targetHeroId: sniper
   targetAttackType: 0
   modifierType: 0
   modifierValue: 0.25
