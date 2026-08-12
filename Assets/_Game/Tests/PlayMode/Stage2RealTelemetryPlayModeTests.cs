@@ -13,6 +13,18 @@ namespace Stonehold.Tests
         private static readonly string JsonReportPath = Path.Combine(Application.dataPath, "../stage2_telemetry_report.json");
         private static readonly string TxtReportPath = Path.Combine(Application.dataPath, "../stage2_telemetry_report.txt");
 
+        [SetUp]
+        public void SetUp()
+        {
+            Time.timeScale = 2.0f;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Time.timeScale = 1.0f;
+        }
+
         [UnityTest, Timeout(420000)]
         public IEnumerator Stage2_RealTimeCombat_TelemetryExecution()
         {

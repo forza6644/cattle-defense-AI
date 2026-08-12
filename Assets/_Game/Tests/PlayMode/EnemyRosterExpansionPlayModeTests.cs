@@ -21,7 +21,7 @@ namespace Stonehold.Tests
         [SetUp]
         public void SetUp()
         {
-            Time.timeScale = 1f;
+            Time.timeScale = 2.0f;
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.SetState(GameState.Playing);

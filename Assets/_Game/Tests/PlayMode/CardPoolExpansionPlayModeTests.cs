@@ -16,6 +16,7 @@ namespace Stonehold.Tests
         [SetUp]
         public void SetUp()
         {
+            Time.timeScale = 2.0f;
             container = new GameObject("CardPoolExpansionTests_Container");
             rosterManager = container.AddComponent<HeroRosterManager>();
             modifierManager = container.AddComponent<RunModifierManager>();
@@ -24,6 +25,7 @@ namespace Stonehold.Tests
         [TearDown]
         public void TearDown()
         {
+            Time.timeScale = 1.0f;
             if (container != null)
             {
                 Object.DestroyImmediate(container);

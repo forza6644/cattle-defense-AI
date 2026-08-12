@@ -35,6 +35,7 @@ namespace Stonehold.Tests
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            Time.timeScale = 2.0f;
             CapturePlayerProgress();
             stage = AssetDatabase.LoadAssetAtPath<StageData>(Root + "/StoneholdExpansionTrial.asset");
             Assert.That(stage, Is.Not.Null);
