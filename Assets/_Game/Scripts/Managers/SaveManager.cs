@@ -38,7 +38,8 @@ namespace Stonehold
             "castle_regen",
             "damage",
             "fire_rate",
-            "range"
+            "range",
+            "gold_bonus"
         };
 
         private static bool runRewardsClaimed;
@@ -315,6 +316,21 @@ namespace Stonehold
         {
             PlayerPrefs.SetInt("meta_upgrade_" + upgradeId, level);
             PlayerPrefs.Save();
+        }
+
+        public static bool TryPurchaseUpgrade(string upgradeId, int cost)
+        {
+            if (string.IsNullOrEmpty(upgradeId) || cost <= 0 || MetaGold < cost)
+            {
+                return false;
+            }
+
+            MetaGold -= cost;
+            PlayerPrefs.SetInt(KeyMetaGold, MetaGold);
+            int currentLevel = GetUpgradeLevel(upgradeId);
+            SetUpgradeLevel(upgradeId, currentLevel + 1);
+            SaveProgress();
+            return true;
         }
 
         public static void ResetProgress()

@@ -52,9 +52,9 @@ namespace Stonehold
         private Button[] crystalButtons;
         private Text[] crystalButtonLabels;
 
-        private Text[] metaUpgradeNameTexts = new Text[5];
-        private Button[] metaUpgradeButtons = new Button[5];
-        private Text[] metaUpgradeButtonLabels = new Text[5];
+        private Text[] metaUpgradeNameTexts = new Text[6];
+        private Button[] metaUpgradeButtons = new Button[6];
+        private Text[] metaUpgradeButtonLabels = new Text[6];
 
         private void Awake()
         {

@@ -9,7 +9,8 @@ namespace Stonehold
         CastleRegen,
         GlobalDamage,
         GlobalFireRate,
-        GlobalRange
+        GlobalRange,
+        GoldBonus
     }
 
     [System.Serializable]
@@ -74,11 +75,12 @@ namespace Stonehold
         private void InitializeUpgrades()
         {
             upgrades.Clear();
-            upgrades.Add(new MetaUpgrade("castle_hp", "Castle Fortification", "+1 Castle HP", 10, 100, 1.5f, MetaUpgradeEffectType.CastleHp, 1f));
+            upgrades.Add(new MetaUpgrade("castle_hp", "Castle Fortification", "+10 Castle HP per level", 10, 100, 1.5f, MetaUpgradeEffectType.CastleHp, 10f));
+            upgrades.Add(new MetaUpgrade("damage", "Crystal Attack", "+15% Damage per level", 10, 150, 1.5f, MetaUpgradeEffectType.GlobalDamage, 0.15f));
+            upgrades.Add(new MetaUpgrade("gold_bonus", "MetaGold Bonus", "+10% MetaGold per level", 10, 120, 1.5f, MetaUpgradeEffectType.GoldBonus, 0.10f));
             upgrades.Add(new MetaUpgrade("castle_regen", "Castle Regeneration", "+1 HP every 5 seconds", 10, 125, 1.5f, MetaUpgradeEffectType.CastleRegen, 1f));
-            upgrades.Add(new MetaUpgrade("damage", "Sharper Weapons", "+5% Damage", 10, 150, 1.5f, MetaUpgradeEffectType.GlobalDamage, 0.05f));
-            upgrades.Add(new MetaUpgrade("fire_rate", "Faster Defenders", "+3% Fire Rate", 10, 150, 1.5f, MetaUpgradeEffectType.GlobalFireRate, 0.03f));
-            upgrades.Add(new MetaUpgrade("range", "Longer Watch", "+3% Range", 10, 120, 1.5f, MetaUpgradeEffectType.GlobalRange, 0.03f));
+            upgrades.Add(new MetaUpgrade("fire_rate", "Faster Defenders", "+3% Fire Rate per level", 10, 150, 1.5f, MetaUpgradeEffectType.GlobalFireRate, 0.03f));
+            upgrades.Add(new MetaUpgrade("range", "Longer Watch", "+3% Range per level", 10, 120, 1.5f, MetaUpgradeEffectType.GlobalRange, 0.03f));
         }
 
         public void LoadUpgrades()
@@ -98,11 +100,12 @@ namespace Stonehold
             int cost = u.GetCost();
             if (u.currentLevel < u.maxLevel && SaveManager.MetaGold >= cost)
             {
-                SaveManager.AddMetaGold(-cost);
-                u.currentLevel++;
-                SaveManager.SetUpgradeLevel(u.id, u.currentLevel);
-                Debug.Log($"[MetaUpgradeManager] Successfully upgraded {u.displayName} to level {u.currentLevel}.");
-                return true;
+                if (SaveManager.TryPurchaseUpgrade(u.id, cost))
+                {
+                    u.currentLevel = SaveManager.GetUpgradeLevel(u.id);
+                    Debug.Log($"[MetaUpgradeManager] Successfully upgraded {u.displayName} to level {u.currentLevel}.");
+                    return true;
+                }
             }
             return false;
         }
@@ -149,6 +152,16 @@ namespace Stonehold
         public float GetGlobalRangeMultiplier()
         {
             var u = upgrades.Find(x => x.id == "range");
+            if (u != null)
+            {
+                return 1.0f + (u.currentLevel * u.effectValuePerLevel);
+            }
+            return 1.0f;
+        }
+
+        public float GetGoldBonusMultiplier()
+        {
+            var u = upgrades.Find(x => x.id == "gold_bonus");
             if (u != null)
             {
                 return 1.0f + (u.currentLevel * u.effectValuePerLevel);
