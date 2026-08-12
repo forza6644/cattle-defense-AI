@@ -100,5 +100,38 @@ namespace Stonehold.Editor
                 PlayerSettings.defaultInterfaceOrientation = originalOrientation;
             }
         }
+
+        [MenuItem("Stonehold/Win64/Build Standalone Win64")]
+        public static void BuildWin64()
+        {
+            string[] scenes = EditorBuildSettings.scenes
+                .Where(scene => scene.enabled)
+                .Select(scene => scene.path)
+                .ToArray();
+
+            if (scenes.Length == 0)
+            {
+                scenes = new string[] { "Assets/_Game/Scenes/V2/GameplayIntegration_V2.unity" };
+            }
+
+            string relativeOutputPath = "Builds/Win64/StoneholdV2.exe";
+            string outputPath = Path.GetFullPath(relativeOutputPath);
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+
+            var options = new BuildPlayerOptions
+            {
+                scenes = scenes,
+                locationPathName = outputPath,
+                target = BuildTarget.StandaloneWindows64,
+                options = BuildOptions.None
+            };
+
+            BuildReport report = BuildPipeline.BuildPlayer(options);
+            BuildSummary summary = report.summary;
+
+            Debug.Log($"Standalone Win64 build result: {summary.result}; size: {summary.totalSize}; duration: {summary.totalTime}");
+            if (summary.result != BuildResult.Succeeded)
+                throw new InvalidOperationException($"Win64 Build failed: {summary.result}");
+        }
     }
 }
