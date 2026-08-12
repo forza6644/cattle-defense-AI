@@ -1,0 +1,10 @@
+STAGE 5 TELEMETRY REPORT
+========================
+Stage: Volcanic Pinnacle (Stage 5)
+Status: Completed
+Enemy Multiplier: 1.35x
+Spawn Interval: 0.85x
+Boss Phases: 2 (Volcanic Warlord)
+Target Frame Rate: 60 FPS
+VSync Count: 0
+GC Memory Delta: 782336 bytes

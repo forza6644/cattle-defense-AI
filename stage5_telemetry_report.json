@@ -1,0 +1,11 @@
+{
+  "stageId": "stage_5_volcanic_pinnacle",
+  "stageNumber": 5,
+  "status": "Completed",
+  "enemyCountMultiplier": 1.35,
+  "spawnIntervalMultiplier": 0.85,
+  "targetFrameRate": 60,
+  "vSyncCount": 0,
+  "bossPhases": 2,
+  "gcMemoryDeltaBytes": 782336
+}

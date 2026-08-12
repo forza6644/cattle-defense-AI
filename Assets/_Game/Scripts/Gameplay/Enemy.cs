@@ -20,6 +20,9 @@ namespace Stonehold
         /// <summary>Raised when any enemy dies to a tower: (enemy, gold awarded).</summary>
         public static event Action<Enemy, int> AnyKilled;
 
+        /// <summary>Raised when a boss transitions to a new phase: (bossEnemy, newPhaseIndex, healthPercent).</summary>
+        public static event Action<Enemy, int, float> BossPhaseTransition;
+
         [SerializeField] private EnemyData data;
         [SerializeField] private float arriveDistance = 0.1f;
 
@@ -32,6 +35,7 @@ namespace Stonehold
             AnyDamaged = null;
             AnyDamagedDetailed = null;
             AnyKilled = null;
+            BossPhaseTransition = null;
         }
 
         private void AssignUniqueActivationId()
@@ -97,6 +101,7 @@ namespace Stonehold
         public bool IsTargetable => isActiveActivation && !isDead && gameObject.activeInHierarchy;
         public string PoolKey => poolKey;
         public Castle TargetCastle => targetCastle;
+        public int BossPhase { get; private set; } = 1;
 
         public float SlowMultiplier
         {
@@ -210,6 +215,7 @@ namespace Stonehold
             currentHealth = data != null ? data.health : 0f;
             slowMultiplier = 1f;
             slowTimer = 0f;
+            BossPhase = 1;
             isDead = false;
             isAttackingCastle = false;
             currentWaypointIndex = 0;
@@ -318,6 +324,17 @@ namespace Stonehold
             currentHealth -= reducedAmount;
             AnyDamaged?.Invoke(this, reducedAmount);
             AnyDamagedDetailed?.Invoke(this, reducedAmount, isCrit);
+
+            if (data != null && data.classification == EnemyClassification.Boss && currentHealth > 0f)
+            {
+                float hpPercent = currentHealth / Mathf.Max(1f, data.health);
+                if (BossPhase == 1 && hpPercent <= 0.50f)
+                {
+                    BossPhase = 2;
+                    slowMultiplier *= 1.25f;
+                    BossPhaseTransition?.Invoke(this, 2, hpPercent);
+                }
+            }
 
             if (currentHealth <= 0f)
             {
