@@ -1,0 +1,7 @@
+STAGE 4 TELEMETRY REPORT
+========================
+Stage: Titan Citadel (Stage 4)
+Status: Completed
+Target Frame Rate: 60 FPS
+VSync Count: 0
+GC Memory Delta: 598016 bytes
