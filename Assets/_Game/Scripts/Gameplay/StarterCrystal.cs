@@ -388,6 +388,11 @@ namespace Stonehold
                 VfxManager.Instance.PlayHeroMuzzle(origin, muzzleHeroId);
             }
 
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayHeroShot(muzzleHeroId);
+            }
+
             switch (definition.element)
             {
                 case CrystalElement.Fire:
