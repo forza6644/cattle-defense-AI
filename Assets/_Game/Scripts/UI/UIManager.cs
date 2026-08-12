@@ -76,6 +76,7 @@ namespace Stonehold
         private readonly Image[] cardInnerBgs = new Image[3];
         private readonly Image[] cardTypeBadges = new Image[3];
         private readonly Text[] cardTypeLabels = new Text[3];
+        private readonly Image[] cardIconImages = new Image[3];
         private RunProgressionManager progression;
 
         // Battle Result Panel
@@ -1302,6 +1303,17 @@ namespace Stonehold
                     cardTitleTexts[i].color = titleColor;
                 }
 
+                Sprite iconSprite = choices[i].icon != null
+                    ? choices[i].icon
+                    : CardIconSpriteGenerator.GetSpriteForCard(choices[i].title, choices[i].cardType ?? "Boost");
+
+                if (cardIconImages[i] != null)
+                {
+                    cardIconImages[i].sprite = iconSprite;
+                    cardIconImages[i].color = Color.white;
+                    cardIconImages[i].gameObject.SetActive(iconSprite != null);
+                }
+
                 if (cardButtons[i] != null)
                 {
                     cardButtons[i].onClick.RemoveAllListeners();
@@ -1771,22 +1783,28 @@ namespace Stonehold
                 cardDescriptionTexts[i] = CreateText(contentRoot, "Description", "Card description...", 19, new Color(0.85f, 0.85f, 0.9f), isPortrait ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter);
                 cardDescriptionTexts[i].horizontalOverflow = HorizontalWrapMode.Wrap;
 
+                // Card Icon Art Frame
+                cardIconImages[i] = CreateImage(contentRoot, "CardIcon", Color.white);
+                cardIconImages[i].raycastTarget = false;
+
                 // Select Button
                 if (isPortrait)
                 {
-                    SetAnchored(cardTypeBadges[i].rectTransform, new Vector2(0f, 1f), new Vector2(40f, -30f), new Vector2(140f, 32f));
-                    SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(40f, -20f), new Vector2(240f, 100f));
-                    SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(300f, 0f), new Vector2(280f, 200f));
-                    cardButtons[i] = CreateButton(contentRoot, "SelectButton", "SELECT", new Vector2(160f, 64f), new Vector2(1f, 0.5f),
-                        new Vector2(-40f, 0f), () => { });
+                    SetAnchored(cardTypeBadges[i].rectTransform, new Vector2(0f, 1f), new Vector2(40f, -25f), new Vector2(140f, 30f));
+                    SetAnchored(cardIconImages[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(70f, -10f), new Vector2(85f, 85f));
+                    SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(160f, 30f), new Vector2(240f, 50f));
+                    SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0f, 0.5f), new Vector2(380f, 0f), new Vector2(240f, 180f));
+                    cardButtons[i] = CreateButton(contentRoot, "SelectButton", "SELECT", new Vector2(140f, 60f), new Vector2(1f, 0.5f),
+                        new Vector2(-30f, 0f), () => { });
                 }
                 else
                 {
-                    SetAnchored(cardTypeBadges[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(180f, 32f));
-                    SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -70f), new Vector2(320f, 60f));
-                    SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -20f), new Vector2(300f, 180f));
-                    cardButtons[i] = CreateButton(contentRoot, "SelectButton", "SELECT", new Vector2(240f, 60f), new Vector2(0.5f, 0f),
-                        new Vector2(0f, 40f), () => { });
+                    SetAnchored(cardTypeBadges[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -18f), new Vector2(180f, 30f));
+                    SetAnchored(cardTitleTexts[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -55f), new Vector2(330f, 45f));
+                    SetAnchored(cardIconImages[i].rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -145f), new Vector2(110f, 110f));
+                    SetAnchored(cardDescriptionTexts[i].rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -55f), new Vector2(320f, 120f));
+                    cardButtons[i] = CreateButton(contentRoot, "SelectButton", "SELECT", new Vector2(240f, 55f), new Vector2(0.5f, 0f),
+                        new Vector2(0f, 35f), () => { });
                 }
 
                 cardTypeLabels[i] = CreateText(cardTypeBadges[i].rectTransform, "Label", "TYPE", 14, Color.white, TextAnchor.MiddleCenter);

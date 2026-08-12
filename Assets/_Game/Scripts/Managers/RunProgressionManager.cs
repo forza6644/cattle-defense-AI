@@ -19,14 +19,16 @@ namespace Stonehold
             public Action action;
             public string cardType;
             public string rarity;
+            public Sprite icon;
 
-            public CardChoice(string title, string description, Action action, string cardType = "Boost", string rarity = "Common")
+            public CardChoice(string title, string description, Action action, string cardType = "Boost", string rarity = "Common", Sprite icon = null)
             {
                 this.title = title;
                 this.description = description;
                 this.action = action;
                 this.cardType = cardType;
                 this.rarity = rarity;
+                this.icon = icon;
             }
         }
 

@@ -175,6 +175,10 @@ namespace Stonehold
         {
             CardDefinition selectedCard = choice.Card;
             string cardType = selectedCard.cardCategory == CardCategory.RecruitHero ? "Add" : "Card";
+            Sprite cardIcon = selectedCard.icon != null
+                ? selectedCard.icon
+                : CardIconSpriteGenerator.GetSpriteForCard(selectedCard.displayName, cardType, selectedCard.recruitHeroId);
+
             return new RunProgressionManager.CardChoice(
                 selectedCard.displayName,
                 selectedCard.description,
@@ -184,7 +188,8 @@ namespace Stonehold
                     isSelectionMade = true;
                 },
                 cardType,
-                choice.Rarity.ToString()
+                choice.Rarity.ToString(),
+                cardIcon
             );
         }
 
