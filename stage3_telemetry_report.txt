@@ -1,12 +1,12 @@
 ================================================================================
  STAGE 3 (FROZEN FRONTIER) REAL-TIME COMBAT TELEMETRY REPORT
 ================================================================================
-Timestamp:                  2026-08-16 21:36:54
+Timestamp:                  2026-08-16 22:53:30
 Stage ID:                   stage_3_frozen_frontier
 Final Game State:           Victory
-Total Run Duration:         71.05 seconds
+Total Run Duration:         71.02 seconds
 Total Waves Cleared:        10 / 10
-Total Enemies Spawned:      131
+Total Enemies Spawned:      128
 Total Enemies Defeated:     131
 Final Castle HP:            50 / 50
 Final Player Level:         10
@@ -23,48 +23,48 @@ Warlord Boss Defeated:      YES
     2 |       4.4 |    10.9 |          6.5 |       9 |        9 |   50/50   |   56 |     4
     3 |      10.9 |    14.4 |          3.5 |      12 |       12 |   50/50   |   30 |     5
     4 |      14.4 |    22.3 |          7.9 |      11 |       11 |   50/50   |   67 |     6
-    5 |      22.3 |    29.5 |          7.1 |      14 |       14 |   50/50   |   17 |     7
-    6 |      29.5 |    37.9 |          8.5 |      11 |       11 |   50/50   |  209 |     7
-    7 |      37.9 |    44.3 |          6.4 |      15 |       15 |   50/50   |   93 |     8
-    8 |      44.3 |    52.9 |          8.6 |      18 |       18 |   50/50   |  339 |     8
-    9 |      52.9 |    63.1 |         10.2 |      23 |       23 |   50/50   |  232 |     9
-   10 |      63.1 |    71.1 |          7.9 |       9 |        9 |   50/50   |   29 |    10
+    5 |      22.3 |    29.3 |          7.0 |      12 |       14 |   50/50   |   17 |     7
+    6 |      29.3 |    37.5 |          8.2 |      11 |       11 |   50/50   |  209 |     7
+    7 |      37.5 |    44.0 |          6.5 |      14 |       15 |   50/50   |   93 |     8
+    8 |      44.0 |    53.3 |          9.3 |      18 |       18 |   50/50   |  339 |     8
+    9 |      53.3 |    63.3 |         10.0 |      23 |       23 |   50/50   |  232 |     9
+   10 |      63.3 |    71.0 |          7.7 |       9 |        9 |   50/50   |   29 |    10
 ================================================================================
  DRAFT SELECTION LOG:
 --------------------------------------------------------------------------------
  Draft #1 @ 2.2s (Level 2)
-   Offered Choices:  Echoing Nova | Forked Current | Extended Circuit
-   Selected Card:    Echoing Nova
+   Offered Choices:  Fast Casting | Shard Volley | Twin Volley
+   Selected Card:    Fast Casting
 --------------------------------------------------------------------------------
  Draft #2 @ 6.2s (Level 3)
-   Offered Choices:  Shard Volley | Wide Blast | Forked Current
-   Selected Card:    Shard Volley
+   Offered Choices:  Piercing Arrows | Fast Casting | Empowered Abilities
+   Selected Card:    Piercing Arrows
 --------------------------------------------------------------------------------
  Draft #3 @ 9.9s (Level 4)
-   Offered Choices:  Wide Blast | Twin Volley | War Training
-   Selected Card:    Wide Blast
+   Offered Choices:  War Training | Wide Blast | Shard Volley
+   Selected Card:    War Training
 --------------------------------------------------------------------------------
  Draft #4 @ 12.7s (Level 5)
-   Offered Choices:  Cluster Shells | Shard Volley | Fast Casting
-   Selected Card:    Cluster Shells
---------------------------------------------------------------------------------
- Draft #5 @ 21.4s (Level 6)
-   Offered Choices:  Wide Blast | Wide Blast | Twin Volley
-   Selected Card:    Wide Blast
---------------------------------------------------------------------------------
- Draft #6 @ 29.1s (Level 7)
-   Offered Choices:  Cluster Shells | Extended Circuit | Wide Blast
-   Selected Card:    Cluster Shells
---------------------------------------------------------------------------------
- Draft #7 @ 42.4s (Level 8)
-   Offered Choices:  Extended Circuit | Battle Rhythm | War Training
+   Offered Choices:  Extended Circuit | Echoing Nova | Twin Volley
    Selected Card:    Extended Circuit
 --------------------------------------------------------------------------------
- Draft #8 @ 57.3s (Level 9)
-   Offered Choices:  Wide Blast | Wide Blast | Frostbite
-   Selected Card:    Wide Blast
+ Draft #5 @ 21.4s (Level 6)
+   Offered Choices:  Empowered Abilities | Shard Volley | Wide Blast
+   Selected Card:    Empowered Abilities
+--------------------------------------------------------------------------------
+ Draft #6 @ 29.0s (Level 7)
+   Offered Choices:  Echoing Nova | Fast Casting | Extended Circuit
+   Selected Card:    Echoing Nova
+--------------------------------------------------------------------------------
+ Draft #7 @ 41.4s (Level 8)
+   Offered Choices:  Twin Volley | Cluster Shells | Fast Casting
+   Selected Card:    Twin Volley
+--------------------------------------------------------------------------------
+ Draft #8 @ 58.2s (Level 9)
+   Offered Choices:  War Training | Extended Circuit | Empowered Abilities
+   Selected Card:    War Training
 --------------------------------------------------------------------------------
  Draft #9 @ 70.7s (Level 10)
-   Offered Choices:  Fast Casting | Frostbite | Extended Circuit
-   Selected Card:    Fast Casting
+   Offered Choices:  War Training | Cluster Shells | Fast Casting
+   Selected Card:    War Training
 --------------------------------------------------------------------------------

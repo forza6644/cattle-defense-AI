@@ -7,4 +7,4 @@ Spawn Interval: 0.85x
 Boss Phases: 2 (Volcanic Warlord)
 Target Frame Rate: 60 FPS
 VSync Count: 0
-GC Memory Delta: 720896 bytes
+GC Memory Delta: 770048 bytes

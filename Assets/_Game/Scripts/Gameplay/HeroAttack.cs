@@ -195,7 +195,12 @@ namespace Stonehold
 
         public float GetModifiedCritChance()
         {
-            float chance = (definition != null && definition.id == "sniper") ? 0.20f : 0.05f;
+            float chance = 0.05f;
+            if (definition != null)
+            {
+                if (definition.id == "sniper") chance = 0.20f;
+                else if (definition.id == "shadow_assassin") chance = 0.25f;
+            }
             if (RunModifierManager.Instance != null && definition != null)
             {
                 chance += RunModifierManager.Instance.GetCritChanceAdd(definition.id);
@@ -209,7 +214,7 @@ namespace Stonehold
 
         public float GetModifiedCritMultiplier()
         {
-            float mult = 2.0f;
+            float mult = (definition != null && definition.id == "shadow_assassin") ? 2.5f : 2.0f;
             if (RunModifierManager.Instance != null && definition != null)
             {
                 mult += RunModifierManager.Instance.GetCritMultiplierAdd(definition.id);
@@ -393,6 +398,8 @@ namespace Stonehold
                 case "electric_engineer": delay = 0.2f; break;
                 case "plague_doctor": delay = 0.25f; break;
                 case "radiant_paladin": delay = 0.2f; break;
+                case "shadow_assassin": delay = 0.12f; break;
+                case "storm_druid": delay = 0.22f; break;
                 default: delay = 0.15f; break;
             }
 
@@ -470,6 +477,100 @@ namespace Stonehold
                 case HeroAbilityType.Consecration:
                     UseConsecrationAbility(primaryTarget, abilityDamage);
                     break;
+                case HeroAbilityType.ShadowStep:
+                    UseShadowStepAbility(primaryTarget, abilityDamage);
+                    break;
+                case HeroAbilityType.TempestCyclone:
+                    UseTempestCycloneAbility(primaryTarget, abilityDamage);
+                    break;
+            }
+        }
+
+        private void UseShadowStepAbility(Enemy primaryTarget, float damage)
+        {
+            if (primaryTarget == null || primaryTarget.IsDead) return;
+
+            Vector3 targetPos = primaryTarget.transform.position;
+            bool isCrit = true; // Guaranteed lethal critical strike
+            float finalDamage = damage * 2.0f; // Eviscerate multiplier
+
+            if (RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("shadow_assassin", HeroBehaviorEffectType.LethalPrecisionCrit))
+            {
+                finalDamage *= 1.5f;
+            }
+
+            float applied = primaryTarget.TakeDamage(finalDamage, true, isCrit, definition.id);
+            DamageTracker.RecordDamage(definition.id, applied);
+
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayHeroProjectileImpact(targetPos, "shadow_assassin", true);
+                if (CameraRig.Instance != null) CameraRig.Instance.Shake(0.5f);
+            }
+
+            // If target died and ShadowDanceReset is active, reset cooldown!
+            if (primaryTarget.IsDead && RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("shadow_assassin", HeroBehaviorEffectType.ShadowDanceReset))
+            {
+                abilityCooldown = 0f;
+                Debug.Log("[HeroAttack] 🗡️ SHADOW DANCE: Cooldown instantly refreshed on kill!");
+            }
+        }
+
+        private void UseTempestCycloneAbility(Enemy primaryTarget, float damage)
+        {
+            Vector3 center = primaryTarget != null ? primaryTarget.transform.position : transform.position;
+            float radius = GetModifiedAbilityRadius();
+
+            if (RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("storm_druid", HeroBehaviorEffectType.VortexMaelstrom))
+            {
+                radius *= 1.5f;
+            }
+
+            StartCoroutine(ExecuteTempestCycloneRoutine(center, damage, radius));
+        }
+
+        private System.Collections.IEnumerator ExecuteTempestCycloneRoutine(Vector3 center, float totalDamage, float radius)
+        {
+            float duration = 2.5f;
+            float tickInterval = 0.5f;
+            float tickDamage = totalDamage / (duration / tickInterval);
+            float elapsed = 0f;
+
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayHeroProjectileImpact(center, "storm_druid", true);
+                if (CameraRig.Instance != null) CameraRig.Instance.Shake(0.4f);
+            }
+
+            while (elapsed < duration)
+            {
+                if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                var enemies = EnemyManager.All;
+                if (enemies != null)
+                {
+                    float radiusSqr = radius * radius;
+                    for (int i = 0; i < enemies.Count; i++)
+                    {
+                        var e = enemies[i];
+                        if (e != null && !e.IsDead && e.IsTargetable)
+                        {
+                            Vector3 diff = center - e.transform.position;
+                            if (diff.sqrMagnitude <= radiusSqr)
+                            {
+                                e.transform.position = Vector3.MoveTowards(e.transform.position, center, 2.5f * Time.deltaTime);
+                            }
+                        }
+                    }
+                }
+
+                HitEnemiesInRadius(center, tickDamage, StatusEffectType.Shock, 1.0f, 2.0f, false, radius);
+                yield return new WaitForSeconds(tickInterval);
+                elapsed += tickInterval;
             }
         }
 
@@ -969,6 +1070,8 @@ namespace Stonehold
                 case "sniper": delay = 0.28f; break;
                 case "plague_doctor": delay = 0.2f; break;
                 case "radiant_paladin": delay = 0.18f; break;
+                case "shadow_assassin": delay = 0.10f; break;
+                case "storm_druid": delay = 0.18f; break;
             }
 
             if (animator != null)

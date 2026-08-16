@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3712fd46809c4174c83589090a128870, type: 3}
+  m_Name: PlagueEpidemicOutbreak
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
+  id: mod_plague_epidemic_outbreak
+  displayName: Epidemic Outbreak
+  description: Enemies infected with Poison explode into a toxic miasma upon defeat, applying full Poison to nearby invaders.
+  icon: {fileID: 0}
+  cardCategory: 2
+  recruitHeroId: 
+  requiredOwnedHeroId: plague_doctor
+  blockedIfOwnedHeroId: 
+  rarity: 2
+  targetType: 2
+  targetHeroId: plague_doctor
+  targetAttackType: 0
+  modifierType: 0
+  modifierValue: 0.3
+  weight: 3

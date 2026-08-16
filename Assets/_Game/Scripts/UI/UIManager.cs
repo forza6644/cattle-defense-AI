@@ -2859,6 +2859,8 @@ namespace Stonehold
                 case "sniper": return new Color(0.75f, 0.4f, 1f);
                 case "plague_doctor": return new Color(0.25f, 0.95f, 0.35f);
                 case "radiant_paladin": return new Color(1f, 0.88f, 0.2f);
+                case "shadow_assassin": return new Color(0.7f, 0.2f, 0.95f);
+                case "storm_druid": return new Color(0.2f, 0.85f, 0.8f);
                 default: return Color.white;
             }
         }
@@ -2875,6 +2877,8 @@ namespace Stonehold
                 case "sniper": return "SNP";
                 case "plague_doctor": return "PLG";
                 case "radiant_paladin": return "PAL";
+                case "shadow_assassin": return "ASN";
+                case "storm_druid": return "DRU";
                 default: return "HERO";
             }
         }
@@ -2916,6 +2920,10 @@ namespace Stonehold
             bool hasFrost = false;
             bool hasElectric = false;
             bool hasPhysical = false;
+            bool hasPoison = false;
+            bool hasHoly = false;
+            bool hasShadow = false;
+            bool hasStorm = false;
 
             for (int i = 0; i < slots.Count; i++)
             {
@@ -2927,13 +2935,21 @@ namespace Stonehold
                     else if (id == "frost_mage") hasFrost = true;
                     else if (id == "electric_engineer") hasElectric = true;
                     else if (id == "archer" || id == "bombardier" || id == "sniper") hasPhysical = true;
+                    else if (id == "plague_doctor") hasPoison = true;
+                    else if (id == "radiant_paladin") hasHoly = true;
+                    else if (id == "shadow_assassin") hasShadow = true;
+                    else if (id == "storm_druid") hasStorm = true;
                 }
             }
 
-            List<string> activeCombos = new List<string>(4);
+            List<string> activeCombos = new List<string>(6);
             if (hasFire && hasFrost) activeCombos.Add("🔥+❄️ Thermal");
             if (hasElectric && hasFire) activeCombos.Add("⚡+🔥 Overload");
             if (hasFrost && hasPhysical) activeCombos.Add("❄️+🏹 Shatter");
+            if (hasPoison && hasFire) activeCombos.Add("🧪+🔥 Corrosive");
+            if (hasHoly && hasPhysical) activeCombos.Add("✨+⚔️ Blessed");
+            if (hasShadow && hasPhysical) activeCombos.Add("🗡️+🎯 Vulnerability");
+            if (hasStorm && hasElectric) activeCombos.Add("🍃+⚡ Maelstrom");
 
             if (activeCombos.Count > 0)
             {

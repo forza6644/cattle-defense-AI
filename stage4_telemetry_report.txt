@@ -4,4 +4,4 @@ Stage: Titan Citadel (Stage 4)
 Status: Completed
 Target Frame Rate: 60 FPS
 VSync Count: 0
-GC Memory Delta: 589824 bytes
+GC Memory Delta: 757760 bytes

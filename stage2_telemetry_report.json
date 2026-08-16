@@ -1,23 +1,23 @@
 {
     "reportTitle": "STAGE 2 (HIGHLANDS) REAL-TIME COMBAT TELEMETRY REPORT",
-    "generatedAtTimestamp": "2026-08-16 21:35:49",
+    "generatedAtTimestamp": "2026-08-16 22:52:26",
     "stageId": "stage_2_highlands",
     "finalGameState": "Victory",
-    "totalRunDurationSeconds": 64.93684387207031,
+    "totalRunDurationSeconds": 63.820526123046878,
     "totalWavesCleared": 10,
     "totalEnemiesSpawned": 114,
     "totalEnemiesDefeated": 116,
     "finalCastleHp": 50,
     "finalCastleMaxHp": 50,
     "finalPlayerLevel": 9,
-    "finalPlayerXp": 282,
+    "finalPlayerXp": 297,
     "totalDraftTriggersFired": 8,
     "waveLogs": [
         {
             "waveNumber": 1,
-            "realStartTimeSeconds": 0.000030517578125,
-            "realEndTimeSeconds": 3.2202606201171877,
-            "durationSeconds": 3.2202301025390627,
+            "realStartTimeSeconds": 0.00006103515625,
+            "realEndTimeSeconds": 3.220550537109375,
+            "durationSeconds": 3.220489501953125,
             "enemiesSpawned": 6,
             "enemiesDefeated": 6,
             "castleHpRemaining": 50,
@@ -27,9 +27,9 @@
         },
         {
             "waveNumber": 2,
-            "realStartTimeSeconds": 3.2202606201171877,
-            "realEndTimeSeconds": 6.4868927001953129,
-            "durationSeconds": 3.266632080078125,
+            "realStartTimeSeconds": 3.220550537109375,
+            "realEndTimeSeconds": 6.487213134765625,
+            "durationSeconds": 3.26666259765625,
             "enemiesSpawned": 8,
             "enemiesDefeated": 8,
             "castleHpRemaining": 50,
@@ -39,9 +39,9 @@
         },
         {
             "waveNumber": 3,
-            "realStartTimeSeconds": 6.4868927001953129,
-            "realEndTimeSeconds": 12.353652954101563,
-            "durationSeconds": 5.86676025390625,
+            "realStartTimeSeconds": 6.487213134765625,
+            "realEndTimeSeconds": 12.354034423828125,
+            "durationSeconds": 5.8668212890625,
             "enemiesSpawned": 9,
             "enemiesDefeated": 9,
             "castleHpRemaining": 50,
@@ -51,8 +51,8 @@
         },
         {
             "waveNumber": 4,
-            "realStartTimeSeconds": 12.353652954101563,
-            "realEndTimeSeconds": 16.903549194335939,
+            "realStartTimeSeconds": 12.354034423828125,
+            "realEndTimeSeconds": 16.9039306640625,
             "durationSeconds": 4.549896240234375,
             "enemiesSpawned": 11,
             "enemiesDefeated": 11,
@@ -63,9 +63,9 @@
         },
         {
             "waveNumber": 5,
-            "realStartTimeSeconds": 16.903549194335939,
-            "realEndTimeSeconds": 25.820297241210939,
-            "durationSeconds": 8.916748046875,
+            "realStartTimeSeconds": 16.9039306640625,
+            "realEndTimeSeconds": 25.537384033203126,
+            "durationSeconds": 8.633453369140625,
             "enemiesSpawned": 10,
             "enemiesDefeated": 10,
             "castleHpRemaining": 50,
@@ -75,9 +75,9 @@
         },
         {
             "waveNumber": 6,
-            "realStartTimeSeconds": 25.820297241210939,
-            "realEndTimeSeconds": 30.236892700195314,
-            "durationSeconds": 4.416595458984375,
+            "realStartTimeSeconds": 25.537384033203126,
+            "realEndTimeSeconds": 29.603851318359376,
+            "durationSeconds": 4.06646728515625,
             "enemiesSpawned": 14,
             "enemiesDefeated": 14,
             "castleHpRemaining": 50,
@@ -87,9 +87,9 @@
         },
         {
             "waveNumber": 7,
-            "realStartTimeSeconds": 30.236892700195314,
-            "realEndTimeSeconds": 39.27015686035156,
-            "durationSeconds": 9.03326416015625,
+            "realStartTimeSeconds": 29.603851318359376,
+            "realEndTimeSeconds": 38.18743896484375,
+            "durationSeconds": 8.583587646484375,
             "enemiesSpawned": 12,
             "enemiesDefeated": 12,
             "castleHpRemaining": 50,
@@ -99,129 +99,129 @@
         },
         {
             "waveNumber": 8,
-            "realStartTimeSeconds": 39.27015686035156,
-            "realEndTimeSeconds": 45.38682556152344,
-            "durationSeconds": 6.116668701171875,
-            "enemiesSpawned": 17,
+            "realStartTimeSeconds": 38.18743896484375,
+            "realEndTimeSeconds": 44.7371826171875,
+            "durationSeconds": 6.54974365234375,
+            "enemiesSpawned": 16,
             "enemiesDefeated": 17,
             "castleHpRemaining": 50,
             "castleMaxHp": 50,
-            "playerXpAtWaveEnd": 67,
+            "playerXpAtWaveEnd": 82,
             "playerLevelAtWaveEnd": 8
         },
         {
             "waveNumber": 9,
-            "realStartTimeSeconds": 45.38682556152344,
-            "realEndTimeSeconds": 56.03700256347656,
-            "durationSeconds": 10.650177001953125,
-            "enemiesSpawned": 18,
+            "realStartTimeSeconds": 44.7371826171875,
+            "realEndTimeSeconds": 55.820526123046878,
+            "durationSeconds": 11.083343505859375,
+            "enemiesSpawned": 19,
             "enemiesDefeated": 20,
             "castleHpRemaining": 50,
             "castleMaxHp": 50,
-            "playerXpAtWaveEnd": 395,
-            "playerLevelAtWaveEnd": 8
+            "playerXpAtWaveEnd": 0,
+            "playerLevelAtWaveEnd": 9
         },
         {
             "waveNumber": 10,
-            "realStartTimeSeconds": 56.03700256347656,
-            "realEndTimeSeconds": 64.93684387207031,
-            "durationSeconds": 8.89984130859375,
+            "realStartTimeSeconds": 55.820526123046878,
+            "realEndTimeSeconds": 63.82049560546875,
+            "durationSeconds": 7.999969482421875,
             "enemiesSpawned": 9,
             "enemiesDefeated": 9,
             "castleHpRemaining": 50,
             "castleMaxHp": 50,
-            "playerXpAtWaveEnd": 282,
+            "playerXpAtWaveEnd": 297,
             "playerLevelAtWaveEnd": 9
         }
     ],
     "draftLogs": [
         {
             "draftIndex": 1,
-            "timestampSeconds": 2.4712982177734377,
+            "timestampSeconds": 2.4716796875,
             "playerLevel": 2,
             "offeredCardTitles": [
-                "Shard Volley",
-                "Frostbite",
-                "Twin Volley"
-            ],
-            "selectedCardTitle": "Shard Volley"
-        },
-        {
-            "draftIndex": 2,
-            "timestampSeconds": 5.8877410888671879,
-            "playerLevel": 3,
-            "offeredCardTitles": [
                 "Battle Rhythm",
-                "Cluster Shells",
+                "Echoing Nova",
                 "Extended Circuit"
             ],
             "selectedCardTitle": "Battle Rhythm"
         },
         {
+            "draftIndex": 2,
+            "timestampSeconds": 5.888153076171875,
+            "playerLevel": 3,
+            "offeredCardTitles": [
+                "Wide Blast",
+                "Fast Casting",
+                "Echoing Nova"
+            ],
+            "selectedCardTitle": "Wide Blast"
+        },
+        {
             "draftIndex": 3,
-            "timestampSeconds": 10.537765502929688,
+            "timestampSeconds": 10.53814697265625,
             "playerLevel": 4,
             "offeredCardTitles": [
-                "Forked Current",
-                "Wide Blast",
-                "Fast Casting"
+                "Piercing Arrows",
+                "Battle Rhythm",
+                "Forked Current"
             ],
-            "selectedCardTitle": "Forked Current"
+            "selectedCardTitle": "Piercing Arrows"
         },
         {
             "draftIndex": 4,
-            "timestampSeconds": 15.621017456054688,
+            "timestampSeconds": 15.621429443359375,
             "playerLevel": 5,
             "offeredCardTitles": [
-                "Extended Circuit",
-                "Empowered Abilities",
-                "War Training"
+                "War Training",
+                "Echoing Nova",
+                "Battle Rhythm"
             ],
-            "selectedCardTitle": "Extended Circuit"
+            "selectedCardTitle": "War Training"
         },
         {
             "draftIndex": 5,
-            "timestampSeconds": 22.454574584960939,
+            "timestampSeconds": 22.454833984375,
             "playerLevel": 6,
             "offeredCardTitles": [
-                "Extended Circuit",
                 "Frostbite",
-                "Shard Volley"
+                "Forked Current",
+                "War Training"
             ],
-            "selectedCardTitle": "Extended Circuit"
+            "selectedCardTitle": "Frostbite"
         },
         {
             "draftIndex": 6,
-            "timestampSeconds": 34.78779602050781,
+            "timestampSeconds": 33.605072021484378,
             "playerLevel": 7,
             "offeredCardTitles": [
-                "Forked Current",
-                "Fast Casting",
-                "Shard Volley"
+                "Twin Volley",
+                "Cluster Shells",
+                "Extended Circuit"
             ],
-            "selectedCardTitle": "Forked Current"
+            "selectedCardTitle": "Twin Volley"
         },
         {
             "draftIndex": 7,
-            "timestampSeconds": 43.48793029785156,
+            "timestampSeconds": 43.00506591796875,
             "playerLevel": 8,
             "offeredCardTitles": [
-                "Cluster Shells",
+                "War Training",
                 "Piercing Arrows",
-                "Battle Rhythm"
+                "Wide Blast"
             ],
-            "selectedCardTitle": "Cluster Shells"
+            "selectedCardTitle": "War Training"
         },
         {
             "draftIndex": 8,
-            "timestampSeconds": 59.82130432128906,
+            "timestampSeconds": 55.505279541015628,
             "playerLevel": 9,
             "offeredCardTitles": [
-                "Twin Volley",
-                "Frostbite",
-                "War Training"
+                "Piercing Arrows",
+                "Cluster Shells",
+                "Shard Volley"
             ],
-            "selectedCardTitle": "Twin Volley"
+            "selectedCardTitle": "Piercing Arrows"
         }
     ]
 }

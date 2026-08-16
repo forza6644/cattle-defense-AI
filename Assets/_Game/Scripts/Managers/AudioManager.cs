@@ -228,6 +228,18 @@ namespace Stonehold
                         PlaySfx(library.upgrade, 0.45f, pitch * 1.25f);
                     }
                     break;
+                case "shadow_assassin":
+                    if (library.arrowHit != null)
+                    {
+                        PlaySfx(library.arrowHit, 0.45f, pitch * 1.65f);
+                    }
+                    break;
+                case "storm_druid":
+                    if (library.frostHit != null)
+                    {
+                        PlaySfx(library.frostHit, 0.45f, pitch * 1.15f);
+                    }
+                    break;
             }
         }
 
@@ -291,6 +303,18 @@ namespace Stonehold
                         PlaySfx(library.cannonExplosion, volume * 0.75f, pitch * 1.1f);
                     }
                     break;
+                case "shadow_assassin":
+                    if (library.arrowHit != null)
+                    {
+                        PlaySfx(library.arrowHit, volume * 0.9f, pitch * 1.4f);
+                    }
+                    break;
+                case "storm_druid":
+                    if (library.cannonExplosion != null)
+                    {
+                        PlaySfx(library.cannonExplosion, volume * 0.75f, pitch * 1.35f);
+                    }
+                    break;
                 default:
                     // Fallback
                     PlayImpact(false, false);
@@ -327,6 +351,12 @@ namespace Stonehold
                     break;
                 case "radiant_paladin":
                     PlaySfx(library.upgrade, 0.85f, pitch * 1.3f);
+                    break;
+                case "shadow_assassin":
+                    PlaySfx(library.arrowHit, 0.95f, pitch * 1.6f);
+                    break;
+                case "storm_druid":
+                    PlaySfx(library.frostHit, 0.9f, pitch * 1.1f);
                     break;
             }
         }

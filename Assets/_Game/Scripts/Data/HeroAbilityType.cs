@@ -10,6 +10,8 @@ namespace Stonehold
         ChainStorm,
         PowerShot,
         PlagueFlask,
-        Consecration
+        Consecration,
+        ShadowStep,
+        TempestCyclone
     }
 }

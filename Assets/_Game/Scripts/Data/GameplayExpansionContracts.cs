@@ -23,7 +23,11 @@ namespace Stonehold
         CorrosiveArmorShred = 15,
         ArmyOfTheDead = 16,
         SanctuaryAura = 17,
-        DivineShieldBreaker = 18
+        DivineShieldBreaker = 18,
+        ShadowDanceReset = 19,
+        LethalPrecisionCrit = 20,
+        ConductiveWinds = 21,
+        VortexMaelstrom = 22
     }
 
     public enum PlacementMode

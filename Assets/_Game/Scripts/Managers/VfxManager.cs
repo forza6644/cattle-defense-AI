@@ -385,6 +385,8 @@ namespace Stonehold
                 case "sniper": return new Color(0.82f, 0.32f, 1f, 1f);
                 case "plague_doctor": return new Color(0.25f, 0.95f, 0.35f, 1f);
                 case "radiant_paladin": return new Color(1f, 0.88f, 0.2f, 1f);
+                case "shadow_assassin": return new Color(0.68f, 0.18f, 0.95f, 1f);
+                case "storm_druid": return new Color(0.2f, 0.88f, 0.82f, 1f);
                 default: return Color.white;
             }
         }
