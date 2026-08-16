@@ -20,8 +20,9 @@ namespace Stonehold
             public string cardType;
             public string rarity;
             public Sprite icon;
+            public string synergyTag;
 
-            public CardChoice(string title, string description, Action action, string cardType = "Boost", string rarity = "Common", Sprite icon = null)
+            public CardChoice(string title, string description, Action action, string cardType = "Boost", string rarity = "Common", Sprite icon = null, string synergyTag = null)
             {
                 this.title = title;
                 this.description = description;
@@ -29,6 +30,7 @@ namespace Stonehold
                 this.cardType = cardType;
                 this.rarity = rarity;
                 this.icon = icon;
+                this.synergyTag = synergyTag;
             }
         }
 

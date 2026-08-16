@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f17e9e434a11340bf474dd4d821c57, type: 3}
+  m_Name: Stage6_AbyssalVoidRift
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.StageData
+  stageId: stage_6_abyssal_void_rift
+  stageDisplayName: Abyssal Void Rift
+  stageDescription: Survive the cosmic horrors of the Abyssal Void Rift, phase-shifting stalkers, nullifiers, and the Void Lord.
+  stageNumber: 6
+  stageMode: 0
+  waves:
+  - {fileID: 11400000, guid: 53369433637066649b2ba106ff048e17, type: 2}
+  - {fileID: 11400000, guid: e838ed57d9e26df48a8bca9129afc958, type: 2}
+  - {fileID: 11400000, guid: b6a91d23686355f49a15a2932210c0a0, type: 2}
+  - {fileID: 11400000, guid: 16f1a059126a28b429a7b843d199c570, type: 2}
+  - {fileID: 11400000, guid: 38e7ede0078c58540b0991311da80031, type: 2}
+  - {fileID: 11400000, guid: 8492de24722e71e4fa2eb04ece466f3f, type: 2}
+  - {fileID: 11400000, guid: 9a2ce97488dd271468ad9c72b7c36e3f, type: 2}
+  - {fileID: 11400000, guid: ed46fa68bcb41804481fb68e359de61b, type: 2}
+  - {fileID: 11400000, guid: 1606efbe39267ec458c2f8861f236dfe, type: 2}
+  - {fileID: 11400000, guid: b8ceac1b2e2f7fb4a839c85ce57a7c5a, type: 2}
+  useExactWaveCounts: 1
+  enemyCountMultiplier: 1.55
+  spawnIntervalMultiplier: 0.75
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: e1a00001000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000002, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000003, type: 2}

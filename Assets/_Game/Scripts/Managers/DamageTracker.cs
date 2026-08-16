@@ -48,6 +48,7 @@ namespace Stonehold
             }
 
             inst.damageByHeroId[heroId] += damageAmount;
+            CombatTelemetryManager.RecordDamage(heroId, damageAmount);
         }
 
         public float GetTotalDamage()

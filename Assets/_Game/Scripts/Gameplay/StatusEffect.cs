@@ -22,7 +22,7 @@ namespace Stonehold
             Duration = duration;
             RemainingTime = duration;
             SourceHeroId = sourceHeroId;
-            TickTimer = 1.0f; // Default burn/DoT tick interval: 1 second
+            TickTimer = (type == StatusEffectType.Poison) ? 0.5f : 1.0f; // Poison ticks every 0.5s, Burn every 1.0s
         }
     }
 }

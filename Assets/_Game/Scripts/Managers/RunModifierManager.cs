@@ -294,6 +294,70 @@ namespace Stonehold
             return add;
         }
 
+        public float GetElementalReactionMultiplier(string heroId)
+        {
+            float mult = 1.0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.ElementalReactionDamageMultiplier)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        mult += card.modifierValue;
+                    }
+                }
+            }
+            return mult;
+        }
+
+        public float GetShatterBonusMultiplier(string heroId)
+        {
+            float mult = 1.0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.ShatterBonusMultiplier)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        mult += card.modifierValue;
+                    }
+                }
+            }
+            return mult;
+        }
+
+        public float GetPoisonDamageAdd(string heroId)
+        {
+            float add = 0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.PoisonDamageAdd)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        add += card.modifierValue;
+                    }
+                }
+            }
+            return add;
+        }
+
+        public float GetPoisonDurationAdd(string heroId)
+        {
+            float add = 0f;
+            foreach (var card in activeCards)
+            {
+                if (card.modifierType == CardModifierType.PoisonDurationAdd)
+                {
+                    if (IsTargetMatch(card, heroId, AttackType.SingleTarget))
+                    {
+                        add += card.modifierValue;
+                    }
+                }
+            }
+            return add;
+        }
+
         private bool IsTargetMatch(CardDefinition card, string heroId, AttackType actionAttackType)
         {
             switch (card.targetType)

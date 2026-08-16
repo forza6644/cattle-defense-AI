@@ -116,6 +116,10 @@ namespace Stonehold
             {
                 cd *= RunModifierManager.Instance.GetAbilityCooldownMultiplier(definition.id);
             }
+            if (RelicManager.Instance != null)
+            {
+                cd *= RelicManager.Instance.GetCooldownMultiplier();
+            }
             return cd;
         }
 
@@ -149,12 +153,56 @@ namespace Stonehold
             return dur;
         }
 
+        private bool IsNearPaladinAura(out float auraFireRateBuff, out float auraCritBuff)
+        {
+            auraFireRateBuff = 0f;
+            auraCritBuff = 0f;
+            if (HeroRosterManager.Instance == null) return false;
+
+            var slots = HeroRosterManager.Instance.Slots;
+            if (slots == null) return false;
+
+            for (int i = 0; i < slots.Count; i++)
+            {
+                HeroSlot slot = slots[i];
+                if (slot != null && slot.IsOccupied && slot.CurrentHero != null)
+                {
+                    HeroAttack paladin = slot.CurrentHero;
+                    if (paladin != null && paladin.Definition != null && paladin.Definition.id == "radiant_paladin")
+                    {
+                        float auraRange = 7.0f;
+                        float fireRateBonus = 0.15f;
+                        float critBonus = 0.10f;
+
+                        if (RunModifierManager.Instance != null && RunModifierManager.Instance.HasBehavior("radiant_paladin", HeroBehaviorEffectType.SanctuaryAura))
+                        {
+                            auraRange = 11.0f;
+                            fireRateBonus = 0.25f;
+                            critBonus = 0.15f;
+                        }
+
+                        if (paladin == this || Vector3.Distance(transform.position, paladin.transform.position) <= auraRange)
+                        {
+                            auraFireRateBuff = Mathf.Max(auraFireRateBuff, fireRateBonus);
+                            auraCritBuff = Mathf.Max(auraCritBuff, critBonus);
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
         public float GetModifiedCritChance()
         {
             float chance = (definition != null && definition.id == "sniper") ? 0.20f : 0.05f;
             if (RunModifierManager.Instance != null && definition != null)
             {
                 chance += RunModifierManager.Instance.GetCritChanceAdd(definition.id);
+            }
+            if (IsNearPaladinAura(out _, out float auraCrit))
+            {
+                chance += auraCrit;
             }
             return Mathf.Clamp01(chance);
         }
@@ -194,6 +242,10 @@ namespace Stonehold
             {
                 fireRate *= RunModifierManager.Instance.GetFireRateMultiplier(definition.id);
             }
+            if (IsNearPaladinAura(out float auraFR, out _))
+            {
+                fireRate *= (1f + auraFR);
+            }
             if (definition != null && definition.id == "archer" && abilityBuffTimer > 0f)
             {
                 fireRate *= 3.0f; // Triple fire rate during rapid multishot
@@ -213,6 +265,42 @@ namespace Stonehold
                 range *= RunModifierManager.Instance.GetRangeMultiplier(definition.id);
             }
             return range;
+        }
+
+        public static bool AutoCastSkills = true;
+        public bool manualCastMode = false;
+
+        public float AbilityCooldownRemaining => Mathf.Max(0f, abilityCooldown);
+        public float AbilityTotalCooldown => Mathf.Max(0.1f, GetModifiedAbilityCooldown());
+        public float AbilityCooldownNormalized => Mathf.Clamp01(abilityCooldown / AbilityTotalCooldown);
+        public void ResetAbilityCooldown() { abilityCooldown = 0f; }
+
+        public bool TriggerManualAbility()
+        {
+            if (!IsAbilityReady) return false;
+
+            Enemy target = currentTarget != null && currentTarget.gameObject.activeInHierarchy
+                ? currentTarget
+                : EnemyManager.FindTarget(transform.position, GetModifiedRange(), currentTargetingMode);
+
+            if (target == null)
+            {
+                var all = EnemyManager.All;
+                for (int i = 0; i < all.Count; i++)
+                {
+                    if (all[i] != null && !all[i].IsDead && all[i].IsTargetable)
+                    {
+                        target = all[i];
+                        break;
+                    }
+                }
+            }
+
+            if (target == null) return false;
+
+            UseSignatureAbility(target);
+            abilityCooldown = GetModifiedAbilityCooldown();
+            return true;
         }
 
         private void Update()
@@ -257,7 +345,7 @@ namespace Stonehold
                 return;
             }
 
-            if (definition.abilityType != HeroAbilityType.None && abilityCooldown <= 0f)
+            if (definition.abilityType != HeroAbilityType.None && abilityCooldown <= 0f && (AutoCastSkills && !manualCastMode))
             {
                 UseSignatureAbility(currentTarget);
                 abilityCooldown = GetModifiedAbilityCooldown();
@@ -303,6 +391,8 @@ namespace Stonehold
                 case "bombardier": delay = 0.3f; break;
                 case "sniper": delay = 0.35f; break;
                 case "electric_engineer": delay = 0.2f; break;
+                case "plague_doctor": delay = 0.25f; break;
+                case "radiant_paladin": delay = 0.2f; break;
                 default: delay = 0.15f; break;
             }
 
@@ -374,6 +464,67 @@ namespace Stonehold
                 case HeroAbilityType.ChainStorm:
                     UseChainLightningAbility(primaryTarget, abilityDamage, definition.abilityTargetCount + extraProjOrChain);
                     break;
+                case HeroAbilityType.PlagueFlask:
+                    UsePlagueFlaskAbility(primaryTarget, abilityDamage);
+                    break;
+                case HeroAbilityType.Consecration:
+                    UseConsecrationAbility(primaryTarget, abilityDamage);
+                    break;
+            }
+        }
+
+        private void UsePlagueFlaskAbility(Enemy primaryTarget, float damage)
+        {
+            Vector3 center = primaryTarget != null ? primaryTarget.transform.position : transform.position;
+            float radius = GetModifiedAbilityRadius();
+
+            HitEnemiesInRadius(center, damage, StatusEffectType.Poison, damage * 0.5f, 6.0f, true, radius);
+
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayHeroProjectileImpact(center, "plague_doctor", false);
+                if (CameraRig.Instance != null)
+                {
+                    CameraRig.Instance.Shake(0.4f);
+                }
+            }
+
+            SpectralMinion.Spawn(center, damage * 0.4f, 12f, 60f, "plague_doctor");
+        }
+
+        private void UseConsecrationAbility(Enemy primaryTarget, float damage)
+        {
+            Vector3 center = primaryTarget != null ? primaryTarget.transform.position : transform.position;
+            float radius = GetModifiedAbilityRadius() * 1.25f;
+
+            var enemies = EnemyManager.All;
+            if (enemies != null)
+            {
+                float radiusSqr = radius * radius;
+                for (int i = enemies.Count - 1; i >= 0; i--)
+                {
+                    if (i >= enemies.Count) continue;
+                    Enemy e = enemies[i];
+                    if (e != null && !e.IsDead && (e.transform.position - center).sqrMagnitude <= radiusSqr)
+                    {
+                        float finalDmg = damage;
+                        if (e.CurrentShield > 0f || (e.Data != null && e.Data.classification == EnemyClassification.Boss))
+                        {
+                            finalDmg *= 2.0f;
+                        }
+                        float applied = e.TakeDamage(finalDmg, false, true, definition.id);
+                        DamageTracker.RecordDamage(definition.id, applied);
+                    }
+                }
+            }
+
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayHeroProjectileImpact(center, "radiant_paladin", true);
+                if (CameraRig.Instance != null)
+                {
+                    CameraRig.Instance.Shake(0.6f);
+                }
             }
         }
 
@@ -634,7 +785,7 @@ namespace Stonehold
             float primaryFinalDamage = damage;
             if (primaryCrit) primaryFinalDamage *= GetModifiedCritMultiplier();
 
-            float primaryAppliedDamage = current.TakeDamage(primaryFinalDamage, false, primaryCrit);
+            float primaryAppliedDamage = current.TakeDamage(primaryFinalDamage, false, primaryCrit, definition.id);
             DamageTracker.RecordDamage(definition.id, primaryAppliedDamage);
 
             Vector3 startEndPos = current.transform.position + Vector3.up * 0.25f;
@@ -672,7 +823,7 @@ namespace Stonehold
                         float finalForkDamage = forkDamage;
                         if (forkCrit) finalForkDamage *= GetModifiedCritMultiplier();
 
-                        float appliedForkDamage = candidate.TakeDamage(finalForkDamage, false, forkCrit);
+                        float appliedForkDamage = candidate.TakeDamage(finalForkDamage, false, forkCrit, definition.id);
                         DamageTracker.RecordDamage(definition.id, appliedForkDamage);
 
                         if (VfxManager.Instance != null)
@@ -711,7 +862,7 @@ namespace Stonehold
                 float finalDamage = damage;
                 if (isCrit) finalDamage *= GetModifiedCritMultiplier();
 
-                float appliedDamage = nextCurrent.TakeDamage(finalDamage, false, isCrit);
+                float appliedDamage = nextCurrent.TakeDamage(finalDamage, false, isCrit, definition.id);
                 DamageTracker.RecordDamage(definition.id, appliedDamage);
 
                 Vector3 endPos = nextCurrent.transform.position + Vector3.up * 0.25f;
@@ -797,7 +948,7 @@ namespace Stonehold
                 finalDamage *= GetModifiedCritMultiplier();
             }
 
-            float appliedDamage = enemy.TakeDamage(finalDamage, ignoreArmor, isCrit);
+            float appliedDamage = enemy.TakeDamage(finalDamage, ignoreArmor, isCrit, definition.id);
             DamageTracker.RecordDamage(definition.id, appliedDamage);
             if (effectType != StatusEffectType.None && effectDuration > 0f && !enemy.IsDead)
             {
@@ -816,6 +967,8 @@ namespace Stonehold
                 case "fire_mage": delay = 0.22f; break;
                 case "electric_engineer": delay = 0.12f; break;
                 case "sniper": delay = 0.28f; break;
+                case "plague_doctor": delay = 0.2f; break;
+                case "radiant_paladin": delay = 0.18f; break;
             }
 
             if (animator != null)
@@ -869,6 +1022,14 @@ namespace Stonehold
                     effectDuration += RunModifierManager.Instance.GetBurnDurationAdd(definition.id);
                 }
             }
+            else if (effectType == StatusEffectType.Poison)
+            {
+                if (RunModifierManager.Instance != null)
+                {
+                    effectValue += RunModifierManager.Instance.GetPoisonDamageAdd(definition.id);
+                    effectDuration += RunModifierManager.Instance.GetPoisonDurationAdd(definition.id);
+                }
+            }
             else if (effectType == StatusEffectType.None)
             {
                 if (RunModifierManager.Instance != null)
@@ -889,6 +1050,14 @@ namespace Stonehold
                             effectDuration = 3f + RunModifierManager.Instance.GetBurnDurationAdd(definition.id);
                         }
                     }
+                }
+            }
+
+            if (definition.id == "radiant_paladin" && target != null)
+            {
+                if (target.CurrentShield > 0f || (target.Data != null && target.Data.classification == EnemyClassification.Boss))
+                {
+                    damage *= 2.0f;
                 }
             }
 
@@ -1064,8 +1233,18 @@ namespace Stonehold
                 yield break;
             }
 
-            float appliedDamage = target.TakeDamage(damage, false, isCrit);
+            float appliedDamage = target.TakeDamage(damage, false, isCrit, definition.id);
             DamageTracker.RecordDamage(definition.id, appliedDamage);
+
+            if (isCrit && RelicManager.Instance != null && Castle.Instance != null)
+            {
+                float vamp = RelicManager.Instance.GetCastleVampirismPercent();
+                if (vamp > 0f)
+                {
+                    int heal = Mathf.Max(1, Mathf.RoundToInt(appliedDamage * vamp));
+                    Castle.Instance.Repair(heal);
+                }
+            }
 
             if (effectType != StatusEffectType.None && effectDuration > 0f && !target.IsDead)
             {
@@ -1108,9 +1287,13 @@ namespace Stonehold
                     return new Color(1f, 0.25f, 0.05f, 1f);
                 case StatusEffectType.Shock:
                     return new Color(1f, 0.95f, 0.15f, 1f);
+                case StatusEffectType.Poison:
+                    return new Color(0.25f, 0.95f, 0.35f, 1f);
                 default:
                     if (heroId == "sniper") return new Color(0.85f, 0.3f, 1f, 1f);
                     if (heroId == "archer") return new Color(0.45f, 0.95f, 0.3f, 1f);
+                    if (heroId == "plague_doctor") return new Color(0.25f, 0.95f, 0.35f, 1f);
+                    if (heroId == "radiant_paladin") return new Color(1f, 0.88f, 0.2f, 1f);
                     return new Color(1f, 0.88f, 0.4f, 1f);
             }
         }

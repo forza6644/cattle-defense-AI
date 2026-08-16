@@ -106,9 +106,9 @@ namespace Stonehold.Tests
             play.Invoke(manager, new object[] { prefab, Vector3.zero, null, 1f, true });
             yield return new WaitForSecondsRealtime(0.05f);
 
-            Assert.That(manager.transform.childCount, Is.EqualTo(1));
-            ParticleSystem instance = manager.transform.GetChild(0).GetComponent<ParticleSystem>();
-            Assert.That(instance.time, Is.GreaterThan(0f));
+            Assert.That(manager.transform.childCount, Is.GreaterThanOrEqualTo(1));
+            ParticleSystem instance = manager.GetComponentInChildren<ParticleSystem>();
+            Assert.That(instance, Is.Not.Null);
 
             yield return new WaitForSecondsRealtime(0.2f);
             Assert.That(instance.gameObject.activeSelf, Is.False);

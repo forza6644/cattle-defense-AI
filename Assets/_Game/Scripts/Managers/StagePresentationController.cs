@@ -26,7 +26,7 @@ private const string RuntimeDressingName = "StageIdentity_Runtime";
 
         private void Start()
         {
-            ApplyTheme(Mathf.Clamp(SaveManager.SelectedStageIndex, 0, 2));
+            ApplyTheme(Mathf.Clamp(SaveManager.SelectedStageIndex, 0, 5));
         }
 
         private void ApplyTheme(int stageIndex)
@@ -39,21 +39,42 @@ private const string RuntimeDressingName = "StageIdentity_Runtime";
 
             switch (stageIndex)
             {
-                case 1:
+                case 1: // Highlands
                     sky = new Color(0.48f, 0.62f, 0.68f);
                     lightColor = new Color(1f, 0.82f, 0.62f);
                     environmentTint = new Color(0.78f, 0.72f, 0.58f);
                     fogColor = new Color(0.52f, 0.58f, 0.56f);
                     lightIntensity = 1.15f;
                     break;
-                case 2:
+                case 2: // Frozen Frontier
                     sky = new Color(0.55f, 0.7f, 0.82f);
                     lightColor = new Color(0.78f, 0.9f, 1f);
                     environmentTint = new Color(0.68f, 0.82f, 0.9f);
                     fogColor = new Color(0.68f, 0.78f, 0.86f);
                     lightIntensity = 1.05f;
                     break;
-                default:
+                case 3: // Desert Ruins / Titan Citadel
+                    sky = new Color(0.85f, 0.65f, 0.45f);
+                    lightColor = new Color(1f, 0.92f, 0.75f);
+                    environmentTint = new Color(0.88f, 0.78f, 0.60f);
+                    fogColor = new Color(0.82f, 0.70f, 0.52f);
+                    lightIntensity = 1.30f;
+                    break;
+                case 4: // Volcanic Pinnacle
+                    sky = new Color(0.25f, 0.08f, 0.05f);
+                    lightColor = new Color(1f, 0.45f, 0.15f);
+                    environmentTint = new Color(0.40f, 0.30f, 0.28f);
+                    fogColor = new Color(0.35f, 0.15f, 0.10f);
+                    lightIntensity = 1.10f;
+                    break;
+                case 5: // Abyssal Void Rift
+                    sky = new Color(0.06f, 0.02f, 0.12f);
+                    lightColor = new Color(0.75f, 0.40f, 1f);
+                    environmentTint = new Color(0.45f, 0.35f, 0.65f);
+                    fogColor = new Color(0.18f, 0.08f, 0.28f);
+                    lightIntensity = 0.95f;
+                    break;
+                default: // Castle Road
                     sky = new Color(0.48f, 0.72f, 0.84f);
                     lightColor = new Color(1f, 0.94f, 0.78f);
                     environmentTint = Color.white;
@@ -188,7 +209,7 @@ BuildStageIdentity(environment.transform, stageIndex);
             {
                 roadStrip.localPosition = new Vector3(0f, 0.035f, 5.25f);
                 roadStrip.localRotation = Quaternion.identity;
-                roadStrip.localScale = new Vector3(5.7f, 0.06f, 21.5f);
+                roadStrip.localScale = new Vector3(8.6f, 0.06f, 21.5f);
                 ApplyColor(roadStrip.GetComponent<Renderer>(), roadColor);
             }
 
@@ -210,21 +231,109 @@ BuildStageIdentity(environment.transform, stageIndex);
             Color stoneDark = Color.Lerp(stoneColor, Color.black, 0.22f);
             Color accentColor = GetStageAccentColor(stageIndex);
 
-            CreateVisual(root, "LaneShoulder_Left", PrimitiveType.Cube, new Vector3(-3.03f, 0.075f, 5.25f), new Vector3(0.18f, 0.07f, 21.5f), stoneDark, stoneMaterial, false);
-            CreateVisual(root, "LaneShoulder_Right", PrimitiveType.Cube, new Vector3(3.03f, 0.075f, 5.25f), new Vector3(0.18f, 0.07f, 21.5f), stoneDark, stoneMaterial, false);
-            CreateVisual(root, "SpawnThreshold", PrimitiveType.Cube, new Vector3(0f, 0.08f, 15.75f), new Vector3(6.15f, 0.08f, 0.28f), accentColor, stoneMaterial, false);
+            // 1 Wide Grand Highway shoulders & boundaries
+            CreateVisual(root, "LaneShoulder_Left", PrimitiveType.Cube, new Vector3(-4.38f, 0.075f, 5.25f), new Vector3(0.22f, 0.07f, 21.5f), stoneDark, stoneMaterial, false);
+            CreateVisual(root, "LaneShoulder_Right", PrimitiveType.Cube, new Vector3(4.38f, 0.075f, 5.25f), new Vector3(0.22f, 0.07f, 21.5f), stoneDark, stoneMaterial, false);
+            CreateVisual(root, "SpawnThreshold", PrimitiveType.Cube, new Vector3(0f, 0.08f, 15.75f), new Vector3(8.9f, 0.08f, 0.28f), accentColor, stoneMaterial, false);
 
             float[] markerZ = { -2.8f, 1.2f, 5.2f, 9.2f, 13.2f };
             for (int i = 0; i < markerZ.Length; i++)
             {
                 float inset = i % 2 == 0 ? 0.08f : -0.08f;
-                CreateVisual(root, $"LaneMarker_L_{i + 1:00}", PrimitiveType.Cube, new Vector3(-3.28f + inset, 0.13f, markerZ[i]), new Vector3(0.48f, 0.18f, 0.7f), stoneColor, stoneMaterial, true);
-                CreateVisual(root, $"LaneMarker_R_{i + 1:00}", PrimitiveType.Cube, new Vector3(3.28f - inset, 0.13f, markerZ[i]), new Vector3(0.48f, 0.18f, 0.7f), stoneColor, stoneMaterial, true);
+                CreateVisual(root, $"LaneMarker_L_{i + 1:00}", PrimitiveType.Cube, new Vector3(-4.62f + inset, 0.13f, markerZ[i]), new Vector3(0.48f, 0.18f, 0.7f), stoneColor, stoneMaterial, true);
+                CreateVisual(root, $"LaneMarker_R_{i + 1:00}", PrimitiveType.Cube, new Vector3(4.62f - inset, 0.13f, markerZ[i]), new Vector3(0.48f, 0.18f, 0.7f), stoneColor, stoneMaterial, true);
             }
 
             ConfigureCastlePresentation(environment, root, stageIndex, stoneMaterial, stoneColor, stoneDark, accentColor);
+            CreateBiomeAtmosphericParticles(root, stageIndex);
         }
 
+        private static void CreateBiomeAtmosphericParticles(Transform parent, int stageIndex)
+        {
+            GameObject psGo = new GameObject("AtmosphericParticles_Runtime");
+            psGo.transform.SetParent(parent, false);
+            psGo.transform.localPosition = new Vector3(0f, 6f, 5f);
+
+            ParticleSystem ps = psGo.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.playOnAwake = true;
+            main.loop = true;
+            main.maxParticles = 80;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 16f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(18f, 2f, 24f);
+
+            var vel = ps.velocityOverLifetime;
+            vel.enabled = true;
+
+            switch (stageIndex)
+            {
+                case 5: // Abyssal Void Rift - Cosmic void motes
+                    main.startLifetime = 4.5f;
+                    main.startSpeed = 1.2f;
+                    main.startSize = 0.14f;
+                    main.startColor = new Color(0.85f, 0.35f, 1f, 0.85f);
+                    vel.y = 1.2f;
+                    vel.z = 0.5f;
+                    break;
+                case 4: // Volcanic Pinnacle - Rising lava embers
+                    main.startLifetime = 3.8f;
+                    main.startSpeed = 2.4f;
+                    main.startSize = 0.11f;
+                    main.startColor = new Color(1f, 0.45f, 0.08f, 0.9f);
+                    vel.y = 2.2f;
+                    vel.z = 0.8f;
+                    break;
+                case 3: // Desert Ruins - Sandstorm dust motes
+                    main.startLifetime = 3.2f;
+                    main.startSpeed = 4.0f;
+                    main.startSize = 0.09f;
+                    main.startColor = new Color(0.95f, 0.82f, 0.55f, 0.7f);
+                    vel.x = -1.5f;
+                    vel.y = -0.8f;
+                    vel.z = -3.5f;
+                    break;
+                case 2: // Frozen Pass - Snow
+                    main.startLifetime = 3.5f;
+                    main.startSpeed = 3.2f;
+                    main.startSize = 0.12f;
+                    main.startColor = new Color(0.85f, 0.95f, 1f, 0.75f);
+                    vel.y = -2.5f;
+                    vel.z = -1.2f;
+                    break;
+                case 1: // Highlands / Mountain wind
+                    main.startLifetime = 4.0f;
+                    main.startSpeed = 2.0f;
+                    main.startSize = 0.08f;
+                    main.startColor = new Color(0.9f, 0.85f, 0.75f, 0.5f);
+                    vel.y = -1.0f;
+                    vel.z = -2.0f;
+                    break;
+                default: // Plains / Castle Road - Gentle pollen motes
+                    main.startLifetime = 5.0f;
+                    main.startSpeed = 1.0f;
+                    main.startSize = 0.09f;
+                    main.startColor = new Color(1f, 0.95f, 0.75f, 0.45f);
+                    vel.y = -0.5f;
+                    vel.z = -0.8f;
+                    break;
+            }
+
+            var renderer = psGo.GetComponent<ParticleSystemRenderer>();
+            if (renderer != null)
+            {
+                Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+                if (shader == null) shader = Shader.Find("Particles/Standard Unlit");
+                if (shader != null)
+                {
+                    renderer.sharedMaterial = new Material(shader);
+                }
+            }
+        }
 
         private static void BuildImportedNature(Transform parent, int stageIndex)
         {
@@ -519,7 +628,10 @@ BuildStageIdentity(environment.transform, stageIndex);
             switch (stageIndex)
             {
                 case 1: return new Color(0.82f, 0.28f, 0.12f);
-                case 2: return new Color(0.2f, 0.68f, 0.92f);
+                case 2: return new Color(0.20f, 0.68f, 0.92f);
+                case 3: return new Color(0.95f, 0.70f, 0.18f); // Desert Gold
+                case 4: return new Color(0.95f, 0.25f, 0.08f); // Lava Red
+                case 5: return new Color(0.70f, 0.25f, 0.95f); // Abyssal Purple
                 default: return new Color(0.18f, 0.55f, 0.28f);
             }
         }
@@ -531,9 +643,12 @@ BuildStageIdentity(environment.transform, stageIndex);
         {
             switch (stageIndex)
             {
-                case 1: return new Color(0.46f, 0.48f, 0.5f);
+                case 1: return new Color(0.46f, 0.48f, 0.50f);
                 case 2: return new Color(0.52f, 0.62f, 0.68f);
-                default: return new Color(0.5f, 0.54f, 0.56f);
+                case 3: return new Color(0.72f, 0.62f, 0.48f); // Sandstone
+                case 4: return new Color(0.28f, 0.26f, 0.28f); // Obsidian
+                case 5: return new Color(0.24f, 0.20f, 0.32f); // Dark Void Stone
+                default: return new Color(0.50f, 0.54f, 0.56f);
             }
         }
 
@@ -545,6 +660,9 @@ BuildStageIdentity(environment.transform, stageIndex);
             {
                 case 1: return new Color(0.48f, 0.34f, 0.22f);
                 case 2: return new Color(0.58f, 0.68f, 0.72f);
+                case 3: return new Color(0.82f, 0.72f, 0.52f); // Sand Road
+                case 4: return new Color(0.22f, 0.18f, 0.18f); // Ash Ground
+                case 5: return new Color(0.18f, 0.12f, 0.25f); // Void Chasm
                 default: return new Color(0.56f, 0.40f, 0.24f);
             }
         }

@@ -21,6 +21,8 @@ namespace Stonehold
         private const string KeyMetaGold = "stats_meta_gold";
         private const string KeyAccountXp = "stats_account_xp";
         private const string KeyCoreMaterials = "stats_core_materials";
+        private const string KeyEndlessAbyssHighestWave = "endless_abyss_highest_wave";
+        private const string KeyEndlessAbyssHighScore = "endless_abyss_high_score";
 
         private static readonly string[] CurrentHeroIds =
         {
@@ -57,6 +59,8 @@ namespace Stonehold
         public static int Coins => MetaGold;
         public static int AccountXp { get; private set; }
         public static int CoreMaterials { get; private set; }
+        public static int EndlessAbyssHighestWave { get; private set; }
+        public static int EndlessAbyssHighScore { get; private set; }
 
         static SaveManager()
         {
@@ -96,6 +100,8 @@ namespace Stonehold
             MetaGold = Mathf.Clamp(PlayerPrefs.GetInt(KeyMetaGold, 0), 0, 9999999);
             AccountXp = Mathf.Clamp(PlayerPrefs.GetInt(KeyAccountXp, 0), 0, 9999999);
             CoreMaterials = Mathf.Clamp(PlayerPrefs.GetInt(KeyCoreMaterials, 0), 0, 999999);
+            EndlessAbyssHighestWave = Mathf.Max(0, PlayerPrefs.GetInt(KeyEndlessAbyssHighestWave, 0));
+            EndlessAbyssHighScore = Mathf.Max(0, PlayerPrefs.GetInt(KeyEndlessAbyssHighScore, 0));
 
             // Clean invalid/corrupt values in PlayerPrefs by writing back sanitized values
             PlayerPrefs.SetInt(KeyBestWave, BestWave);
@@ -104,6 +110,8 @@ namespace Stonehold
             PlayerPrefs.SetInt(KeyTotalRuns, TotalRuns);
             PlayerPrefs.SetInt(KeySelectedStage, SelectedStageIndex);
             PlayerPrefs.SetInt(KeyHighestStageUnlocked, HighestStageUnlocked);
+            PlayerPrefs.SetInt(KeyEndlessAbyssHighestWave, EndlessAbyssHighestWave);
+            PlayerPrefs.SetInt(KeyEndlessAbyssHighScore, EndlessAbyssHighScore);
             PlayerPrefs.SetInt(KeyStage1Completed, Stage1Completed ? 1 : 0);
             PlayerPrefs.SetString(KeySelectedStartingDefender, SelectedStartingDefenderId);
             PlayerPrefs.SetString(KeySelectedStarterCrystal, SelectedStarterCrystalId);
@@ -138,9 +146,10 @@ namespace Stonehold
         public static bool TryClaimRunRewards(int waveReached, out int gold, out int xp, out int materials)
         {
             int safeWave = Mathf.Max(1, waveReached);
-            gold = safeWave * 50;
-            xp = safeWave * 2;
-            materials = safeWave * 5;
+            float scoreMult = AscensionManager.Instance != null ? AscensionManager.Instance.GetScoreMultiplier() : 1.0f;
+            gold = Mathf.RoundToInt(safeWave * 50 * scoreMult);
+            xp = Mathf.RoundToInt(safeWave * 2 * scoreMult);
+            materials = Mathf.RoundToInt(safeWave * 5 * scoreMult);
 
             if (runRewardsClaimed)
             {
@@ -258,6 +267,27 @@ namespace Stonehold
             }
         }
 
+        public static void RecordEndlessAbyssWave(int wave, int score)
+        {
+            bool changed = false;
+            if (wave > EndlessAbyssHighestWave)
+            {
+                EndlessAbyssHighestWave = wave;
+                PlayerPrefs.SetInt(KeyEndlessAbyssHighestWave, EndlessAbyssHighestWave);
+                changed = true;
+            }
+            if (score > EndlessAbyssHighScore)
+            {
+                EndlessAbyssHighScore = score;
+                PlayerPrefs.SetInt(KeyEndlessAbyssHighScore, EndlessAbyssHighScore);
+                changed = true;
+            }
+            if (changed)
+            {
+                PlayerPrefs.Save();
+            }
+        }
+
         public static void RecordWin()
         {
             TotalWins++;
@@ -280,6 +310,20 @@ namespace Stonehold
         {
             MetaGold += amount;
             PlayerPrefs.SetInt(KeyMetaGold, MetaGold);
+            PlayerPrefs.Save();
+        }
+
+        public static void AddCoreMaterials(int amount)
+        {
+            CoreMaterials += amount;
+            PlayerPrefs.SetInt(KeyCoreMaterials, CoreMaterials);
+            PlayerPrefs.Save();
+        }
+
+        public static void AddAccountXp(int amount)
+        {
+            AccountXp += amount;
+            PlayerPrefs.SetInt(KeyAccountXp, AccountXp);
             PlayerPrefs.Save();
         }
 
@@ -344,6 +388,8 @@ namespace Stonehold
             Stage1Completed = false;
             AccountXp = 0;
             CoreMaterials = 0;
+            EndlessAbyssHighestWave = 0;
+            EndlessAbyssHighScore = 0;
 
             PlayerPrefs.DeleteKey(KeyBestWave);
             PlayerPrefs.DeleteKey(KeyTotalWins);
@@ -354,6 +400,8 @@ namespace Stonehold
             PlayerPrefs.DeleteKey(KeyStage1Completed);
             PlayerPrefs.DeleteKey(KeyAccountXp);
             PlayerPrefs.DeleteKey(KeyCoreMaterials);
+            PlayerPrefs.DeleteKey(KeyEndlessAbyssHighestWave);
+            PlayerPrefs.DeleteKey(KeyEndlessAbyssHighScore);
 
             for (int i = 0; i < CurrentMetaUpgradeIds.Length; i++)
             {

@@ -171,6 +171,57 @@ namespace Stonehold
             }
         }
 
+        public static string EvaluateSynergyTag(CardDefinition card, HeroRosterManager roster, StarterCrystal crystal)
+        {
+            if (card == null) return null;
+
+            bool hasFire = (roster != null && roster.IsHeroOwned("fire_mage")) || (crystal != null && crystal.Definition != null && crystal.Definition.element == CrystalElement.Fire);
+            bool hasFrost = (roster != null && roster.IsHeroOwned("frost_mage")) || (crystal != null && crystal.Definition != null && crystal.Definition.element == CrystalElement.Ice);
+            bool hasShock = (roster != null && roster.IsHeroOwned("electric_engineer")) || (crystal != null && crystal.Definition != null && crystal.Definition.element == CrystalElement.Lightning);
+            bool hasPoison = (roster != null && roster.IsHeroOwned("plague_doctor"));
+            bool hasPhysical = (roster != null && (roster.IsHeroOwned("archer") || roster.IsHeroOwned("sniper") || roster.IsHeroOwned("bombardier"))) || (crystal != null && crystal.Definition != null && crystal.Definition.element == CrystalElement.Stone);
+
+            string id = card.id != null ? card.id.ToLowerInvariant() : "";
+            string name = card.displayName != null ? card.displayName.ToLowerInvariant() : "";
+            string targetHero = card.targetHeroId != null ? card.targetHeroId.ToLowerInvariant() : "";
+
+            // 1. Thermal Shock (Fire + Frost)
+            if ((hasFire && (targetHero == "frost_mage" || id.Contains("frost") || id.Contains("ice") || id.Contains("freeze") || name.Contains("frost") || name.Contains("ice"))) ||
+                (hasFrost && (targetHero == "fire_mage" || id.Contains("fire") || id.Contains("burn") || id.Contains("flame") || name.Contains("fire") || name.Contains("flame"))))
+            {
+                return "🔥 Thermal Synergy";
+            }
+
+            // 2. Overload (Fire + Shock)
+            if ((hasFire && (targetHero == "electric_engineer" || id.Contains("shock") || id.Contains("lightning") || id.Contains("electric") || name.Contains("lightning") || name.Contains("shock"))) ||
+                (hasShock && (targetHero == "fire_mage" || id.Contains("fire") || id.Contains("burn") || id.Contains("flame") || name.Contains("fire") || name.Contains("flame"))))
+            {
+                return "⚡ Overload Synergy";
+            }
+
+            // 3. Corrosive Blast (Fire + Poison)
+            if ((hasFire && (targetHero == "plague_doctor" || id.Contains("poison") || id.Contains("toxic") || id.Contains("corrosive") || name.Contains("poison") || name.Contains("corrosive"))) ||
+                (hasPoison && (targetHero == "fire_mage" || id.Contains("fire") || id.Contains("burn") || id.Contains("flame") || name.Contains("fire") || name.Contains("flame"))))
+            {
+                return "☠️ Corrosive Synergy";
+            }
+
+            // 4. Sub-Zero Shatter (Frost + Heavy Physical)
+            if ((hasFrost && (targetHero == "sniper" || targetHero == "bombardier" || id.Contains("pierc") || id.Contains("heavy") || id.Contains("cluster") || name.Contains("sniper") || name.Contains("bomb"))) ||
+                (hasPhysical && (targetHero == "frost_mage" || id.Contains("frost") || id.Contains("freeze") || id.Contains("shatter") || name.Contains("frost") || name.Contains("shatter"))))
+            {
+                return "❄️ Shatter Synergy";
+            }
+
+            // 5. Direct Hero Upgrade matching an active hero
+            if (!string.IsNullOrEmpty(targetHero) && roster != null && roster.IsHeroOwned(targetHero))
+            {
+                return "⭐ Hero Upgrade";
+            }
+
+            return null;
+        }
+
         private RunProgressionManager.CardChoice CreateChoice(DraftCardChoice choice)
         {
             CardDefinition selectedCard = choice.Card;
@@ -178,6 +229,9 @@ namespace Stonehold
             Sprite cardIcon = selectedCard.icon != null
                 ? selectedCard.icon
                 : CardIconSpriteGenerator.GetSpriteForCard(selectedCard.displayName, cardType, selectedCard.recruitHeroId);
+
+            var crystal = Object.FindAnyObjectByType<StarterCrystal>();
+            string synergyTag = EvaluateSynergyTag(selectedCard, HeroRosterManager.Instance, crystal);
 
             return new RunProgressionManager.CardChoice(
                 selectedCard.displayName,
@@ -189,7 +243,8 @@ namespace Stonehold
                 },
                 cardType,
                 choice.Rarity.ToString(),
-                cardIcon
+                cardIcon,
+                synergyTag
             );
         }
 
@@ -203,7 +258,9 @@ namespace Stonehold
                     isSelectionMade = true;
                 },
                 "Card",
-                CardRarity.Common.ToString()
+                CardRarity.Common.ToString(),
+                null,
+                null
             );
         }
 

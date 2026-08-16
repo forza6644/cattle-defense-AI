@@ -37,19 +37,45 @@ namespace Stonehold
                 {
                     baseMax += MetaUpgradeManager.Instance.GetCastleHpBonus();
                 }
+                if (AscensionManager.Instance != null)
+                {
+                    baseMax = Mathf.Max(10, Mathf.RoundToInt(baseMax * AscensionManager.Instance.GetCastleHealthMultiplier()));
+                }
                 return baseMax;
             }
         }
         public bool IsGameOver { get; private set; }
 
+        public static Castle Instance { get; private set; }
+        public float CurrentShield { get; private set; }
+        public float MaxShield { get; private set; }
+
+        public void AddKineticShield(float amount)
+        {
+            CurrentShield += amount;
+            MaxShield = Mathf.Max(MaxShield, CurrentShield);
+            HealthChanged?.Invoke();
+        }
+
+        public void AddShield(float amount) => AddKineticShield(amount);
+
         private void Awake()
         {
+            Instance = this;
             if (config == null)
             {
                 Debug.LogWarning("Castle: GameConfig not assigned.");
             }
 
             CurrentHealth = MaxHealth;
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         private void Update()
@@ -87,8 +113,26 @@ namespace Stonehold
                 return;
             }
 
+            if (CurrentShield > 0f)
+            {
+                if (CurrentShield >= amount)
+                {
+                    CurrentShield -= amount;
+                    FloatingCombatTextManager.Instance?.SpawnCustomText(transform.position + Vector3.up * 2f, $"🛡️ -{amount}", new Color(0.3f, 0.7f, 1f));
+                    HealthChanged?.Invoke();
+                    return;
+                }
+                else
+                {
+                    amount -= Mathf.RoundToInt(CurrentShield);
+                    CurrentShield = 0f;
+                    FloatingCombatTextManager.Instance?.SpawnCustomText(transform.position + Vector3.up * 2f, "🛡️ SHIELD BROKEN!", new Color(0.3f, 0.7f, 1f));
+                }
+            }
+
             int appliedDamage = Mathf.Min(CurrentHealth, amount);
             CurrentHealth -= appliedDamage;
+            CombatTelemetryManager.RecordCastleDamage(appliedDamage, 0f);
             Debug.Log("Castle hit! HP = " + CurrentHealth + " / " + MaxHealth);
             DamageTaken?.Invoke(appliedDamage);
             HealthChanged?.Invoke();

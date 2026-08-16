@@ -75,6 +75,14 @@ namespace Stonehold
             return !string.IsNullOrEmpty(heroId) && ownedHeroIds.Contains(heroId);
         }
 
+        public void AddOwnedHero(string heroId)
+        {
+            if (!string.IsNullOrEmpty(heroId))
+            {
+                ownedHeroIds.Add(heroId);
+            }
+        }
+
         public int GetMaxSlotsForCurrentStage()
         {
             WaveManager waveManager = Object.FindFirstObjectByType<WaveManager>();

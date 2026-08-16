@@ -20,8 +20,10 @@ namespace Stonehold.Tests
                 Object.DestroyImmediate(AudioManager.Instance.gameObject);
             }
 
+            PlayerPrefs.DeleteKey("AudioMasterVol");
             audioObject = new GameObject("TestAudioManager");
             audioManager = audioObject.AddComponent<AudioManager>();
+            audioManager.SetMasterVolume(1f);
         }
 
         [TearDown]

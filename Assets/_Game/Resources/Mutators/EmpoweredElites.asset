@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3b8c5a2e9064b3b894236cc8d020000, type: 3}
+  m_Name: EmpoweredElites
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.AscensionMutatorDefinition
+  id: empowered_elites
+  displayName: Elite Champions
+  description: Elite and Boss units spawn with +50% increased health.
+  heatPoints: 2
+  scoreMultiplierBonus: 0.2
+  themeColor: {r: 0.95, g: 0.25, b: 0.2, a: 1}
+  mutatorType: 4
+  effectValue: 0.5

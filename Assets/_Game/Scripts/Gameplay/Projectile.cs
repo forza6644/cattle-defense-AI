@@ -256,7 +256,7 @@ namespace Stonehold
                             hitPrimaryTarget = true;
                         }
 
-                        float appliedDamage = enemy.TakeDamage(pierceDamage, false, isCrit);
+                        float appliedDamage = enemy.TakeDamage(pierceDamage, false, isCrit, sourceHeroId);
                         DamageTracker.RecordDamage(sourceHeroId, appliedDamage);
 
                         if (statusEffectType != StatusEffectType.None && statusEffectDuration > 0f && !enemy.IsDead)
@@ -618,7 +618,7 @@ namespace Stonehold
         private void HitEnemy(Enemy enemy)
         {
             if (enemy == null || enemy.IsDead) return;
-            float appliedDamage = enemy.TakeDamage(damage, false, isCrit);
+            float appliedDamage = enemy.TakeDamage(damage, false, isCrit, sourceHeroId);
             DamageTracker.RecordDamage(sourceHeroId, appliedDamage);
 
             if (statusEffectType != StatusEffectType.None && statusEffectDuration > 0f)

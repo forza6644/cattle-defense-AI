@@ -18,7 +18,7 @@ MonoBehaviour:
   element: 4
   baseDamage: 13
   attacksPerSecond: 1
-  attackRange: 14
+  attackRange: 28
   splashRadius: 0
   chainTargets: 3
   statusMagnitude: 0

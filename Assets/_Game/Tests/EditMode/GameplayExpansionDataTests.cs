@@ -274,9 +274,13 @@ namespace Stonehold.Tests
             EnemyData[] enemies = LoadEnemyAssets();
             List<GameplayValidationIssue> issues = GameplayDataValidation.ValidateEnemies(enemies);
 
-            Assert.That(enemies, Has.Length.EqualTo(5));
+            Assert.That(enemies, Has.Length.GreaterThanOrEqualTo(5));
             Assert.That(GameplayDataValidation.HasErrors(issues), Is.False, FormatIssues(issues));
-            Assert.That(enemies.All(enemy => enemy.shieldCapacity == 0f && enemy.dodgeChance == 0f), Is.True);
+
+            // Legacy baseline enemies must remain with 0 shield and 0 dodge
+            string[] legacyIds = { "grunt", "runner", "brute", "armored", "warlord_boss" };
+            var legacyEnemies = enemies.Where(enemy => legacyIds.Contains(enemy.stableId));
+            Assert.That(legacyEnemies.All(enemy => enemy.shieldCapacity == 0f && enemy.dodgeChance == 0f), Is.True);
         }
 
         [Test]

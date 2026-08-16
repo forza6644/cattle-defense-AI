@@ -15,11 +15,17 @@ namespace Stonehold
         private float pulseVisualTimer;
         private bool isWindingUp;
         private bool isCasting;
+        private bool isPhaseShifted;
+        private float bossPhaseTimer = 5.0f;
+        private bool isSupernovaCharging;
         private GameObject windUpIndicator;
         private LineRenderer eliteRing;
         private LineRenderer pulseRing;
+        private LineRenderer aimLine;
         private static Material indicatorMaterial;
 
+        public bool IsPhaseShifted => isPhaseShifted;
+        public bool IsSupernovaCharging => isSupernovaCharging;
         public bool IsWindingUp => isWindingUp;
         public bool IsCasting => isCasting;
         public int LastHealCount { get; private set; }
@@ -65,6 +71,12 @@ namespace Stonehold
                     return TickRanged(data.rangedAttack);
                 case EnemySpecialRole.HealingElite:
                     return TickHealing(data.healingPulse);
+                case EnemySpecialRole.VoidPhaseStalker:
+                    return TickVoidStalker();
+                case EnemySpecialRole.VoidNullifier:
+                    return TickVoidNullifier();
+                case EnemySpecialRole.VoidLordBoss:
+                    return TickVoidLordBoss();
                 default:
                     return false;
             }
@@ -76,6 +88,7 @@ namespace Stonehold
             isCasting = false;
             actionTimer = 0f;
             SetWindUpVisible(false, 0f, Color.clear);
+            if (aimLine != null) aimLine.gameObject.SetActive(false);
         }
 
         public void ResetForReuse()
@@ -85,9 +98,120 @@ namespace Stonehold
             activationId = 0;
             LastHealCount = 0;
             pulseVisualTimer = 0f;
+            isPhaseShifted = false;
+            bossPhaseTimer = 5.0f;
+            isSupernovaCharging = false;
             for (int i = 0; i < healTargets.Length; i++) healTargets[i] = null;
             if (eliteRing != null) eliteRing.gameObject.SetActive(false);
             if (pulseRing != null) pulseRing.gameObject.SetActive(false);
+            if (aimLine != null) aimLine.gameObject.SetActive(false);
+        }
+
+        private bool TickVoidStalker()
+        {
+            if (castle == null) return false;
+            float distToCastle = Vector3.Distance(transform.position, castle.transform.position);
+
+            bool shouldPhase = distToCastle > 6f && distToCastle < 22f;
+
+            if (shouldPhase && !isPhaseShifted)
+            {
+                isPhaseShifted = true;
+                if (eliteRing != null)
+                {
+                    eliteRing.gameObject.SetActive(true);
+                    eliteRing.startColor = new Color(0.6f, 0.1f, 0.9f, 0.5f);
+                    eliteRing.endColor = eliteRing.startColor;
+                }
+                VfxManager.Instance?.PlayShockImpact(transform.position);
+            }
+            else if (!shouldPhase && isPhaseShifted)
+            {
+                isPhaseShifted = false;
+                if (eliteRing != null) eliteRing.gameObject.SetActive(false);
+                VfxManager.Instance?.PlayFireImpact(transform.position, false);
+                if (BattlefieldDefenseManager.Instance != null && BattlefieldDefenseManager.Instance.ActiveDefense != null)
+                {
+                    if (Vector3.Distance(transform.position, BattlefieldDefenseManager.Instance.ActiveDefense.transform.position) <= 3.5f)
+                    {
+                        BattlefieldDefenseManager.Instance.ActiveDefense.TakeDamage(15f, enemy, activationId);
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool TickVoidNullifier()
+        {
+            actionTimer -= Time.deltaTime;
+            if (actionTimer <= 0f)
+            {
+                actionTimer = 2.5f;
+                var all = EnemyManager.All;
+                for (int i = 0; i < all.Count; i++)
+                {
+                    Enemy e = all[i];
+                    if (e != null && !e.IsDead && (e.transform.position - transform.position).sqrMagnitude <= 6.0f * 6.0f)
+                    {
+                        e.StatusController?.ResetController();
+                    }
+                }
+
+                pulseVisualTimer = 0.5f;
+                if (pulseRing != null)
+                {
+                    pulseRing.gameObject.SetActive(true);
+                    pulseRing.startColor = new Color(0.7f, 0.2f, 1f, 0.9f);
+                    pulseRing.endColor = pulseRing.startColor;
+                    pulseRing.transform.localScale = Vector3.one * 0.1f;
+                }
+            }
+            return false;
+        }
+
+        private bool TickVoidLordBoss()
+        {
+            if (castle == null || castle.IsGameOver) return false;
+
+            float hpFraction = enemy.CurrentHealth / Mathf.Max(1f, enemy.MaxHealth);
+
+            if (hpFraction <= 0.25f)
+            {
+                if (!isSupernovaCharging)
+                {
+                    isSupernovaCharging = true;
+                    actionTimer = 6.0f;
+                    SetWindUpVisible(true, 0f, new Color(0.85f, 0.1f, 1f));
+                }
+
+                if (actionTimer > 0f)
+                {
+                    actionTimer -= Time.deltaTime;
+                    SetWindUpVisible(true, 1f - Mathf.Clamp01(actionTimer / 6.0f), new Color(0.85f, 0.1f, 1f));
+                    if (actionTimer <= 0f)
+                    {
+                        castle.TakeDamage(35);
+                        VfxManager.Instance?.PlayFireImpact(castle.transform.position, true);
+                        isSupernovaCharging = false;
+                        actionTimer = 8f;
+                        SetWindUpVisible(false, 0f, Color.clear);
+                    }
+                    return true;
+                }
+            }
+            else if (hpFraction <= 0.60f)
+            {
+                bossPhaseTimer -= Time.deltaTime;
+                if (bossPhaseTimer <= 0f)
+                {
+                    bossPhaseTimer = 7.0f;
+                    transform.position += new Vector3(Random.Range(-1.5f, 1.5f), 0f, -1.5f);
+                    VfxManager.Instance?.PlayShockImpact(transform.position);
+                }
+            }
+
+            return false;
         }
 
         private bool TickRanged(EnemyRangedAttackSettings settings)
@@ -107,12 +231,19 @@ namespace Stonehold
             {
                 actionTimer -= Time.deltaTime;
                 SetWindUpVisible(true, 1f - Mathf.Clamp01(actionTimer / Mathf.Max(0.01f, settings.windUpSeconds)), new Color(1f, 0.55f, 0.08f));
+                if (aimLine != null)
+                {
+                    aimLine.gameObject.SetActive(true);
+                    aimLine.SetPosition(0, transform.position + Vector3.up * 0.9f);
+                    aimLine.SetPosition(1, castle.transform.position + Vector3.up * 0.5f);
+                }
                 if (actionTimer <= 0f)
                 {
                     FireAtCastle(settings);
                     isWindingUp = false;
                     actionTimer = settings.cooldownSeconds;
                     SetWindUpVisible(false, 0f, Color.clear);
+                    if (aimLine != null) aimLine.gameObject.SetActive(false);
                 }
                 return true;
             }
@@ -148,11 +279,18 @@ namespace Stonehold
             {
                 actionTimer -= Time.deltaTime;
                 SetWindUpVisible(true, 1f - Mathf.Clamp01(actionTimer / Mathf.Max(0.01f, settings.windUpSeconds)), new Color(1f, 0.55f, 0.08f));
+                if (aimLine != null)
+                {
+                    aimLine.gameObject.SetActive(true);
+                    aimLine.SetPosition(0, transform.position + Vector3.up * 0.9f);
+                    aimLine.SetPosition(1, defense.transform.position + Vector3.up * 0.5f);
+                }
                 if (actionTimer <= 0f)
                 {
                     defense.TakeDamage(enemy.Data.castleDamage, enemy, activationId);
                     VfxManager.Instance?.PlayHit(defense.transform.position + Vector3.up, new Color(1f, 0.45f, 0.08f));
                     isWindingUp = false; actionTimer = settings.cooldownSeconds; SetWindUpVisible(false, 0f, Color.clear);
+                    if (aimLine != null) aimLine.gameObject.SetActive(false);
                 }
                 return true;
             }
@@ -285,8 +423,22 @@ namespace Stonehold
             }
             if (eliteRing == null) eliteRing = CreateRing("EliteIndicator", 1.05f, new Color(0.7f, 0.15f, 1f, 0.95f));
             if (pulseRing == null) pulseRing = CreateRing("HealingPulse", 1f, new Color(0.25f, 1f, 0.45f, 0.9f));
+            if (aimLine == null)
+            {
+                GameObject lineObj = new GameObject("RangedAimLine");
+                lineObj.transform.SetParent(transform, false);
+                aimLine = lineObj.AddComponent<LineRenderer>();
+                aimLine.useWorldSpace = true;
+                aimLine.positionCount = 2;
+                aimLine.startWidth = 0.06f;
+                aimLine.endWidth = 0.02f;
+                aimLine.sharedMaterial = GetIndicatorMaterial();
+                aimLine.startColor = new Color(1f, 0.25f, 0.08f, 0.75f);
+                aimLine.endColor = new Color(1f, 0.55f, 0.08f, 0.15f);
+            }
             eliteRing.gameObject.SetActive(false);
             pulseRing.gameObject.SetActive(false);
+            aimLine.gameObject.SetActive(false);
         }
 
         private LineRenderer CreateRing(string objectName, float radius, Color color)

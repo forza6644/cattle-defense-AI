@@ -23,7 +23,7 @@ namespace Stonehold
         [Header("Core Combat")]
         public float baseDamage = 15f;
         public float attacksPerSecond = 1.4f;
-        public float attackRange = 14f;
+        public float attackRange = 28f;
 
         [Header("Elemental Behavior")]
         public float splashRadius = 0f;

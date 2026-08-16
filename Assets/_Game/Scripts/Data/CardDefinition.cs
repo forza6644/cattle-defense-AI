@@ -32,7 +32,11 @@ namespace Stonehold
         BurnDurationAdd,
         SlowDurationAdd,
         CritChanceAdd,
-        CritMultiplierAdd
+        CritMultiplierAdd,
+        ElementalReactionDamageMultiplier,
+        ShatterBonusMultiplier,
+        PoisonDamageAdd,
+        PoisonDurationAdd
     }
 
     public enum CardCategory

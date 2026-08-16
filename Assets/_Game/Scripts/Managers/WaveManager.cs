@@ -237,12 +237,81 @@ namespace Stonehold
 
                 Debug.Log("Wave " + CurrentWave + " cleared");
                 WaveCleared?.Invoke(CurrentWave, wave);
+                QuestManager.Instance?.ReportWaveCleared();
 
                 // Card drafts are driven by player level-ups, not wave completion.
             }
 
+            if (EndlessSurvivalManager.Instance != null && EndlessSurvivalManager.Instance.IsEndlessActive)
+            {
+                yield return StartCoroutine(RunEndlessWaves());
+                yield break;
+            }
+
             Debug.Log("All " + TotalWaves + " waves cleared - VICTORY");
             AllWavesCleared?.Invoke();
+        }
+
+        public void TriggerEndlessModeAfterVictory()
+        {
+            if (EndlessSurvivalManager.Instance != null)
+            {
+                EndlessSurvivalManager.Instance.StartEndlessMode();
+                StartCoroutine(RunEndlessWaves());
+            }
+        }
+
+        private IEnumerator RunEndlessWaves()
+        {
+            var allEnemies = Resources.LoadAll<EnemyData>("Enemies");
+            if (allEnemies == null || allEnemies.Length == 0)
+            {
+                allEnemies = activeWaves != null && activeWaves.Length > 0 && activeWaves[0].spawns != null && activeWaves[0].spawns.Length > 0
+                    ? new EnemyData[] { activeWaves[0].spawns[0].enemy }
+                    : null;
+            }
+
+            while (!IsGameOver && EndlessSurvivalManager.Instance != null && EndlessSurvivalManager.Instance.IsEndlessActive)
+            {
+                int abyssalWave = EndlessSurvivalManager.Instance.AbyssalWaveNumber;
+                CurrentWave = (activeWaves != null ? activeWaves.Length : 10) + abyssalWave;
+
+                yield return WaitForWaveStart(CurrentWave, null);
+                if (IsGameOver) yield break;
+
+                WaveStarted?.Invoke(CurrentWave, null);
+                Debug.Log($"[WaveManager] Abyssal Wave {abyssalWave} starting! (Wave {CurrentWave})");
+
+                if (allEnemies != null && allEnemies.Length > 0)
+                {
+                    int enemyCount = EndlessSurvivalManager.Instance.GetAbyssalEnemyCount(abyssalWave);
+                    for (int i = 0; i < enemyCount; i++)
+                    {
+                        if (IsGameOver) yield break;
+                        var enemyToSpawn = allEnemies[UnityEngine.Random.Range(0, allEnemies.Length)];
+                        if (enemyToSpawn != null)
+                        {
+                            SpawnEnemy(enemyToSpawn);
+                        }
+                        yield return new WaitForSeconds(UnityEngine.Random.Range(0.2f, 0.5f));
+                    }
+                }
+
+                while (enemyPool != null && enemyPool.ActiveCount > 0)
+                {
+                    if (IsGameOver) yield break;
+                    yield return null;
+                }
+
+                if (IsGameOver) yield break;
+
+                Debug.Log($"[WaveManager] Abyssal Wave {abyssalWave} cleared!");
+                WaveCleared?.Invoke(CurrentWave, null);
+                QuestManager.Instance?.ReportWaveCleared();
+                SaveManager.RecordEndlessAbyssWave(CurrentWave, abyssalWave * 1000);
+                EndlessSurvivalManager.Instance.AdvanceAbyssalWave();
+                UIManager.Instance?.ShowAbyssalDraftModal(EndlessSurvivalManager.Instance.RollOverchargeDraft(3));
+            }
         }
 
         private void ConfigureStageOverrides()
@@ -296,6 +365,10 @@ namespace Stonehold
         private IEnumerator WaitForWaveStart(int waveNumber, WaveData wave)
         {
             float waitTime = Mathf.Max(0f, config.timeBetweenWaves);
+            if (AscensionManager.Instance != null)
+            {
+                waitTime *= AscensionManager.Instance.GetWaveCountdownMultiplier();
+            }
             if (waitTime <= 0f)
             {
                 yield break;
@@ -369,21 +442,9 @@ namespace Stonehold
 
         private Vector3[] GetRoutePoints(int portalIndex, Vector3 spawnPos)
         {
-            if (portalIndex == 0) // Left Portal: direct straight diagonal to (-5.0, 0.1, 0.4)
-            {
-                Vector3 target = new Vector3(-5.0f, 0.1f, 0.4f);
-                return CreateStraightRoute(spawnPos, target, 5);
-            }
-            else if (portalIndex == 2) // Right Portal: direct straight diagonal to (5.0, 0.1, 0.4)
-            {
-                Vector3 target = new Vector3(5.0f, 0.1f, 0.4f);
-                return CreateStraightRoute(spawnPos, target, 5);
-            }
-            else // Center Portal: direct straight line to (0.0, 0.1, 0.4)
-            {
-                Vector3 target = new Vector3(0.0f, 0.1f, 0.4f);
-                return CreateStraightRoute(spawnPos, target, 5);
-            }
+            // 1 Wide Grand Highway: All enemies march down the majestic central highway straight to the Castle Gate
+            Vector3 target = new Vector3(0.0f, 0.1f, 0.4f);
+            return CreateStraightRoute(spawnPos, target, 5);
         }
 
         private void SpawnEnemy(EnemyData enemyData)
@@ -409,13 +470,18 @@ namespace Stonehold
                 selectedPortal = spawnPortalPresentation;
             }
 
-            Vector3 spawnPos = selectedPortal != null ? selectedPortal.SpawnAnchor.position : (spawnPoint != null ? spawnPoint.transform.position : Vector3.zero);
+            Vector3 spawnPos = selectedPortal != null ? selectedPortal.SpawnAnchor.position : (spawnPoint != null ? spawnPoint.transform.position : new Vector3(0f, 0.1f, 16f));
             Quaternion spawnRot = selectedPortal != null ? selectedPortal.SpawnAnchor.rotation : Quaternion.identity;
 
             Vector3[] points = GetRoutePoints(portalIndex, spawnPos);
 
             float laneOffset = NextLaneOffset();
-            if (portalIndex != 1)
+            // Bosses and Elites march down the commanding center, swarms spread across wide flanks
+            if (enemyData.classification == EnemyClassification.Boss)
+            {
+                laneOffset *= 0.15f;
+            }
+            else if (enemyData.classification == EnemyClassification.Elite)
             {
                 laneOffset *= 0.35f;
             }

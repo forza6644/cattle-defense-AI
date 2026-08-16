@@ -69,6 +69,7 @@ namespace Stonehold
             ApplyVolumes();
 
             Enemy.AnyKilled += OnEnemyKilled;
+            StatusEffectController.OnElementalReaction += OnElementalReaction;
             SceneManager.sceneLoaded += OnSceneLoaded;
             HookScene();
 
@@ -88,6 +89,7 @@ namespace Stonehold
             }
 
             Enemy.AnyKilled -= OnEnemyKilled;
+            StatusEffectController.OnElementalReaction -= OnElementalReaction;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             Unhook();
             Instance = null;
@@ -338,6 +340,8 @@ namespace Stonehold
         public void PlayPlace() { if (library != null) PlaySfx(library.place); }
         public void PlayUpgrade() { if (library != null) PlaySfx(library.upgrade); }
 
+        private Coroutine musicCrossfadeRoutine;
+
         public void PlayMusic(AudioClip clip, bool loop)
         {
             if (musicSource == null || clip == null)
@@ -345,10 +349,122 @@ namespace Stonehold
                 return;
             }
 
+            if (musicCrossfadeRoutine != null)
+            {
+                StopCoroutine(musicCrossfadeRoutine);
+                musicCrossfadeRoutine = null;
+            }
+
             musicSource.clip = clip;
             musicSource.loop = loop;
-            musicSource.volume = musicVolume;
+            musicSource.volume = masterVolume * musicVolume;
             musicSource.Play();
+        }
+
+        public void FadeMusicTo(AudioClip newClip, float duration = 1.0f, bool loop = true)
+        {
+            if (musicSource == null) return;
+            if (musicCrossfadeRoutine != null)
+            {
+                StopCoroutine(musicCrossfadeRoutine);
+            }
+            musicCrossfadeRoutine = StartCoroutine(CrossfadeMusicRoutine(newClip, duration, loop));
+        }
+
+        private System.Collections.IEnumerator CrossfadeMusicRoutine(AudioClip newClip, float duration, bool loop)
+        {
+            if (musicSource == null) yield break;
+            float startVol = musicSource.volume;
+            float halfDuration = Mathf.Max(0.05f, duration * 0.5f);
+
+            // Fade out
+            float elapsed = 0f;
+            while (elapsed < halfDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                musicSource.volume = Mathf.Lerp(startVol, 0f, elapsed / halfDuration);
+                yield return null;
+            }
+
+            musicSource.volume = 0f;
+            if (newClip != null)
+            {
+                musicSource.clip = newClip;
+                musicSource.loop = loop;
+                musicSource.Play();
+
+                // Fade in
+                elapsed = 0f;
+                float targetVol = masterVolume * musicVolume;
+                while (elapsed < halfDuration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    musicSource.volume = Mathf.Lerp(0f, targetVol, elapsed / halfDuration);
+                    yield return null;
+                }
+                musicSource.volume = targetVol;
+            }
+            else
+            {
+                musicSource.Stop();
+            }
+            musicCrossfadeRoutine = null;
+        }
+
+        private void OnElementalReaction(ElementalReactionType reaction, Vector3 worldPos, string heroId)
+        {
+            PlayElementalReactionSfx(reaction);
+        }
+
+        public void PlayElementalReactionSfx(ElementalReactionType reaction)
+        {
+            if (library == null) return;
+
+            switch (reaction)
+            {
+                case ElementalReactionType.ThermalShock:
+                    if (library.frostHit != null)
+                    {
+                        PlaySfx(library.frostHit, 0.65f, 1.4f);
+                    }
+                    if (library.cannonExplosion != null)
+                    {
+                        PlaySfx(library.cannonExplosion, 0.45f, 1.8f);
+                    }
+                    break;
+                case ElementalReactionType.Overload:
+                    if (library.button != null)
+                    {
+                        PlaySfx(library.button, 0.7f, 1.9f);
+                    }
+                    if (library.cannonExplosion != null)
+                    {
+                        PlaySfx(library.cannonExplosion, 0.5f, 1.5f);
+                    }
+                    break;
+                case ElementalReactionType.Shatter:
+                    if (library.arrowHit != null)
+                    {
+                        PlaySfx(library.arrowHit, 0.8f, 1.5f);
+                    }
+                    if (library.frostHit != null)
+                    {
+                        PlaySfx(library.frostHit, 0.6f, 1.6f);
+                    }
+                    break;
+                case ElementalReactionType.CorrosiveBlast:
+                    if (library.cannonExplosion != null) PlaySfx(library.cannonExplosion, 0.7f, 1.3f);
+                    if (library.frostHit != null) PlaySfx(library.frostHit, 0.5f, 0.7f);
+                    break;
+                case ElementalReactionType.Neurotoxin:
+                    if (library.button != null) PlaySfx(library.button, 0.8f, 1.7f);
+                    if (library.arrowHit != null) PlaySfx(library.arrowHit, 0.7f, 1.4f);
+                    break;
+                case ElementalReactionType.BrittleBlight:
+                    if (library.frostHit != null) PlaySfx(library.frostHit, 0.8f, 1.2f);
+                    if (library.enemyDeath != null) PlaySfx(library.enemyDeath, 0.5f, 1.5f);
+                    break;
+            }
         }
 
         // --------------------------------------------------------------- Hooks
@@ -418,14 +534,22 @@ namespace Stonehold
             {
                 if (hookedWaves != null && waveNumber == hookedWaves.TotalWaves)
                 {
-                    // Boss wave started! Deep bass rumble SFX (low-pitched explosion/damage sounds)
+                    // Boss wave started! Deep bass rumble SFX and dynamic crossfade to boss BGM
                     PlaySfx(library.cannonExplosion, 1.0f, 0.45f);
                     PlaySfx(library.castleDamage, 0.8f, 0.55f);
+                    if (library.musicBoss != null)
+                    {
+                        FadeMusicTo(library.musicBoss, 1.2f, true);
+                    }
                 }
                 else
                 {
                     AudioClip clip = library.waveStart != null ? library.waveStart : library.upgrade;
                     PlaySfx(clip, 1.0f);
+                    if (waveNumber == 1 && library.musicGameplay != null)
+                    {
+                        FadeMusicTo(library.musicGameplay, 0.8f, true);
+                    }
                 }
             }
         }
@@ -450,16 +574,59 @@ namespace Stonehold
             PlaySfx(library.gold, 0.5f, Random.Range(1.0f, 1.12f));
         }
 
+        private bool isLowHealthTension;
+        private Coroutine tensionPitchRoutine;
+
+        public void SetLowHealthTension(bool active)
+        {
+            if (isLowHealthTension == active) return;
+            isLowHealthTension = active;
+
+            if (tensionPitchRoutine != null) StopCoroutine(tensionPitchRoutine);
+            tensionPitchRoutine = StartCoroutine(SmoothPitchTension(active ? 1.08f : 1.0f));
+
+            if (active && library != null && library.castleDamage != null)
+            {
+                PlaySfx(library.castleDamage, 0.7f, 0.5f);
+            }
+        }
+
+        private System.Collections.IEnumerator SmoothPitchTension(float targetPitch)
+        {
+            if (musicSource == null) yield break;
+            float startPitch = musicSource.pitch;
+            float elapsed = 0f;
+            float dur = 0.6f;
+
+            while (elapsed < dur)
+            {
+                if (musicSource == null) yield break;
+                elapsed += Time.unscaledDeltaTime;
+                musicSource.pitch = Mathf.Lerp(startPitch, targetPitch, elapsed / dur);
+                yield return null;
+            }
+
+            if (musicSource != null) musicSource.pitch = targetPitch;
+            tensionPitchRoutine = null;
+        }
+
         private void OnCastleDamaged(int damage)
         {
             if (library != null)
             {
                 PlaySfx(library.castleDamage);
             }
+
+            if (hookedCastle != null && hookedCastle.MaxHealth > 0)
+            {
+                float ratio = (float)hookedCastle.CurrentHealth / hookedCastle.MaxHealth;
+                SetLowHealthTension(ratio <= 0.30f);
+            }
         }
 
         private void OnStateChanged(GameState state)
         {
+            SetLowHealthTension(false);
             if (library == null)
             {
                 return;

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 023039d46d0c89b45a888656b243966f, type: 3}
+  m_Name: VoidNullifierData
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
+  stableId: void_nullifier
+  enemyName: Void Nullifier
+  classification: 1
+  prefab: {fileID: 5225040395024732567, guid: 0ad8a56d117b47f4b377a11c99ee7950, type: 3}
+  health: 380
+  moveSpeed: 1.0
+  armor: 6
+  shieldCapacity: 120
+  dodgeChance: 0
+  goldReward: 20
+  xpValue: 25
+  castleDamage: 6
+  specialRole: 4
+  affix: 5

@@ -6,7 +6,20 @@ namespace Stonehold
     {
         None = 0,
         RangedCastleAttacker = 1,
-        HealingElite = 2
+        HealingElite = 2,
+        VoidPhaseStalker = 3,
+        VoidNullifier = 4,
+        VoidLordBoss = 5
+    }
+
+    public enum EnemyAffixType
+    {
+        None = 0,
+        Shielded = 1,
+        VolatileExplosive = 2,
+        BerserkerRage = 3,
+        PhaseShift = 4,
+        NullificationAura = 5
     }
 
     [System.Serializable]
@@ -61,8 +74,11 @@ namespace Stonehold
         public int xpValue;
         public int castleDamage;
 
-        [Header("Expansion Role")]
+        [Header("Expansion Role & Elite Affixes")]
         public EnemySpecialRole specialRole;
+        public EnemyAffixType affix = EnemyAffixType.None;
+        [Min(0f)] public float explosionRadius = 3.5f;
+        [Min(0f)] public float explosionDamage = 40f;
         public EnemyRangedAttackSettings rangedAttack = new EnemyRangedAttackSettings();
         public EnemyHealingPulseSettings healingPulse = new EnemyHealingPulseSettings();
     }

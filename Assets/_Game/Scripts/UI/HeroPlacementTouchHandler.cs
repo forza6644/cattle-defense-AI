@@ -92,6 +92,10 @@ namespace Stonehold
                     TryPlaceHeroIntoSlot(pendingHeroId, hitSlot);
                     ClearPendingHero();
                 }
+                else if (hitSlot != null && hitSlot.IsOccupied && hitSlot.CurrentHero != null)
+                {
+                    UIManager.Instance?.ShowHeroTargetingModal(hitSlot.CurrentHero);
+                }
             }
         }
 

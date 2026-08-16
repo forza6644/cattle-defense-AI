@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 023039d46d0c89b45a888656b243966f, type: 3}
+  m_Name: VoidStalkerData
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.EnemyData
+  stableId: void_stalker
+  enemyName: Void Stalker
+  classification: 0
+  prefab: {fileID: 5225040395024732567, guid: 5a9a3ed875ba48b6905464bdd305d2de, type: 3}
+  health: 140
+  moveSpeed: 2.2
+  armor: 2
+  shieldCapacity: 0
+  dodgeChance: 0.15
+  goldReward: 8
+  xpValue: 10
+  castleDamage: 3
+  specialRole: 3
+  affix: 4

@@ -63,6 +63,7 @@ namespace Stonehold
 
         private void Start()
         {
+            PreWarmPools();
             hookedCastle = FindFirstObjectByType<Castle>();
             castle = hookedCastle != null ? hookedCastle.transform : null;
 
@@ -211,6 +212,14 @@ namespace Stonehold
                 case "sniper":
                     Play(hitPrefab, pos, color, 0.46f);
                     break;
+                case "plague_doctor":
+                    Play(hitPrefab, pos, color, 0.65f);
+                    PlayRestrainedHeroImpactRing(pos, color, 0.5f);
+                    break;
+                case "radiant_paladin":
+                    Play(upgradePrefab != null ? upgradePrefab : hitPrefab, pos, color, 0.75f);
+                    PlayRestrainedHeroImpactRing(pos, color, 0.65f);
+                    break;
                 default:
                     Play(hitPrefab, pos, color, 0.34f);
                     break;
@@ -231,6 +240,8 @@ namespace Stonehold
                 case "bombardier": scale = 0.82f; break;
                 case "sniper": scale = 0.38f; break;
                 case "fire_mage": scale = 0.62f; break;
+                case "plague_doctor": scale = 0.45f; break;
+                case "radiant_paladin": scale = 0.55f; break;
                 default: scale = 0.5f; break;
             }
 
@@ -252,6 +263,8 @@ namespace Stonehold
                 case "fire_mage": scale = 0.40f; break;
                 case "electric_engineer": scale = 0.26f; break;
                 case "sniper": scale = 0.18f; break;
+                case "plague_doctor": scale = 0.28f; break;
+                case "radiant_paladin": scale = 0.35f; break;
                 default: scale = 0.30f; break;
             }
 
@@ -370,6 +383,8 @@ namespace Stonehold
                 case "fire_mage": return new Color(1f, 0.2f, 0.04f, 1f);
                 case "electric_engineer": return new Color(0.12f, 0.72f, 1f, 1f);
                 case "sniper": return new Color(0.82f, 0.32f, 1f, 1f);
+                case "plague_doctor": return new Color(0.25f, 0.95f, 0.35f, 1f);
+                case "radiant_paladin": return new Color(1f, 0.88f, 0.2f, 1f);
                 default: return Color.white;
             }
         }
@@ -731,6 +746,11 @@ namespace Stonehold
                 return abilityTracePool.Dequeue();
             }
 
+            return CreateAbilityTraceInstance();
+        }
+
+        private LineRenderer CreateAbilityTraceInstance()
+        {
             GameObject go = new GameObject("HeroAbilityTrace");
             go.transform.SetParent(transform, false);
             LineRenderer trace = go.AddComponent<LineRenderer>();
@@ -869,6 +889,11 @@ namespace Stonehold
                 return impactRingPool.Dequeue();
             }
 
+            return CreateImpactRingInstance();
+        }
+
+        private LineRenderer CreateImpactRingInstance()
+        {
             GameObject go = new GameObject("HeroImpactRing");
             go.transform.SetParent(transform, false);
             LineRenderer ring = go.AddComponent<LineRenderer>();
@@ -885,8 +910,6 @@ namespace Stonehold
             ring.enabled = false;
             return ring;
         }
-
-
 
         public void PlayImpactRing(Vector3 position, Color color, float radius, float duration, float width)
         {
@@ -911,5 +934,83 @@ namespace Stonehold
             color.a = 0.48f;
             PlayImpactRing(position, color, radius, 0.11f, 0.055f);
         }
-}
+
+        /// <summary>
+        /// Pre-warms visual effect particle systems, traces, and impact rings to eliminate GC alloc spikes during high-density waves.
+        /// </summary>
+        public void PreWarmPools(int preWarmCount = 8)
+        {
+            GameObject[] impactPrefabs = { explosionPrefab, frostPrefab, hitPrefab, deathPrefab, goldPrefab, placePrefab, upgradePrefab };
+            for (int i = 0; i < impactPrefabs.Length; i++)
+            {
+                GameObject prefab = impactPrefabs[i];
+                if (prefab == null) continue;
+
+                if (!pools.TryGetValue(prefab, out Queue<ParticleSystem> pool))
+                {
+                    pool = new Queue<ParticleSystem>();
+                    pools[prefab] = pool;
+                }
+
+                while (pool.Count < preWarmCount)
+                {
+                    GameObject go = Instantiate(prefab, transform);
+                    go.SetActive(false);
+                    ParticleSystem ps = go.GetComponent<ParticleSystem>();
+                    if (ps != null)
+                    {
+                        if (!prefabDefaults.ContainsKey(prefab))
+                        {
+                            prefabDefaults[prefab] = new EffectDefaults
+                            {
+                                startColor = ps.main.startColor,
+                                scale = go.transform.localScale
+                            };
+                        }
+                        pool.Enqueue(ps);
+                    }
+                }
+            }
+
+            while (abilityTracePool.Count < 16)
+            {
+                abilityTracePool.Enqueue(CreateAbilityTraceInstance());
+            }
+
+            while (impactRingPool.Count < MaxImpactRings)
+            {
+                impactRingPool.Enqueue(CreateImpactRingInstance());
+            }
+
+            StatusEffectType[] statusTypes = { StatusEffectType.Slow, StatusEffectType.Burn, StatusEffectType.Shock, StatusEffectType.Stun, StatusEffectType.Poison };
+            for (int s = 0; s < statusTypes.Length; s++)
+            {
+                StatusEffectType st = statusTypes[s];
+                if (!statusParticlePools.TryGetValue(st, out Queue<ParticleSystem> sPool))
+                {
+                    sPool = new Queue<ParticleSystem>();
+                    statusParticlePools[st] = sPool;
+                }
+
+                while (sPool.Count < 4)
+                {
+                    GameObject pPrefab = st == StatusEffectType.Slow ? frostPrefab : (st == StatusEffectType.Burn ? explosionPrefab : hitPrefab);
+                    if (pPrefab != null)
+                    {
+                        GameObject sGo = Instantiate(pPrefab, transform);
+                        sGo.SetActive(false);
+                        ParticleSystem sPs = sGo.GetComponent<ParticleSystem>();
+                        if (sPs != null)
+                        {
+                            sPool.Enqueue(sPs);
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
 }

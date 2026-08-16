@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5aa71f337ccca7d4da3fd307d99de4a0, type: 3}
+  m_Name: PlagueDoctorHero
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.HeroDefinition
+  id: plague_doctor
+  displayName: Plague Doctor
+  icon: {fileID: 0}
+  heroPrefab: {fileID: 1726440750871718265, guid: 4d83f859357d50e48b2c82bdd7439718, type: 3}
+  weapon: {fileID: 11400000, guid: d1a9e847c2b34a98981f4a9b8c7e0001, type: 2}
+  baseDamage: 12
+  baseFireRate: 1.1
+  baseRange: 10
+  defaultTargetingMode: 0
+  abilityType: 7
+  abilityCooldown: 10
+  abilityPowerMultiplier: 1.5
+  abilityRadius: 4.5
+  abilityTargetCount: 1

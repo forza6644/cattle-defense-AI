@@ -53,6 +53,10 @@ namespace Stonehold
 
         public void AddGold(int amount)
         {
+            if (amount > 0 && AscensionManager.Instance != null)
+            {
+                amount = Mathf.Max(1, Mathf.RoundToInt(amount * AscensionManager.Instance.GetGoldMultiplier()));
+            }
             Gold += amount;
             GoldChanged?.Invoke();
         }

@@ -98,10 +98,14 @@ namespace Stonehold
         public bool IsAttackingCastle => isAttackingCastle;
         public int ActivationId => activationId;
         public bool IsActiveActivation => isActiveActivation;
-        public bool IsTargetable => isActiveActivation && !isDead && gameObject.activeInHierarchy;
+        public bool IsTargetable => isActiveActivation && !isDead && gameObject.activeInHierarchy && (specialBehavior == null || !specialBehavior.IsPhaseShifted);
+        public StatusEffectController StatusController => statusController;
         public string PoolKey => poolKey;
         public Castle TargetCastle => targetCastle;
         public int BossPhase { get; private set; } = 1;
+        public float CurrentShield { get; private set; }
+        public float MaxShield { get; private set; }
+        public bool IsEnraged { get; private set; }
 
         public float SlowMultiplier
         {
@@ -211,11 +215,29 @@ namespace Stonehold
         {
             data = spawnData;
             CacheRuntimeComponents();
-            transform.SetPositionAndRotation(position, rotation);
-            currentHealth = data != null ? data.health : 0f;
+            if (data != null && !string.IsNullOrEmpty(data.stableId))
+            {
+                BestiaryManager.Instance?.RegisterEncounter(data.stableId);
+            }
+            float hp = data != null ? data.health : 0f;
+            if (data != null && (data.classification == EnemyClassification.Elite || data.classification == EnemyClassification.Boss))
+            {
+                if (AscensionManager.Instance != null)
+                {
+                    hp *= AscensionManager.Instance.GetEliteHealthMultiplier();
+                }
+            }
+            currentHealth = hp;
             slowMultiplier = 1f;
             slowTimer = 0f;
             BossPhase = 1;
+            MaxShield = data != null ? data.shieldCapacity : 0f;
+            if (MaxShield <= 0f && AscensionManager.Instance != null && UnityEngine.Random.value < AscensionManager.Instance.GetNullifierShieldChance())
+            {
+                MaxShield = hp * 0.35f;
+            }
+            CurrentShield = MaxShield;
+            IsEnraged = false;
             isDead = false;
             isAttackingCastle = false;
             currentWaypointIndex = 0;
@@ -253,6 +275,9 @@ namespace Stonehold
             defenseAttackTimer = 0f;
             slowMultiplier = 1f;
             slowTimer = 0f;
+            CurrentShield = 0f;
+            MaxShield = 0f;
+            IsEnraged = false;
             isDead = false;
             isAttackingCastle = false;
             rewardClaimed = false;
@@ -300,7 +325,7 @@ namespace Stonehold
         }
 
         /// <summary>Called by projectiles. Kills the enemy (awarding gold) at 0 HP.</summary>
-        public float TakeDamage(float amount, bool ignoreArmor = false, bool isCrit = false)
+        public float TakeDamage(float amount, bool ignoreArmor = false, bool isCrit = false, string sourceHeroId = null)
         {
             if (isDead || (poolOwner != null && !isActiveActivation))
             {
@@ -308,9 +333,14 @@ namespace Stonehold
             }
 
             float reducedAmount = amount;
-            if (!ignoreArmor && data != null && data.armor > 0f)
+            float totalArmor = data != null ? data.armor : 0f;
+            if (AscensionManager.Instance != null)
             {
-                reducedAmount = Mathf.Max(1f, amount - data.armor);
+                totalArmor += AscensionManager.Instance.GetEnemyArmorBonus();
+            }
+            if (!ignoreArmor && totalArmor > 0f)
+            {
+                reducedAmount = Mathf.Max(1f, amount - totalArmor);
             }
 
             if (statusController != null && statusController.IsShocked())
@@ -321,18 +351,68 @@ namespace Stonehold
                 reducedAmount *= 1.3f;
             }
 
+            if (statusController != null && statusController.IsVulnerableToShatter)
+            {
+                bool isPhysicalHero = sourceHeroId == "archer" || sourceHeroId == "bombardier" || sourceHeroId == "sniper";
+                if (isPhysicalHero || isCrit)
+                {
+                    float shatterMult = 1.30f;
+                    if (!string.IsNullOrEmpty(sourceHeroId) && RunModifierManager.Instance != null)
+                    {
+                        shatterMult *= RunModifierManager.Instance.GetShatterBonusMultiplier(sourceHeroId);
+                        if (RunModifierManager.Instance.HasBehavior(sourceHeroId, HeroBehaviorEffectType.ExecutionerCrit))
+                        {
+                            shatterMult += 0.35f;
+                        }
+                    }
+                    reducedAmount *= shatterMult;
+                    StatusEffectController.TriggerReactionEvent(ElementalReactionType.Shatter, transform.position, sourceHeroId);
+                }
+            }
+
+            // Shield Absorption
+            if (CurrentShield > 0f)
+            {
+                if (CurrentShield >= reducedAmount)
+                {
+                    CurrentShield -= reducedAmount;
+                    AnyDamaged?.Invoke(this, reducedAmount);
+                    AnyDamagedDetailed?.Invoke(this, reducedAmount, isCrit);
+                    FloatingCombatTextManager.Instance?.SpawnCustomText(transform.position, $"🛡️ {Mathf.RoundToInt(reducedAmount)}", new Color(0.4f, 0.8f, 1f));
+                    return reducedAmount;
+                }
+                else
+                {
+                    float absorbed = CurrentShield;
+                    CurrentShield = 0f;
+                    reducedAmount -= absorbed;
+                    FloatingCombatTextManager.Instance?.SpawnCustomText(transform.position, "🛡️ BROKEN!", new Color(0.4f, 0.8f, 1f), 1.2f, true);
+                }
+            }
+
             currentHealth -= reducedAmount;
             AnyDamaged?.Invoke(this, reducedAmount);
             AnyDamagedDetailed?.Invoke(this, reducedAmount, isCrit);
 
-            if (data != null && data.classification == EnemyClassification.Boss && currentHealth > 0f)
+            if (data != null && currentHealth > 0f)
             {
                 float hpPercent = currentHealth / Mathf.Max(1f, data.health);
-                if (BossPhase == 1 && hpPercent <= 0.50f)
+                if (data.classification == EnemyClassification.Boss)
                 {
-                    BossPhase = 2;
-                    slowMultiplier *= 1.25f;
-                    BossPhaseTransition?.Invoke(this, 2, hpPercent);
+                    if (BossPhase == 1 && hpPercent <= 0.50f)
+                    {
+                        BossPhase = 2;
+                        slowMultiplier *= 1.25f;
+                        BossPhaseTransition?.Invoke(this, 2, hpPercent);
+                    }
+                }
+
+                // Berserker Rage Affix check
+                if ((data.affix == EnemyAffixType.BerserkerRage || data.classification == EnemyClassification.Elite) && hpPercent <= 0.40f && !IsEnraged)
+                {
+                    IsEnraged = true;
+                    slowMultiplier = Mathf.Max(1.35f, slowMultiplier * 1.35f);
+                    FloatingCombatTextManager.Instance?.SpawnCustomText(transform.position, "⚡ ENRAGED!", new Color(1f, 0.2f, 0.2f), 1.3f, true);
                 }
             }
 
@@ -395,16 +475,46 @@ namespace Stonehold
             specialBehavior?.CancelPendingActions();
             UnregisterOnce();
 
+            if (data != null && !string.IsNullOrEmpty(data.stableId))
+            {
+                BestiaryManager.Instance?.RegisterKill(data.stableId);
+            }
+            CombatTelemetryManager.RecordKill();
+
+            AchievementManager.Instance?.AddProgress("achv_first_blood", 1);
+            AchievementManager.Instance?.AddProgress("achv_slayer_100", 1);
+            AchievementManager.Instance?.AddProgress("achv_slayer_500", 1);
+            if (data != null && data.classification == EnemyClassification.Boss)
+            {
+                AchievementManager.Instance?.AddProgress("achv_boss_slayer", 1);
+            }
+
+            int goldReward = data != null ? data.goldReward : 0;
+            if (data != null && (data.classification == EnemyClassification.Elite || data.classification == EnemyClassification.Boss))
+            {
+                if (RelicManager.Instance != null)
+                {
+                    goldReward = Mathf.RoundToInt(goldReward * RelicManager.Instance.GetEliteBossGoldMultiplier());
+                }
+            }
+
             if (!rewardClaimed && EconomyManager.Instance != null)
             {
-                EconomyManager.Instance.AddGold(data.goldReward);
+                EconomyManager.Instance.AddGold(goldReward);
             }
 
             if (!rewardClaimed)
             {
                 rewardClaimed = true;
-                AnyKilled?.Invoke(this, data.goldReward);
+                AnyKilled?.Invoke(this, goldReward);
             }
+
+            if (data != null && data.affix == EnemyAffixType.VolatileExplosive)
+            {
+                TriggerVolatileExplosion();
+            }
+
+            statusController?.OnEnemyDeath();
 
             int deathActivationId = activationId;
             Action complete = () =>
@@ -489,8 +599,21 @@ namespace Stonehold
                 return;
             }
 
+            if (AscensionManager.Instance != null && AscensionManager.Instance.GetEnemyRegenPercent() > 0f && !isDead && data != null)
+            {
+                float maxHp = data.health * (data.classification == EnemyClassification.Elite || data.classification == EnemyClassification.Boss ? (AscensionManager.Instance != null ? AscensionManager.Instance.GetEliteHealthMultiplier() : 1f) : 1f);
+                if (currentHealth < maxHp)
+                {
+                    currentHealth = Mathf.Min(maxHp, currentHealth + (maxHp * AscensionManager.Instance.GetEnemyRegenPercent() * Time.deltaTime));
+                }
+            }
+
             Vector3 targetPosition = pathPoints[currentWaypointIndex];
             float speed = data.moveSpeed * slowMultiplier;
+            if (AscensionManager.Instance != null)
+            {
+                speed *= AscensionManager.Instance.GetEnemySpeedMultiplier();
+            }
 
             Vector3 direction = (targetPosition - transform.position).normalized;
             direction.y = 0f;
@@ -615,6 +738,40 @@ namespace Stonehold
                     body.linearVelocity = Vector3.zero;
                     body.angularVelocity = Vector3.zero;
                     body.Sleep();
+                }
+            }
+        }
+
+        private void TriggerVolatileExplosion()
+        {
+            if (data == null) return;
+            float radius = data.explosionRadius > 0f ? data.explosionRadius : 3.5f;
+            float dmg = data.explosionDamage > 0f ? data.explosionDamage : 40f;
+            float radiusSqr = radius * radius;
+
+            if (VfxManager.Instance != null)
+            {
+                VfxManager.Instance.PlayExplosion(transform.position, true);
+            }
+            if (FloatingCombatTextManager.Instance != null)
+            {
+                FloatingCombatTextManager.Instance.SpawnCustomText(transform.position, "💥 BOOM!", new Color(1f, 0.5f, 0.1f), 1.3f, true);
+            }
+
+            var all = EnemyManager.All;
+            if (all != null)
+            {
+                for (int i = all.Count - 1; i >= 0; i--)
+                {
+                    if (i >= all.Count) continue;
+                    Enemy other = all[i];
+                    if (other != null && other != this && !other.IsDead)
+                    {
+                        if ((other.transform.position - transform.position).sqrMagnitude <= radiusSqr)
+                        {
+                            other.TakeDamage(dmg, true);
+                        }
+                    }
                 }
             }
         }

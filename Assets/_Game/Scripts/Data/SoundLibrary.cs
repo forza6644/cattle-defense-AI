@@ -12,6 +12,7 @@ namespace Stonehold
     {
         [Header("Music")]
         public AudioClip musicGameplay;
+        public AudioClip musicBoss;
         public AudioClip musicVictory;
         public AudioClip musicDefeat;
 

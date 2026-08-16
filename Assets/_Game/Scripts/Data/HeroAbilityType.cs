@@ -8,6 +8,8 @@ namespace Stonehold
         FrostNova,
         FlameWave,
         ChainStorm,
-        PowerShot
+        PowerShot,
+        PlagueFlask,
+        Consecration
     }
 }

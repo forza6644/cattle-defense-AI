@@ -88,6 +88,8 @@ namespace Stonehold
         private Text resultDamageReportText;
         private Button resultOkButton;
         private Button resultDoubleButton;
+        private Button enterAbyssButton;
+        private GameObject abyssalModalPanel;
         private bool rewardsClaimed;
 
         private Text hintText;
@@ -101,13 +103,16 @@ namespace Stonehold
         private class AbilityCooldownUIItem
         {
             public GameObject Root;
+            public Button Button;
             public Image Background;
             public Image Icon;
             public Image Fill;
             public Text LevelText;
             public Text TimerText;
             public Text RoleText;
+            public Text HotkeyText;
             public string HeroId;
+            public HeroAttack BoundHero;
         }
         private RectTransform abilityHudContainer;
         private readonly List<AbilityCooldownUIItem> abilityUiItems = new List<AbilityCooldownUIItem>();
@@ -496,9 +501,33 @@ namespace Stonehold
         {
             EnsureUIBuilt();
             int total = waves != null ? waves.TotalWaves : 0;
+
+            if (EndlessSurvivalManager.Instance != null && EndlessSurvivalManager.Instance.IsEndlessActive)
+            {
+                if (waveText != null)
+                {
+                    waveText.text = $"ABYSSAL WAVE: ∞-{EndlessSurvivalManager.Instance.AbyssalWaveNumber}  CLEAR";
+                    waveText.color = new Color(0.85f, 0.45f, 1f, 1f);
+                }
+                ShowBanner($"🌌 Abyssal Wave {EndlessSurvivalManager.Instance.AbyssalWaveNumber} Cleared!");
+                return;
+            }
+
             if (waveText != null)
             {
                 waveText.text = "WAVE  " + number + " / " + (total > 0 ? total.ToString() : "-") + "  CLEAR";
+            }
+
+            if (number == 5 || (number % 5 == 0 && number < total))
+            {
+                if (RelicManager.Instance != null)
+                {
+                    var choices = RelicManager.Instance.RollRelicDraft(3);
+                    if (choices != null && choices.Count > 0)
+                    {
+                        ShowRelicDraftModal(choices, relic => RelicManager.Instance.AddRelic(relic));
+                    }
+                }
             }
         }
 
@@ -1253,6 +1282,18 @@ namespace Stonehold
                     badgeLabel = "UPGRADE";
                 }
 
+                string synergy = choices[i].synergyTag;
+                if (string.IsNullOrEmpty(synergy) && CheckCardSynergyWithPlacedHeroes(choices[i]))
+                {
+                    synergy = "⚡ SYNERGY";
+                }
+
+                if (!string.IsNullOrEmpty(synergy))
+                {
+                    badgeColor = new Color(0.12f, 0.70f, 0.95f, 0.95f);
+                    badgeLabel = $"{synergy} • {badgeLabel}";
+                }
+
                 if (cardTypeBadges[i] != null)
                 {
                     cardTypeBadges[i].color = badgeColor;
@@ -1452,6 +1493,25 @@ namespace Stonehold
             if (showAbilityHud)
             {
                 UpdateAbilityCooldownHUD();
+                UpdateSynergyHUD();
+
+                if (UnityEngine.InputSystem.Keyboard.current != null)
+                {
+                    var kb = UnityEngine.InputSystem.Keyboard.current;
+                    UnityEngine.InputSystem.Controls.KeyControl[] skillKeys = {
+                        kb.digit1Key, kb.digit2Key, kb.digit3Key, kb.digit4Key, kb.digit5Key, kb.digit6Key
+                    };
+                    for (int k = 0; k < skillKeys.Length && k < abilityUiItems.Count; k++)
+                    {
+                        if (skillKeys[k] != null && skillKeys[k].wasPressedThisFrame)
+                        {
+                            if (abilityUiItems[k].BoundHero != null)
+                            {
+                                abilityUiItems[k].BoundHero.TriggerManualAbility();
+                            }
+                        }
+                    }
+                }
             }
 
             RefreshPriorityTargetIndicator();
@@ -1712,6 +1772,8 @@ namespace Stonehold
 
             BuildLevelUpPanel();
             BuildAbilityCooldownHUD();
+            BuildSynergyHUD();
+            BuildRelicHUD();
             BuildBattleResultPanel();
         }
 
@@ -2128,6 +2190,26 @@ namespace Stonehold
                 doubleLabel.color = new Color(0.6f, 0.6f, 0.6f);
             }
 
+            enterAbyssButton = CreateButton(contentBg.rectTransform, "EnterAbyssButton", "🌌 ENTER THE ABYSS", new Vector2(240f, 60f), new Vector2(0.5f, 0f), new Vector2(135f, 44f), () =>
+            {
+                ShowPanel(resultPanelGroup, false);
+                if (waves != null)
+                {
+                    waves.TriggerEndlessModeAfterVictory();
+                }
+                if (game != null)
+                {
+                    game.SetState(GameState.Playing);
+                }
+            });
+            Text abyssText = enterAbyssButton.GetComponentInChildren<Text>();
+            if (abyssText != null)
+            {
+                abyssText.fontSize = 15;
+                abyssText.fontStyle = FontStyle.Bold;
+                abyssText.color = new Color(0.95f, 0.75f, 1f);
+            }
+
             resultPanelGroup = dim.gameObject.AddComponent<CanvasGroup>();
             resultPanelGroup.alpha = 0f;
             resultPanelGroup.interactable = false;
@@ -2235,11 +2317,34 @@ namespace Stonehold
             if (resultDamageReportText != null)
             {
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
-                if (damageEntries.Count == 0)
+                var telemetry = CombatTelemetryManager.Instance;
+                if (telemetry != null && telemetry.GetAllHeroReports().Count > 0)
                 {
-                    sb.AppendLine("No damage recorded.");
+                    var mvp = telemetry.GetMvpReport();
+                    sb.AppendLine($"👑 RUN MVP: {mvp.displayName.ToUpperInvariant()} ({mvp.damagePercentage:F1}% DMG | {mvp.dps:F0} DPS)");
+                    sb.AppendLine();
+
+                    var reports = telemetry.GetAllHeroReports();
+                    for (int i = 0; i < reports.Count; i++)
+                    {
+                        var r = reports[i];
+                        int barLength = Mathf.Clamp(Mathf.RoundToInt(r.damagePercentage / 10f), 0, 10);
+                        string bar = new string('█', barLength) + new string('░', 10 - barLength);
+                        sb.AppendLine($"{i + 1}. {r.displayName,-14} [{bar}]  {r.totalDamage:N0} dmg ({r.damagePercentage:F1}%) | {r.dps:F0} DPS");
+                    }
+
+                    if (telemetry.ReactionCounts.Count > 0)
+                    {
+                        sb.AppendLine();
+                        List<string> rxns = new List<string>();
+                        foreach (var kvp in telemetry.ReactionCounts)
+                        {
+                            rxns.Add($"{kvp.Key}: {kvp.Value}");
+                        }
+                        sb.AppendLine($"⚡ Elemental Reactions: {string.Join(" • ", rxns)}");
+                    }
                 }
-                else
+                else if (damageEntries.Count > 0)
                 {
                     for (int i = 0; i < damageEntries.Count; i++)
                     {
@@ -2247,7 +2352,20 @@ namespace Stonehold
                         sb.AppendLine($"{i + 1}. {entry.displayName.ToUpperInvariant()}   {entry.damageDealt:N0} dmg ({entry.percentage:F1}%)");
                     }
                 }
+                else
+                {
+                    sb.AppendLine("No damage recorded.");
+                }
                 resultDamageReportText.text = sb.ToString().TrimEnd();
+            }
+
+            if (enterAbyssButton != null)
+            {
+                enterAbyssButton.gameObject.SetActive(victory);
+            }
+            if (resultDoubleButton != null)
+            {
+                resultDoubleButton.gameObject.SetActive(!victory);
             }
 
             ShowPanel(resultPanelGroup, true);
@@ -2551,11 +2669,39 @@ namespace Stonehold
             abilityHudContainer = containerObj.GetComponent<RectTransform>();
             abilityHudContainer.SetParent(safeAreaRect, false);
             SetAnchored(abilityHudContainer, new Vector2(1f, 1f), new Vector2(-48f, -104f), new Vector2(78f, 500f));
+
+            GameObject autoToggleObj = new GameObject("AutoSkillToggle", typeof(RectTransform));
+            RectTransform autoRt = autoToggleObj.GetComponent<RectTransform>();
+            autoRt.SetParent(abilityHudContainer, false);
+            SetAnchored(autoRt, new Vector2(0.5f, 1f), new Vector2(0f, 26f), new Vector2(74f, 22f));
+
+            Image autoBg = CreateHudPanel(autoRt, "AutoBg");
+            autoBg.rectTransform.anchorMin = Vector2.zero;
+            autoBg.rectTransform.anchorMax = Vector2.one;
+            autoBg.rectTransform.offsetMin = Vector2.zero;
+            autoBg.rectTransform.offsetMax = Vector2.zero;
+            autoBg.color = new Color(0.1f, 0.12f, 0.18f, 0.9f);
+
+            Text autoText = CreateText(autoRt, "AutoText", "AUTO: ON", 10, new Color(0.3f, 1f, 0.4f), TextAnchor.MiddleCenter);
+            autoText.fontStyle = FontStyle.Bold;
+            autoText.rectTransform.anchorMin = Vector2.zero;
+            autoText.rectTransform.anchorMax = Vector2.one;
+            autoText.rectTransform.offsetMin = Vector2.zero;
+            autoText.rectTransform.offsetMax = Vector2.zero;
+
+            Button autoBtn = autoToggleObj.AddComponent<Button>();
+            autoBtn.onClick.AddListener(() =>
+            {
+                HeroAttack.AutoCastSkills = !HeroAttack.AutoCastSkills;
+                autoText.text = HeroAttack.AutoCastSkills ? "AUTO: ON" : "AUTO: OFF";
+                autoText.color = HeroAttack.AutoCastSkills ? new Color(0.3f, 1f, 0.4f) : new Color(1f, 0.6f, 0.2f);
+            });
         }
 
         private void CreateAbilityCooldownUIItem()
         {
-            GameObject rootObj = new GameObject("Slot_" + abilityUiItems.Count, typeof(RectTransform));
+            int itemIndex = abilityUiItems.Count;
+            GameObject rootObj = new GameObject("Slot_" + itemIndex, typeof(RectTransform));
             RectTransform rootRt = rootObj.GetComponent<RectTransform>();
             rootRt.SetParent(abilityHudContainer, false);
             SetAnchored(rootRt, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(64f, 64f));
@@ -2603,16 +2749,34 @@ namespace Stonehold
             lvlText.rectTransform.anchoredPosition = new Vector2(0f, -12f);
             lvlText.rectTransform.sizeDelta = new Vector2(64f, 16f);
 
+            Text hotkeyText = CreateText(rootRt, "HotkeyText", $"[{itemIndex + 1}]", 10, new Color(1f, 0.9f, 0.3f), TextAnchor.LowerRight);
+            hotkeyText.fontStyle = FontStyle.Bold;
+            hotkeyText.rectTransform.anchorMin = Vector2.zero;
+            hotkeyText.rectTransform.anchorMax = Vector2.one;
+            hotkeyText.rectTransform.anchoredPosition = new Vector2(-4f, 4f);
+
+            Button btn = rootObj.AddComponent<Button>();
+            btn.onClick.AddListener(() =>
+            {
+                if (itemIndex < abilityUiItems.Count && abilityUiItems[itemIndex].BoundHero != null)
+                {
+                    abilityUiItems[itemIndex].BoundHero.TriggerManualAbility();
+                }
+            });
+
             AbilityCooldownUIItem item = new AbilityCooldownUIItem
             {
                 Root = rootObj,
+                Button = btn,
                 Background = bg,
                 Icon = icon,
                 Fill = fill,
                 LevelText = lvlText,
                 TimerText = timerText,
                 RoleText = roleText,
-                HeroId = ""
+                HotkeyText = hotkeyText,
+                HeroId = "",
+                BoundHero = null
             };
 
             abilityUiItems.Add(item);
@@ -2646,6 +2810,7 @@ namespace Stonehold
 
                 var uiItem = abilityUiItems[activeSlotCount];
                 uiItem.Root.SetActive(true);
+                uiItem.BoundHero = hero;
                 uiItem.HeroId = hero.Definition.id;
                 uiItem.Icon.color = GetHeroColor(hero.Definition.id);
                 uiItem.RoleText.text = GetHeroHudRoleLabel(hero.Definition.id);
@@ -2677,6 +2842,7 @@ namespace Stonehold
 
             for (int i = activeSlotCount; i < abilityUiItems.Count; i++)
             {
+                abilityUiItems[i].BoundHero = null;
                 abilityUiItems[i].Root.SetActive(false);
             }
         }
@@ -2691,6 +2857,8 @@ namespace Stonehold
                 case "fire_mage": return new Color(1f, 0.22f, 0.08f);
                 case "electric_engineer": return new Color(0.2f, 0.85f, 1f);
                 case "sniper": return new Color(0.75f, 0.4f, 1f);
+                case "plague_doctor": return new Color(0.25f, 0.95f, 0.35f);
+                case "radiant_paladin": return new Color(1f, 0.88f, 0.2f);
                 default: return Color.white;
             }
         }
@@ -2705,8 +2873,523 @@ namespace Stonehold
                 case "fire_mage": return "FIR";
                 case "electric_engineer": return "TES";
                 case "sniper": return "SNP";
+                case "plague_doctor": return "PLG";
+                case "radiant_paladin": return "PAL";
                 default: return "HERO";
             }
+        }
+
+        // ----------------------------------------------------------- Synergy HUD
+
+        private RectTransform synergyHudContainer;
+        private Text synergyHudText;
+
+        private void BuildSynergyHUD()
+        {
+            GameObject containerObj = new GameObject("SynergyHUD", typeof(RectTransform));
+            synergyHudContainer = containerObj.GetComponent<RectTransform>();
+            synergyHudContainer.SetParent(safeAreaRect, false);
+            SetAnchored(synergyHudContainer, new Vector2(0.5f, 1f), new Vector2(0f, -118f), new Vector2(420f, 26f));
+
+            Image bg = CreateHudPanel(synergyHudContainer, "Bg");
+            bg.rectTransform.anchorMin = Vector2.zero;
+            bg.rectTransform.anchorMax = Vector2.one;
+            bg.rectTransform.offsetMin = Vector2.zero;
+            bg.rectTransform.offsetMax = Vector2.zero;
+            bg.color = new Color(0.06f, 0.08f, 0.12f, 0.85f);
+
+            synergyHudText = CreateText(synergyHudContainer, "SynergyText", "COMBOS: -", 13, new Color(0.4f, 0.9f, 1f), TextAnchor.MiddleCenter);
+            synergyHudText.fontStyle = FontStyle.Bold;
+            synergyHudText.rectTransform.anchorMin = Vector2.zero;
+            synergyHudText.rectTransform.anchorMax = Vector2.one;
+            synergyHudText.rectTransform.offsetMin = Vector2.zero;
+            synergyHudText.rectTransform.offsetMax = Vector2.zero;
+            synergyHudContainer.gameObject.SetActive(false);
+        }
+
+        private void UpdateSynergyHUD()
+        {
+            if (HeroRosterManager.Instance == null || synergyHudText == null || synergyHudContainer == null) return;
+
+            var slots = HeroRosterManager.Instance.Slots;
+            bool hasFire = false;
+            bool hasFrost = false;
+            bool hasElectric = false;
+            bool hasPhysical = false;
+
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i];
+                if (slot != null && slot.IsOccupied && slot.CurrentHero != null)
+                {
+                    string id = slot.CurrentHero.Definition != null ? slot.CurrentHero.Definition.id : "";
+                    if (id == "fire_mage") hasFire = true;
+                    else if (id == "frost_mage") hasFrost = true;
+                    else if (id == "electric_engineer") hasElectric = true;
+                    else if (id == "archer" || id == "bombardier" || id == "sniper") hasPhysical = true;
+                }
+            }
+
+            List<string> activeCombos = new List<string>(4);
+            if (hasFire && hasFrost) activeCombos.Add("🔥+❄️ Thermal");
+            if (hasElectric && hasFire) activeCombos.Add("⚡+🔥 Overload");
+            if (hasFrost && hasPhysical) activeCombos.Add("❄️+🏹 Shatter");
+
+            if (activeCombos.Count > 0)
+            {
+                if (!synergyHudContainer.gameObject.activeSelf) synergyHudContainer.gameObject.SetActive(true);
+                synergyHudText.text = "COMBOS: " + string.Join("  |  ", activeCombos);
+                synergyHudText.color = new Color(0.35f, 0.95f, 1f, 1f);
+            }
+            else
+            {
+                if (synergyHudContainer.gameObject.activeSelf) synergyHudContainer.gameObject.SetActive(false);
+            }
+        }
+
+        private bool CheckCardSynergyWithPlacedHeroes(RunProgressionManager.CardChoice choice)
+        {
+            if (HeroRosterManager.Instance == null) return false;
+
+            var slots = HeroRosterManager.Instance.Slots;
+            bool hasFire = false;
+            bool hasFrost = false;
+            bool hasElectric = false;
+            bool hasPhysical = false;
+
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var slot = slots[i];
+                if (slot != null && slot.IsOccupied && slot.CurrentHero != null)
+                {
+                    string id = slot.CurrentHero.Definition != null ? slot.CurrentHero.Definition.id : "";
+                    if (id == "fire_mage") hasFire = true;
+                    else if (id == "frost_mage") hasFrost = true;
+                    else if (id == "electric_engineer") hasElectric = true;
+                    else if (id == "archer" || id == "bombardier" || id == "sniper") hasPhysical = true;
+                }
+            }
+
+            string text = ((choice.title ?? "") + " " + (choice.description ?? "")).ToLowerInvariant();
+
+            if (hasFire && (text.Contains("frost") || text.Contains("ice") || text.Contains("shock") || text.Contains("thermal") || text.Contains("overload"))) return true;
+            if (hasFrost && (text.Contains("fire") || text.Contains("burn") || text.Contains("shatter") || text.Contains("thermal"))) return true;
+            if (hasElectric && (text.Contains("fire") || text.Contains("burn") || text.Contains("overload") || text.Contains("shock"))) return true;
+            if (hasPhysical && (text.Contains("frost") || text.Contains("shatter"))) return true;
+
+            return false;
+        }
+
+        // ----------------------------------------------------------- Relic HUD & Modal
+        private RectTransform relicHudContainer;
+        private readonly List<GameObject> relicIconObjects = new List<GameObject>();
+        private GameObject relicModalPanel;
+
+        private void BuildRelicHUD()
+        {
+            if (safeAreaRect == null) return;
+            GameObject containerObj = new GameObject("RelicHUD", typeof(RectTransform));
+            relicHudContainer = containerObj.GetComponent<RectTransform>();
+            relicHudContainer.SetParent(safeAreaRect, false);
+            SetAnchored(relicHudContainer, new Vector2(1f, 1f), new Vector2(-20f, -60f), new Vector2(300f, 36f));
+
+            RelicManager.OnRelicsUpdated += UpdateRelicHUD;
+            UpdateRelicHUD();
+        }
+
+        public void UpdateRelicHUD()
+        {
+            if (relicHudContainer == null) return;
+            for (int i = 0; i < relicIconObjects.Count; i++)
+            {
+                if (relicIconObjects[i] != null) Destroy(relicIconObjects[i]);
+            }
+            relicIconObjects.Clear();
+
+            if (RelicManager.Instance == null || RelicManager.Instance.ActiveRelics.Count == 0)
+            {
+                relicHudContainer.gameObject.SetActive(false);
+                return;
+            }
+
+            relicHudContainer.gameObject.SetActive(true);
+            var relics = RelicManager.Instance.ActiveRelics;
+            for (int i = 0; i < relics.Count; i++)
+            {
+                RelicDefinition r = relics[i];
+                if (r == null) continue;
+
+                GameObject iconObj = new GameObject("Relic_" + r.id, typeof(RectTransform));
+                RectTransform rt = iconObj.GetComponent<RectTransform>();
+                rt.SetParent(relicHudContainer, false);
+                SetAnchored(rt, new Vector2(1f, 0.5f), new Vector2(-i * 38f, 0f), new Vector2(32f, 32f));
+
+                Image bg = CreateHudPanel(rt, "Border");
+                bg.rectTransform.anchorMin = Vector2.zero;
+                bg.rectTransform.anchorMax = Vector2.one;
+                bg.rectTransform.offsetMin = Vector2.zero;
+                bg.rectTransform.offsetMax = Vector2.zero;
+                bg.color = r.GetRarityColor();
+
+                Text lbl = CreateText(rt, "IconLabel", r.displayName.Length > 0 ? r.displayName.Substring(0, 1) : "R", 14, Color.white, TextAnchor.MiddleCenter);
+                lbl.fontStyle = FontStyle.Bold;
+                lbl.rectTransform.anchorMin = Vector2.zero;
+                lbl.rectTransform.anchorMax = Vector2.one;
+                lbl.rectTransform.offsetMin = Vector2.zero;
+                lbl.rectTransform.offsetMax = Vector2.zero;
+
+                relicIconObjects.Add(iconObj);
+            }
+        }
+
+        public void ShowRelicDraftModal(List<RelicDefinition> choices, System.Action<RelicDefinition> onSelected)
+        {
+            if (choices == null || choices.Count == 0 || safeAreaRect == null) return;
+
+            if (relicModalPanel != null) Destroy(relicModalPanel);
+
+            relicModalPanel = new GameObject("RelicDraftModal", typeof(RectTransform));
+            RectTransform modalRt = relicModalPanel.GetComponent<RectTransform>();
+            modalRt.SetParent(safeAreaRect, false);
+            modalRt.anchorMin = Vector2.zero;
+            modalRt.anchorMax = Vector2.one;
+            modalRt.offsetMin = Vector2.zero;
+            modalRt.offsetMax = Vector2.zero;
+
+            Image backdrop = CreateHudPanel(modalRt, "Backdrop");
+            backdrop.rectTransform.anchorMin = Vector2.zero;
+            backdrop.rectTransform.anchorMax = Vector2.one;
+            backdrop.rectTransform.offsetMin = Vector2.zero;
+            backdrop.rectTransform.offsetMax = Vector2.zero;
+            backdrop.color = new Color(0.02f, 0.04f, 0.08f, 0.92f);
+
+            Text header = CreateText(modalRt, "Title", "👑 ELITE RELIC DISCOVERED", 26, new Color(1f, 0.85f, 0.2f), TextAnchor.MiddleCenter);
+            header.fontStyle = FontStyle.Bold;
+            SetAnchored(header.rectTransform, new Vector2(0.5f, 0.85f), Vector2.zero, new Vector2(500f, 50f));
+
+            Text subtitle = CreateText(modalRt, "Subtitle", "Choose an artifact to empower your defenses for the rest of the run:", 15, new Color(0.8f, 0.9f, 1f), TextAnchor.MiddleCenter);
+            SetAnchored(subtitle.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(600f, 30f));
+
+            float cardWidth = 230f;
+            float spacing = 20f;
+            float totalWidth = (choices.Count * cardWidth) + ((choices.Count - 1) * spacing);
+            float startX = -totalWidth * 0.5f + cardWidth * 0.5f;
+
+            for (int i = 0; i < choices.Count; i++)
+            {
+                RelicDefinition relic = choices[i];
+
+                GameObject cardObj = new GameObject("RelicCard_" + i, typeof(RectTransform));
+                RectTransform cardRt = cardObj.GetComponent<RectTransform>();
+                cardRt.SetParent(modalRt, false);
+                SetAnchored(cardRt, new Vector2(0.5f, 0.48f), new Vector2(startX + i * (cardWidth + spacing), 0f), new Vector2(cardWidth, 310f));
+
+                Image cardBg = CreateHudPanel(cardRt, "CardBg");
+                cardBg.rectTransform.anchorMin = Vector2.zero;
+                cardBg.rectTransform.anchorMax = Vector2.one;
+                cardBg.rectTransform.offsetMin = Vector2.zero;
+                cardBg.rectTransform.offsetMax = Vector2.zero;
+                cardBg.color = new Color(0.08f, 0.11f, 0.16f, 0.98f);
+
+                Image cardBorder = CreateHudPanel(cardRt, "CardBorder");
+                cardBorder.rectTransform.anchorMin = Vector2.zero;
+                cardBorder.rectTransform.anchorMax = Vector2.one;
+                cardBorder.rectTransform.offsetMin = new Vector2(3f, 3f);
+                cardBorder.rectTransform.offsetMax = new Vector2(-3f, -3f);
+                cardBorder.color = relic.GetRarityColor() * 0.5f;
+
+                Text rarityText = CreateText(cardRt, "Rarity", relic.rarity.ToString().ToUpper(), 12, relic.GetRarityColor(), TextAnchor.MiddleCenter);
+                rarityText.fontStyle = FontStyle.Bold;
+                SetAnchored(rarityText.rectTransform, new Vector2(0.5f, 0.92f), Vector2.zero, new Vector2(cardWidth - 20f, 24f));
+
+                Text nameText = CreateText(cardRt, "Name", relic.displayName, 18, Color.white, TextAnchor.MiddleCenter);
+                nameText.fontStyle = FontStyle.Bold;
+                SetAnchored(nameText.rectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(cardWidth - 20f, 40f));
+
+                Text descText = CreateText(cardRt, "Desc", relic.description, 14, new Color(0.85f, 0.88f, 0.92f), TextAnchor.UpperCenter);
+                SetAnchored(descText.rectTransform, new Vector2(0.5f, 0.52f), Vector2.zero, new Vector2(cardWidth - 30f, 120f));
+
+                Button claimBtn = CreateButton(cardRt, "ClaimBtn", "CLAIM ARTIFACT", new Vector2(cardWidth - 40f, 38f), new Vector2(0.5f, 0.12f), Vector2.zero, () =>
+                {
+                    Destroy(relicModalPanel);
+                    relicModalPanel = null;
+                    onSelected?.Invoke(relic);
+                    if (AudioManager.Instance != null) AudioManager.Instance.PlayUpgrade();
+                });
+            }
+        }
+
+        public void ShowAbyssalDraftModal(List<AbyssalOvercharge> choices)
+        {
+            if (choices == null || choices.Count == 0 || safeAreaRect == null) return;
+
+            if (abyssalModalPanel != null) Destroy(abyssalModalPanel);
+
+            abyssalModalPanel = new GameObject("AbyssalDraftModal", typeof(RectTransform));
+            RectTransform modalRt = abyssalModalPanel.GetComponent<RectTransform>();
+            modalRt.SetParent(safeAreaRect, false);
+            modalRt.anchorMin = Vector2.zero;
+            modalRt.anchorMax = Vector2.one;
+            modalRt.offsetMin = Vector2.zero;
+            modalRt.offsetMax = Vector2.zero;
+
+            Image backdrop = CreateHudPanel(modalRt, "Backdrop");
+            backdrop.rectTransform.anchorMin = Vector2.zero;
+            backdrop.rectTransform.anchorMax = Vector2.one;
+            backdrop.rectTransform.offsetMin = Vector2.zero;
+            backdrop.rectTransform.offsetMax = Vector2.zero;
+            backdrop.color = new Color(0.04f, 0.02f, 0.08f, 0.94f);
+
+            Text header = CreateText(modalRt, "Title", "🌌 ABYSSAL OVERCHARGE UNLOCKED", 26, new Color(0.85f, 0.45f, 1f), TextAnchor.MiddleCenter);
+            header.fontStyle = FontStyle.Bold;
+            SetAnchored(header.rectTransform, new Vector2(0.5f, 0.85f), Vector2.zero, new Vector2(600f, 50f));
+
+            Text subtitle = CreateText(modalRt, "Subtitle", "Harvest void energy to sustain your fortress deeper into the endless abyss:", 15, new Color(0.9f, 0.8f, 1f), TextAnchor.MiddleCenter);
+            SetAnchored(subtitle.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(700f, 30f));
+
+            float cardWidth = 240f;
+            float spacing = 20f;
+            float totalWidth = (choices.Count * cardWidth) + ((choices.Count - 1) * spacing);
+            float startX = -totalWidth * 0.5f + cardWidth * 0.5f;
+
+            for (int i = 0; i < choices.Count; i++)
+            {
+                AbyssalOvercharge overcharge = choices[i];
+
+                GameObject cardObj = new GameObject("OverchargeCard_" + i, typeof(RectTransform));
+                RectTransform cardRt = cardObj.GetComponent<RectTransform>();
+                cardRt.SetParent(modalRt, false);
+                SetAnchored(cardRt, new Vector2(0.5f, 0.48f), new Vector2(startX + i * (cardWidth + spacing), 0f), new Vector2(cardWidth, 310f));
+
+                Image cardBg = CreateHudPanel(cardRt, "CardBg");
+                cardBg.rectTransform.anchorMin = Vector2.zero;
+                cardBg.rectTransform.anchorMax = Vector2.one;
+                cardBg.rectTransform.offsetMin = Vector2.zero;
+                cardBg.rectTransform.offsetMax = Vector2.zero;
+                cardBg.color = new Color(0.12f, 0.08f, 0.20f, 0.98f);
+
+                Image cardBorder = CreateHudPanel(cardRt, "CardBorder");
+                cardBorder.rectTransform.anchorMin = Vector2.zero;
+                cardBorder.rectTransform.anchorMax = Vector2.one;
+                cardBorder.rectTransform.offsetMin = new Vector2(3f, 3f);
+                cardBorder.rectTransform.offsetMax = new Vector2(-3f, -3f);
+                cardBorder.color = overcharge.themeColor * 0.7f;
+
+                Text badgeText = CreateText(cardRt, "Badge", overcharge.rarityBadge, 12, overcharge.themeColor, TextAnchor.MiddleCenter);
+                badgeText.fontStyle = FontStyle.Bold;
+                SetAnchored(badgeText.rectTransform, new Vector2(0.5f, 0.92f), Vector2.zero, new Vector2(cardWidth - 20f, 24f));
+
+                Text nameText = CreateText(cardRt, "Name", overcharge.name, 18, Color.white, TextAnchor.MiddleCenter);
+                nameText.fontStyle = FontStyle.Bold;
+                SetAnchored(nameText.rectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(cardWidth - 20f, 40f));
+
+                Text descText = CreateText(cardRt, "Desc", overcharge.description, 14, new Color(0.9f, 0.85f, 0.95f), TextAnchor.UpperCenter);
+                SetAnchored(descText.rectTransform, new Vector2(0.5f, 0.52f), Vector2.zero, new Vector2(cardWidth - 30f, 120f));
+
+                Button claimBtn = CreateButton(cardRt, "ClaimBtn", "HARVEST VOID", new Vector2(cardWidth - 40f, 38f), new Vector2(0.5f, 0.12f), Vector2.zero, () =>
+                {
+                    Destroy(abyssalModalPanel);
+                    abyssalModalPanel = null;
+                    EndlessSurvivalManager.Instance?.ClaimOvercharge(overcharge);
+                    if (AudioManager.Instance != null) AudioManager.Instance.PlayUpgrade();
+                });
+                var btnImg = claimBtn.GetComponent<Image>();
+                if (btnImg != null) btnImg.color = new Color(0.45f, 0.15f, 0.7f, 1f);
+            }
+        }
+
+        private GameObject achievementToastObj;
+        private Coroutine achievementToastRoutine;
+
+        public void ShowAchievementToast(AchievementDefinition achv)
+        {
+            if (achv == null || safeAreaRect == null) return;
+
+            if (achievementToastRoutine != null)
+            {
+                StopCoroutine(achievementToastRoutine);
+            }
+            if (achievementToastObj != null)
+            {
+                Destroy(achievementToastObj);
+            }
+
+            achievementToastObj = new GameObject("AchievementToast", typeof(RectTransform));
+            RectTransform toastRt = achievementToastObj.GetComponent<RectTransform>();
+            toastRt.SetParent(safeAreaRect, false);
+            SetAnchored(toastRt, new Vector2(0.5f, 1f), new Vector2(0f, -60f), new Vector2(480f, 68f));
+
+            Image bg = CreateHudPanel(toastRt, "ToastBg");
+            bg.rectTransform.anchorMin = Vector2.zero;
+            bg.rectTransform.anchorMax = Vector2.one;
+            bg.rectTransform.offsetMin = Vector2.zero;
+            bg.rectTransform.offsetMax = Vector2.zero;
+            bg.color = new Color(0.08f, 0.10f, 0.15f, 0.96f);
+
+            Image border = CreateHudPanel(toastRt, "ToastBorder");
+            border.rectTransform.anchorMin = Vector2.zero;
+            border.rectTransform.anchorMax = Vector2.one;
+            border.rectTransform.offsetMin = new Vector2(2f, 2f);
+            border.rectTransform.offsetMax = new Vector2(-2f, -2f);
+            border.color = new Color(1f, 0.85f, 0.25f, 0.8f);
+
+            Text iconTxt = CreateText(toastRt, "Icon", achv.iconBadge, 26, Color.white, TextAnchor.MiddleCenter);
+            SetAnchored(iconTxt.rectTransform, new Vector2(0f, 0.5f), new Vector2(32f, 0f), new Vector2(40f, 40f));
+
+            Text headerTxt = CreateText(toastRt, "Header", "🏆 ACHIEVEMENT UNLOCKED!", 12, new Color(1f, 0.85f, 0.25f), TextAnchor.MiddleLeft);
+            headerTxt.fontStyle = FontStyle.Bold;
+            SetAnchored(headerTxt.rectTransform, new Vector2(0f, 1f), new Vector2(65f, -18f), new Vector2(400f, 18f));
+
+            Text bodyTxt = CreateText(toastRt, "Body", $"{achv.title} — {achv.description}", 13, Color.white, TextAnchor.MiddleLeft);
+            bodyTxt.fontStyle = FontStyle.Bold;
+            SetAnchored(bodyTxt.rectTransform, new Vector2(0f, 0f), new Vector2(65f, 18f), new Vector2(400f, 24f));
+
+            var cg = achievementToastObj.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            cg.blocksRaycasts = false;
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayUpgrade();
+            }
+
+            achievementToastRoutine = StartCoroutine(AnimateToast(cg, toastRt));
+        }
+
+        private IEnumerator AnimateToast(CanvasGroup cg, RectTransform rt)
+        {
+            float elapsed = 0f;
+            Vector2 startPos = new Vector2(0f, 20f);
+            Vector2 endPos = new Vector2(0f, -60f);
+
+            while (elapsed < 0.35f)
+            {
+                if (cg == null || rt == null) yield break;
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, elapsed / 0.35f);
+                cg.alpha = t;
+                rt.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
+                yield return null;
+            }
+
+            cg.alpha = 1f;
+            rt.anchoredPosition = endPos;
+
+            yield return new WaitForSecondsRealtime(3.2f);
+
+            elapsed = 0f;
+            while (elapsed < 0.35f)
+            {
+                if (cg == null) yield break;
+                elapsed += Time.unscaledDeltaTime;
+                cg.alpha = 1f - (elapsed / 0.35f);
+                yield return null;
+            }
+
+            if (achievementToastObj != null)
+            {
+                Destroy(achievementToastObj);
+                achievementToastObj = null;
+            }
+        }
+
+        private GameObject heroTargetingModalPanel;
+
+        public void ShowHeroTargetingModal(HeroAttack hero)
+        {
+            if (hero == null || hero.Definition == null || safeAreaRect == null) return;
+
+            if (heroTargetingModalPanel != null)
+            {
+                Destroy(heroTargetingModalPanel);
+            }
+
+            heroTargetingModalPanel = new GameObject("HeroTargetingModal", typeof(RectTransform));
+            RectTransform modalRt = heroTargetingModalPanel.GetComponent<RectTransform>();
+            modalRt.SetParent(safeAreaRect, false);
+            modalRt.anchorMin = Vector2.zero;
+            modalRt.anchorMax = Vector2.one;
+            modalRt.offsetMin = Vector2.zero;
+            modalRt.offsetMax = Vector2.zero;
+
+            // Semi-transparent backdrop to dismiss
+            Image backdrop = CreateImage(modalRt, "Backdrop", new Color(0f, 0f, 0f, 0.65f));
+            backdrop.raycastTarget = true;
+            backdrop.rectTransform.anchorMin = Vector2.zero;
+            backdrop.rectTransform.anchorMax = Vector2.one;
+            backdrop.rectTransform.offsetMin = Vector2.zero;
+            backdrop.rectTransform.offsetMax = Vector2.zero;
+            Button backdropBtn = backdrop.gameObject.AddComponent<Button>();
+            backdropBtn.onClick.AddListener(() =>
+            {
+                if (heroTargetingModalPanel != null) Destroy(heroTargetingModalPanel);
+            });
+
+            // Card Panel
+            Image card = CreateHudPanel(modalRt, "TargetingCard");
+            SetAnchored(card.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(440f, 460f));
+            card.color = new Color(0.08f, 0.11f, 0.18f, 0.98f);
+
+            Color heroColor = GetHeroColor(hero.Definition.id);
+            Text title = CreateText(card.rectTransform, "Title", $"🎯 {hero.Definition.displayName.ToUpper()}", 22, heroColor, TextAnchor.MiddleCenter);
+            title.fontStyle = FontStyle.Bold;
+            SetAnchored(title.rectTransform, new Vector2(0.5f, 0.90f), Vector2.zero, new Vector2(400f, 32f));
+
+            Text subtitle = CreateText(card.rectTransform, "Subtitle", $"Current Priority: <color=#ffd726><b>{hero.CurrentTargetingMode}</b></color>\nSelect tactical targeting priority:", 14, new Color(0.85f, 0.88f, 0.95f), TextAnchor.MiddleCenter);
+            SetAnchored(subtitle.rectTransform, new Vector2(0.5f, 0.77f), Vector2.zero, new Vector2(400f, 40f));
+
+            TargetingMode[] modes =
+            {
+                TargetingMode.ClosestToGoal,
+                TargetingMode.Strongest,
+                TargetingMode.Nearest,
+                TargetingMode.Weakest,
+                TargetingMode.Clustered
+            };
+
+            string[] modeLabels =
+            {
+                "FIRST (Closest to Keep)",
+                "STRONGEST (Bosses & Elites)",
+                "NEAREST (Closest to Hero)",
+                "WEAKEST (Low HP Clean-up)",
+                "CLUSTERED (Area Splash Focus)"
+            };
+
+            for (int i = 0; i < modes.Length; i++)
+            {
+                TargetingMode m = modes[i];
+                string label = modeLabels[i];
+                bool isCurrent = hero.CurrentTargetingMode == m;
+
+                Button modeBtn = CreateButton(card.rectTransform, "Mode_" + m, label, new Vector2(380f, 44f),
+                    new Vector2(0.5f, 0.60f - i * 0.11f), Vector2.zero, () =>
+                    {
+                        hero.CurrentTargetingMode = m;
+                        HapticFeedbackManager.TriggerLight();
+                        if (AudioManager.Instance != null) AudioManager.Instance.PlayButton();
+                        if (heroTargetingModalPanel != null) Destroy(heroTargetingModalPanel);
+                    });
+
+                var btnImg = modeBtn.GetComponent<Image>();
+                if (btnImg != null)
+                {
+                    btnImg.color = isCurrent ? new Color(0.18f, 0.45f, 0.30f, 1f) : new Color(0.14f, 0.18f, 0.26f, 0.95f);
+                }
+                var lbl = modeBtn.GetComponentInChildren<Text>();
+                if (lbl != null)
+                {
+                    lbl.fontSize = 13;
+                    lbl.fontStyle = isCurrent ? FontStyle.Bold : FontStyle.Normal;
+                    lbl.color = isCurrent ? new Color(1f, 0.95f, 0.3f) : Color.white;
+                }
+            }
+
+            CreateButton(card.rectTransform, "CloseBtn", "CLOSE", new Vector2(180f, 38f),
+                new Vector2(0.5f, 0.05f), Vector2.zero, () =>
+                {
+                    if (heroTargetingModalPanel != null) Destroy(heroTargetingModalPanel);
+                });
         }
     }
 

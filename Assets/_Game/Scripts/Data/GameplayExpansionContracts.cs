@@ -15,7 +15,15 @@ namespace Stonehold
         ExtraChain = 7,
         ExplosionRadius = 8,
         ExtraCast = 9,
-        CriticalBehavior = 10
+        CriticalBehavior = 10,
+        SuperconductorDischarge = 11,
+        ThermalShockMastery = 12,
+        ExecutionerCrit = 13,
+        EpidemicSpread = 14,
+        CorrosiveArmorShred = 15,
+        ArmyOfTheDead = 16,
+        SanctuaryAura = 17,
+        DivineShieldBreaker = 18
     }
 
     public enum PlacementMode

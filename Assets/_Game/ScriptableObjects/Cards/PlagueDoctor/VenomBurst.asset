@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3712fd46809c4174c83589090a128870, type: 3}
+  m_Name: VenomBurst
+  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.CardDefinition
+  id: plague_doctor_venom_burst
+  displayName: Venom Burst
+  description: Plague Doctor's poison deals +8 extra decay damage per tick.
+  icon: {fileID: 0}
+  cardCategory: 0
+  recruitHeroId: 
+  requiredOwnedHeroId: plague_doctor
+  blockedIfOwnedHeroId: 
+  rarity: 0
+  targetType: 1
+  targetHeroId: plague_doctor
+  targetAttackType: 0
+  modifierType: 18
+  modifierValue: 8
+  weight: 1
+  maxStacks: 3
