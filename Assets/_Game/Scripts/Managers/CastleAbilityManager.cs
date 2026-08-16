@@ -127,7 +127,7 @@ namespace Stonehold
 
             if (AudioManager.Instance != null)
             {
-                AudioManager.Instance.PlayUpgrade();
+                AudioManager.Instance.PlayCastleAbilitySfx(ability.id);
             }
 
             Debug.Log($"[CastleAbilityManager] ⚔️ CAST FORTRESS ULTIMATE: {ability.displayName} at {targetPosition}!");

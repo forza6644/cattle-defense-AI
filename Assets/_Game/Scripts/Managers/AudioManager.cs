@@ -216,6 +216,18 @@ namespace Stonehold
                         PlaySfx(library.arrowHit, 0.75f, pitch * 0.65f);
                     }
                     break;
+                case "plague_doctor":
+                    if (library.frostHit != null)
+                    {
+                        PlaySfx(library.frostHit, 0.40f, pitch * 1.55f);
+                    }
+                    break;
+                case "radiant_paladin":
+                    if (library.upgrade != null)
+                    {
+                        PlaySfx(library.upgrade, 0.45f, pitch * 1.25f);
+                    }
+                    break;
             }
         }
 
@@ -267,6 +279,18 @@ namespace Stonehold
                         PlaySfx(library.arrowHit, volume * 0.95f, pitch * 0.72f);
                     }
                     break;
+                case "plague_doctor":
+                    if (library.frostHit != null)
+                    {
+                        PlaySfx(library.frostHit, volume * 0.7f, pitch * 1.3f);
+                    }
+                    break;
+                case "radiant_paladin":
+                    if (library.cannonExplosion != null)
+                    {
+                        PlaySfx(library.cannonExplosion, volume * 0.75f, pitch * 1.1f);
+                    }
+                    break;
                 default:
                     // Fallback
                     PlayImpact(false, false);
@@ -297,6 +321,33 @@ namespace Stonehold
                     break;
                 case "archer":
                     PlaySfx(library.arrowHit, 0.8f, pitch * 1.3f);
+                    break;
+                case "plague_doctor":
+                    PlaySfx(library.cannonExplosion, 0.65f, pitch * 1.4f);
+                    break;
+                case "radiant_paladin":
+                    PlaySfx(library.upgrade, 0.85f, pitch * 1.3f);
+                    break;
+            }
+        }
+
+        public void PlayCastleAbilitySfx(string abilityId)
+        {
+            if (library == null) return;
+            switch (abilityId)
+            {
+                case "castle_meteor_strike":
+                    PlaySfx(library.cannonExplosion, 1.0f, 0.65f);
+                    PlaySfx(library.castleDamage, 0.7f, 0.85f);
+                    break;
+                case "castle_kinetic_shield":
+                    PlaySfx(library.upgrade, 0.9f, 1.2f);
+                    break;
+                case "castle_gold_overflow":
+                    PlaySfx(library.gold, 1.0f, 1.1f);
+                    break;
+                case "castle_overcharge":
+                    PlaySfx(library.upgrade, 1.0f, 1.6f);
                     break;
             }
         }
