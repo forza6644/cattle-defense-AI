@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f17e9e434a11340bf474dd4d821c57, type: 3}
+  m_Name: Stage9_TheVoidRift
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.StageData
+  stageId: stage_9_abyssal_void_rift
+  stageDisplayName: The Void Rift
+  stageDescription: Survive the cosmic horrors of the Abyssal Void Rift, phase-shifting
+    stalkers, and the Void Lord.
+  stageNumber: 9
+  stageMode: 0
+  waves:
+  - {fileID: 11400000, guid: 6c031c493322d4a46bcbdf61d8146eea, type: 2}
+  - {fileID: 11400000, guid: ce6124d05c554c6449a29c1a2a973a42, type: 2}
+  - {fileID: 11400000, guid: c3bd56d72fd7fe140aad8116ca6090d2, type: 2}
+  - {fileID: 11400000, guid: e1326e13e5ad34548b403e15e265a961, type: 2}
+  - {fileID: 11400000, guid: 53bfbfb7f461eee44bb4bea38fd30800, type: 2}
+  - {fileID: 11400000, guid: e6bc371d662b69948ba4c3668dc2c1f2, type: 2}
+  - {fileID: 11400000, guid: db7e9084ddf430c43953d5c8f6c0a80b, type: 2}
+  - {fileID: 11400000, guid: 458e87339e0d27b45959a7e940b03fbe, type: 2}
+  - {fileID: 11400000, guid: 027ac69d86f099b42b53b44147f06c76, type: 2}
+  - {fileID: 11400000, guid: 39e88ec9c66b1174db4c49efb00e99ec, type: 2}
+  cardPoolOverride: {fileID: 0}
+  startingHeroId: archer
+  battlefieldFixturePrefab: {fileID: 0}
+  useExactWaveCounts: 1
+  enemyCountMultiplier: 1.7
+  spawnIntervalMultiplier: 0.75
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: e1a00001000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000002, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000003, type: 2}

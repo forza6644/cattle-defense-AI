@@ -37,10 +37,10 @@ namespace Stonehold.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator CampaignProgressionManager_DefaultNodes_InitializesAll6Biomes()
+        public IEnumerator CampaignProgressionManager_DefaultNodes_InitializesAll10Stages()
         {
             Assert.IsNotNull(campaignManager.AllNodes);
-            Assert.AreEqual(6, campaignManager.AllNodes.Count);
+            Assert.AreEqual(10, campaignManager.AllNodes.Count);
 
             var stage1 = campaignManager.GetNode(0);
             Assert.IsNotNull(stage1);
@@ -49,8 +49,13 @@ namespace Stonehold.Tests.PlayMode
 
             var stage6 = campaignManager.GetNode(5);
             Assert.IsNotNull(stage6);
-            Assert.AreEqual("The Void Rift", stage6.stageName);
+            Assert.AreEqual("Toxic Mire", stage6.stageName);
             Assert.AreEqual(10, stage6.requiredTotalStarsToUnlock);
+
+            var stage10 = campaignManager.GetNode(9);
+            Assert.IsNotNull(stage10);
+            Assert.AreEqual("Celestial Sanctum", stage10.stageName);
+            Assert.AreEqual(18, stage10.requiredTotalStarsToUnlock);
             yield return null;
         }
 

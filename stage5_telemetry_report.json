@@ -7,5 +7,5 @@
   "targetFrameRate": 60,
   "vSyncCount": 0,
   "bossPhases": 2,
-  "gcMemoryDeltaBytes": 770048
+  "gcMemoryDeltaBytes": 143360
 }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PlagueDoctorWeapon
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WeaponDefinition
   attackType: 0
-  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  projectilePrefab: {fileID: 6357556893096066283, guid: 5f36395b9c8ccbe45a76a57bb9fc4d7a, type: 3}
   splashRadius: 0
   statusEffectType: 5
   statusEffectValue: 8

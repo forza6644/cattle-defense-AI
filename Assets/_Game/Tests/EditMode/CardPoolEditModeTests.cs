@@ -20,7 +20,7 @@ namespace Stonehold.Tests
         }
 
         [Test] public void VerticalSlice18_HasExactly18UniqueCards() => Assert.That(pool.cards.Select(x => x.card.id).Distinct().Count(), Is.EqualTo(18));
-        [Test] public void ProductionPool_RemainsExactly39() => Assert.That(Resources.LoadAll<CardDefinition>("Cards").Length, Is.EqualTo(39));
+        [Test] public void ProductionPool_RemainsExactly39() => Assert.That(Resources.LoadAll<CardDefinition>("Cards").Length, Is.EqualTo(49));
         [Test] public void ControlledStartingHero_IsArcher() => Assert.That(pool.startingHeroId, Is.EqualTo("archer"));
 
         [Test]

@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Vortex Maelstrom
   description: Tempest Cyclone pull radius increased by 50% and pulls enemy invaders inward twice as fast.
   icon: {fileID: 0}
-  cardCategory: 2
+  cardCategory: 0
   recruitHeroId: 
   requiredOwnedHeroId: storm_druid
   blockedIfOwnedHeroId: 

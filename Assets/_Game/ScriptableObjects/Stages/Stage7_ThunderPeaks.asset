@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f17e9e434a11340bf474dd4d821c57, type: 3}
+  m_Name: Stage7_ThunderPeaks
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.StageData
+  stageId: stage_7_thunder_peaks
+  stageDisplayName: Thunder Peaks
+  stageDescription: Withstand high-voltage storm cliffs whipped by galvanic harpies
+    and the Tempest Archon.
+  stageNumber: 7
+  stageMode: 0
+  waves:
+  - {fileID: 11400000, guid: fe45df2cc9abff0449c0afec36ea7526, type: 2}
+  - {fileID: 11400000, guid: 3cf8697a0e8f2af43a2f286f45f82b43, type: 2}
+  - {fileID: 11400000, guid: 3476660b24afeb5499900b0f2b60417f, type: 2}
+  - {fileID: 11400000, guid: 456eec8524b194040a3474039a247315, type: 2}
+  - {fileID: 11400000, guid: 32583c721380fed479c3f2cfce9af257, type: 2}
+  - {fileID: 11400000, guid: 7120c89bafd6c704f879c4e28a746ca8, type: 2}
+  - {fileID: 11400000, guid: 42a2ec08433e3b345ab1629d76613b4b, type: 2}
+  - {fileID: 11400000, guid: b81f40795dd98a143aae2d3e9c674817, type: 2}
+  - {fileID: 11400000, guid: 636035989a266c14c8a0443abc5a6ee6, type: 2}
+  - {fileID: 11400000, guid: a1d39c2e53fdc7043928032dac3d8d75, type: 2}
+  cardPoolOverride: {fileID: 0}
+  startingHeroId: archer
+  battlefieldFixturePrefab: {fileID: 0}
+  useExactWaveCounts: 1
+  enemyCountMultiplier: 1.5
+  spawnIntervalMultiplier: 0.8
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+  - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+  - {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+  - {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+  - {fileID: 11400000, guid: 94490734d9d14e2d929ee334fc31ca44, type: 2}

@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Lethal Precision
   description: Shadow Assassin gains +15% Critical Strike Chance and +50% Critical Damage.
   icon: {fileID: 0}
-  cardCategory: 2
+  cardCategory: 0
   recruitHeroId: 
   requiredOwnedHeroId: shadow_assassin
   blockedIfOwnedHeroId: 

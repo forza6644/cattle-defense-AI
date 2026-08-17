@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ShadowAssassinWeapon
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WeaponDefinition
   attackType: 0
-  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  projectilePrefab: {fileID: 6247747837752455381, guid: bd46983e6385c344aa9f9b02f3961d8d, type: 3}
   splashRadius: 0
   statusEffectType: 0
   statusEffectValue: 0

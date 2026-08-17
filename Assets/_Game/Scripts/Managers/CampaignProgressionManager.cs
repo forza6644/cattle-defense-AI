@@ -184,7 +184,7 @@ namespace Stonehold
 
         public void ResetCampaignProgress()
         {
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 15; i++)
             {
                 PlayerPrefs.DeleteKey("campaign_stars_stage_" + i);
                 PlayerPrefs.DeleteKey("campaign_score_stage_" + i);
@@ -196,12 +196,16 @@ namespace Stonehold
 
         private void CreateDefaultNodes()
         {
-            allNodes.Add(CreateDefaultNode(0, "Castle Road", "Grassy Plains", "The primary approach to Stonehold Citadel. Repel initial goblin raiders.", 0, new Vector2(-320f, -120f), "🏰", new Color(0.4f, 0.8f, 0.4f)));
-            allNodes.Add(CreateDefaultNode(1, "Highlands Fortress", "Rocky Foothills", "Rugged rocky slopes swarming with armored orc battalions.", 2, new Vector2(-190f, 20f), "🏔️", new Color(0.8f, 0.6f, 0.3f)));
-            allNodes.Add(CreateDefaultNode(2, "Frozen Pass", "Glacial Peaks", "Sub-zero mountain blizzards crawling with frost-bitten siege fiends.", 4, new Vector2(-60f, -80f), "❄️", new Color(0.4f, 0.85f, 1f)));
-            allNodes.Add(CreateDefaultNode(3, "Volcanic Caldera", "Infernal Magma", "Scorched volcanic badlands flowing with living molten rock.", 6, new Vector2(70f, 50f), "🌋", new Color(1f, 0.45f, 0.2f)));
-            allNodes.Add(CreateDefaultNode(4, "Toxic Mire", "Rotting Swamp", "Noxious poisonous wetlands hiding caustic abominations.", 8, new Vector2(200f, -60f), "☣️", new Color(0.5f, 0.9f, 0.3f)));
-            allNodes.Add(CreateDefaultNode(5, "The Void Rift", "Abyssal Dimension", "A cosmic singularity tearing the fabric of reality itself.", 10, new Vector2(330f, 40f), "🌌", new Color(0.8f, 0.3f, 0.95f)));
+            allNodes.Add(CreateDefaultNode(0, "Castle Road", "Grassy Plains", "The primary approach to Stonehold Citadel. Repel initial goblin raiders.", 0, new Vector2(-380f, -120f), "🏰", new Color(0.4f, 0.8f, 0.4f)));
+            allNodes.Add(CreateDefaultNode(1, "Highlands Fortress", "Rocky Foothills", "Rugged rocky slopes swarming with armored orc battalions.", 2, new Vector2(-300f, -20f), "🏔️", new Color(0.8f, 0.6f, 0.3f)));
+            allNodes.Add(CreateDefaultNode(2, "Frozen Frontier", "Glacial Peaks", "Sub-zero mountain blizzards crawling with frost-bitten siege fiends.", 4, new Vector2(-220f, 80f), "❄️", new Color(0.4f, 0.85f, 1f)));
+            allNodes.Add(CreateDefaultNode(3, "Titan Citadel", "Ancient Ruins", "Massive stone colossi and heavily armored titan siege brigades.", 6, new Vector2(-140f, -10f), "🏛️", new Color(0.85f, 0.75f, 0.5f)));
+            allNodes.Add(CreateDefaultNode(4, "Volcanic Caldera", "Infernal Magma", "Scorched volcanic badlands flowing with living molten rock.", 8, new Vector2(-60f, -100f), "🌋", new Color(1f, 0.45f, 0.2f)));
+            allNodes.Add(CreateDefaultNode(5, "Toxic Mire", "Rotting Swamp", "Noxious poisonous wetlands hiding caustic abominations.", 10, new Vector2(20f, -20f), "☣️", new Color(0.5f, 0.9f, 0.3f)));
+            allNodes.Add(CreateDefaultNode(6, "Thunder Peaks", "Storm Cliffs", "Electrified crags whipped by gale storms and tempest harpies.", 12, new Vector2(100f, 80f), "⚡", new Color(0.3f, 0.8f, 1f)));
+            allNodes.Add(CreateDefaultNode(7, "Sunken Necropolis", "Cursed Crypt", "Ancient subterranean catacombs swarming with undead legions.", 14, new Vector2(180f, 0f), "🏜️", new Color(0.7f, 0.55f, 0.85f)));
+            allNodes.Add(CreateDefaultNode(8, "The Void Rift", "Abyssal Dimension", "A cosmic singularity tearing the fabric of reality itself.", 16, new Vector2(260f, -100f), "🌌", new Color(0.8f, 0.3f, 0.95f)));
+            allNodes.Add(CreateDefaultNode(9, "Celestial Sanctum", "Throne of Eternity", "The ultimate pinnacle sanctum guarded by the Ancient King.", 18, new Vector2(340f, 50f), "👑", new Color(1f, 0.85f, 0.25f)));
         }
 
         private CampaignMapNodeDefinition CreateDefaultNode(int index, string name, string biome, string lore, int reqStars, Vector2 coords, string icon, Color color)

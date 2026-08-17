@@ -128,7 +128,7 @@ namespace Stonehold.Tests
 
         [Test] public void QualifiedCardPools_RemainUnchanged()
         {
-            Assert.That(Resources.LoadAll<CardDefinition>("Cards"), Has.Length.EqualTo(39));
+            Assert.That(Resources.LoadAll<CardDefinition>("Cards"), Has.Length.EqualTo(49));
             CardPoolDefinition verticalSlice = AssetDatabase.LoadAssetAtPath<CardPoolDefinition>("Assets/_Game/ScriptableObjects/CardPools/VerticalSlice18.asset");
             Assert.That(verticalSlice.cards, Has.Count.EqualTo(18));
             Assert.That(verticalSlice.stableId, Is.EqualTo("vertical_slice_18"));

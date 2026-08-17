@@ -53,26 +53,54 @@ private const string RuntimeDressingName = "StageIdentity_Runtime";
                     fogColor = new Color(0.68f, 0.78f, 0.86f);
                     lightIntensity = 1.05f;
                     break;
-                case 3: // Desert Ruins / Titan Citadel
+                case 3: // Titan Citadel / Ancient Ruins
                     sky = new Color(0.85f, 0.65f, 0.45f);
                     lightColor = new Color(1f, 0.92f, 0.75f);
                     environmentTint = new Color(0.88f, 0.78f, 0.60f);
                     fogColor = new Color(0.82f, 0.70f, 0.52f);
                     lightIntensity = 1.30f;
                     break;
-                case 4: // Volcanic Pinnacle
+                case 4: // Volcanic Caldera
                     sky = new Color(0.25f, 0.08f, 0.05f);
                     lightColor = new Color(1f, 0.45f, 0.15f);
                     environmentTint = new Color(0.40f, 0.30f, 0.28f);
                     fogColor = new Color(0.35f, 0.15f, 0.10f);
                     lightIntensity = 1.10f;
                     break;
-                case 5: // Abyssal Void Rift
+                case 5: // Toxic Mire
+                    sky = new Color(0.10f, 0.20f, 0.07f);
+                    lightColor = new Color(0.50f, 0.90f, 0.30f);
+                    environmentTint = new Color(0.30f, 0.45f, 0.25f);
+                    fogColor = new Color(0.18f, 0.35f, 0.14f);
+                    lightIntensity = 1.00f;
+                    break;
+                case 6: // Thunder Peaks
+                    sky = new Color(0.12f, 0.18f, 0.30f);
+                    lightColor = new Color(0.40f, 0.70f, 1f);
+                    environmentTint = new Color(0.35f, 0.45f, 0.60f);
+                    fogColor = new Color(0.20f, 0.30f, 0.40f);
+                    lightIntensity = 1.25f;
+                    break;
+                case 7: // Sunken Necropolis
+                    sky = new Color(0.18f, 0.10f, 0.22f);
+                    lightColor = new Color(0.70f, 0.50f, 0.90f);
+                    environmentTint = new Color(0.40f, 0.32f, 0.48f);
+                    fogColor = new Color(0.24f, 0.16f, 0.30f);
+                    lightIntensity = 0.90f;
+                    break;
+                case 8: // The Void Rift
                     sky = new Color(0.06f, 0.02f, 0.12f);
                     lightColor = new Color(0.75f, 0.40f, 1f);
                     environmentTint = new Color(0.45f, 0.35f, 0.65f);
                     fogColor = new Color(0.18f, 0.08f, 0.28f);
                     lightIntensity = 0.95f;
+                    break;
+                case 9: // Celestial Sanctum
+                    sky = new Color(0.10f, 0.12f, 0.24f);
+                    lightColor = new Color(1f, 0.95f, 0.65f);
+                    environmentTint = new Color(0.60f, 0.55f, 0.75f);
+                    fogColor = new Color(0.24f, 0.26f, 0.40f);
+                    lightIntensity = 1.35f;
                     break;
                 default: // Castle Road
                     sky = new Color(0.48f, 0.72f, 0.84f);
@@ -272,7 +300,15 @@ BuildStageIdentity(environment.transform, stageIndex);
 
             switch (stageIndex)
             {
-                case 5: // Abyssal Void Rift - Cosmic void motes
+                case 9: // Celestial Sanctum - Golden stardust & holy light motes
+                    main.startLifetime = 4.2f;
+                    main.startSpeed = 1.4f;
+                    main.startSize = 0.16f;
+                    main.startColor = new Color(1f, 0.90f, 0.40f, 0.9f);
+                    vel.y = 1.6f;
+                    vel.z = 0.6f;
+                    break;
+                case 8: // The Void Rift - Cosmic void motes
                     main.startLifetime = 4.5f;
                     main.startSpeed = 1.2f;
                     main.startSize = 0.14f;
@@ -280,7 +316,32 @@ BuildStageIdentity(environment.transform, stageIndex);
                     vel.y = 1.2f;
                     vel.z = 0.5f;
                     break;
-                case 4: // Volcanic Pinnacle - Rising lava embers
+                case 7: // Sunken Necropolis - Spectral soul wisps
+                    main.startLifetime = 3.6f;
+                    main.startSpeed = 1.8f;
+                    main.startSize = 0.12f;
+                    main.startColor = new Color(0.65f, 0.45f, 0.95f, 0.75f);
+                    vel.y = 1.4f;
+                    vel.x = 0.4f;
+                    break;
+                case 6: // Thunder Peaks - High-voltage electric spark motes
+                    main.startLifetime = 2.2f;
+                    main.startSpeed = 4.5f;
+                    main.startSize = 0.13f;
+                    main.startColor = new Color(0.35f, 0.85f, 1f, 0.95f);
+                    vel.x = 2.0f;
+                    vel.y = -1.2f;
+                    vel.z = -3.0f;
+                    break;
+                case 5: // Toxic Mire - Caustic poison spores
+                    main.startLifetime = 4.8f;
+                    main.startSpeed = 0.8f;
+                    main.startSize = 0.15f;
+                    main.startColor = new Color(0.40f, 0.95f, 0.20f, 0.8f);
+                    vel.y = 0.6f;
+                    vel.z = -0.4f;
+                    break;
+                case 4: // Volcanic Caldera - Rising lava embers
                     main.startLifetime = 3.8f;
                     main.startSpeed = 2.4f;
                     main.startSize = 0.11f;
@@ -288,7 +349,7 @@ BuildStageIdentity(environment.transform, stageIndex);
                     vel.y = 2.2f;
                     vel.z = 0.8f;
                     break;
-                case 3: // Desert Ruins - Sandstorm dust motes
+                case 3: // Titan Citadel / Ancient Ruins - Sandstorm dust motes
                     main.startLifetime = 3.2f;
                     main.startSpeed = 4.0f;
                     main.startSize = 0.09f;
@@ -297,7 +358,7 @@ BuildStageIdentity(environment.transform, stageIndex);
                     vel.y = -0.8f;
                     vel.z = -3.5f;
                     break;
-                case 2: // Frozen Pass - Snow
+                case 2: // Frozen Frontier - Snow
                     main.startLifetime = 3.5f;
                     main.startSpeed = 3.2f;
                     main.startSize = 0.12f;
@@ -627,12 +688,16 @@ BuildStageIdentity(environment.transform, stageIndex);
         {
             switch (stageIndex)
             {
-                case 1: return new Color(0.82f, 0.28f, 0.12f);
-                case 2: return new Color(0.20f, 0.68f, 0.92f);
-                case 3: return new Color(0.95f, 0.70f, 0.18f); // Desert Gold
+                case 1: return new Color(0.82f, 0.28f, 0.12f); // Highlands Crimson
+                case 2: return new Color(0.20f, 0.68f, 0.92f); // Glacial Ice Cyan
+                case 3: return new Color(0.95f, 0.70f, 0.18f); // Titan Gold
                 case 4: return new Color(0.95f, 0.25f, 0.08f); // Lava Red
-                case 5: return new Color(0.70f, 0.25f, 0.95f); // Abyssal Purple
-                default: return new Color(0.18f, 0.55f, 0.28f);
+                case 5: return new Color(0.40f, 0.90f, 0.15f); // Toxic Acid Lime
+                case 6: return new Color(0.20f, 0.75f, 1.00f); // Electric Blue
+                case 7: return new Color(0.65f, 0.35f, 0.95f); // Necrotic Violet
+                case 8: return new Color(0.80f, 0.25f, 1.00f); // Abyssal Magenta
+                case 9: return new Color(1.00f, 0.85f, 0.20f); // Celestial Divine Gold
+                default: return new Color(0.18f, 0.55f, 0.28f); // Castle Green
             }
         }
 
@@ -643,12 +708,16 @@ BuildStageIdentity(environment.transform, stageIndex);
         {
             switch (stageIndex)
             {
-                case 1: return new Color(0.46f, 0.48f, 0.50f);
-                case 2: return new Color(0.52f, 0.62f, 0.68f);
+                case 1: return new Color(0.46f, 0.48f, 0.50f); // Foothill Slate
+                case 2: return new Color(0.52f, 0.62f, 0.68f); // Permafrost Stone
                 case 3: return new Color(0.72f, 0.62f, 0.48f); // Sandstone
                 case 4: return new Color(0.28f, 0.26f, 0.28f); // Obsidian
-                case 5: return new Color(0.24f, 0.20f, 0.32f); // Dark Void Stone
-                default: return new Color(0.50f, 0.54f, 0.56f);
+                case 5: return new Color(0.24f, 0.30f, 0.22f); // Bog Stone
+                case 6: return new Color(0.26f, 0.32f, 0.40f); // Thunder Basalt
+                case 7: return new Color(0.30f, 0.24f, 0.32f); // Crypt Marble
+                case 8: return new Color(0.20f, 0.16f, 0.28f); // Dark Void Stone
+                case 9: return new Color(0.75f, 0.72f, 0.82f); // Celestial Alabaster
+                default: return new Color(0.50f, 0.54f, 0.56f); // Castle Granite
             }
         }
 
@@ -658,12 +727,16 @@ BuildStageIdentity(environment.transform, stageIndex);
         {
             switch (stageIndex)
             {
-                case 1: return new Color(0.48f, 0.34f, 0.22f);
-                case 2: return new Color(0.58f, 0.68f, 0.72f);
+                case 1: return new Color(0.48f, 0.34f, 0.22f); // Earth Dirt
+                case 2: return new Color(0.58f, 0.68f, 0.72f); // Frozen Cobble
                 case 3: return new Color(0.82f, 0.72f, 0.52f); // Sand Road
                 case 4: return new Color(0.22f, 0.18f, 0.18f); // Ash Ground
-                case 5: return new Color(0.18f, 0.12f, 0.25f); // Void Chasm
-                default: return new Color(0.56f, 0.40f, 0.24f);
+                case 5: return new Color(0.18f, 0.24f, 0.15f); // Swamp Mud
+                case 6: return new Color(0.20f, 0.24f, 0.32f); // Storm Crag Path
+                case 7: return new Color(0.22f, 0.18f, 0.26f); // Bone Catacomb Path
+                case 8: return new Color(0.15f, 0.10f, 0.22f); // Void Chasm
+                case 9: return new Color(0.45f, 0.42f, 0.55f); // Sacred Golden Path
+                default: return new Color(0.56f, 0.40f, 0.24f); // Grassy Road
             }
         }
 

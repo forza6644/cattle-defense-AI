@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f17e9e434a11340bf474dd4d821c57, type: 3}
+  m_Name: Stage8_SunkenNecropolis
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.StageData
+  stageId: stage_8_sunken_necropolis
+  stageDisplayName: Sunken Necropolis
+  stageDescription: Purge ancient cursed crypts swarming with undead skeleton legions
+    and the Dread Necromancer.
+  stageNumber: 8
+  stageMode: 0
+  waves:
+  - {fileID: 11400000, guid: a22e786aead933347bc8834c36ff1626, type: 2}
+  - {fileID: 11400000, guid: a4c34ae8b5bb82b489121573c4800fc8, type: 2}
+  - {fileID: 11400000, guid: 0782042ece89b8742980aa14fd616f4d, type: 2}
+  - {fileID: 11400000, guid: 415c85d25ba9c7e4cbfdb4739fc5f76f, type: 2}
+  - {fileID: 11400000, guid: d54ec5ac6c7cfdc43ae33d8734e333af, type: 2}
+  - {fileID: 11400000, guid: ab7b9bf6f6cfa8340ac4014f9dbf899a, type: 2}
+  - {fileID: 11400000, guid: aa88199017d09c041ab3ab0b4bdadbb0, type: 2}
+  - {fileID: 11400000, guid: 38e741280f183ba458a0a159c55245b1, type: 2}
+  - {fileID: 11400000, guid: da463d2fbcdaada4fbb999a78a26d6f1, type: 2}
+  - {fileID: 11400000, guid: 193e69d951f346049bd16510bf133375, type: 2}
+  cardPoolOverride: {fileID: 0}
+  startingHeroId: archer
+  battlefieldFixturePrefab: {fileID: 0}
+  useExactWaveCounts: 1
+  enemyCountMultiplier: 1.6
+  spawnIntervalMultiplier: 0.78
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+  - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+  - {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+  - {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+  - {fileID: 11400000, guid: 94490734d9d14e2d929ee334fc31ca44, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000002, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000003, type: 2}

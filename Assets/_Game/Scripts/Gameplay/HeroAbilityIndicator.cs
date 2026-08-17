@@ -30,8 +30,9 @@ namespace Stonehold
             ring.loop = false;
             ring.widthMultiplier = 0.075f;
             ring.numCapVertices = 2;
-            ring.material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
-            ring.material.hideFlags = HideFlags.HideAndDontSave;
+            Material ringMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+            ringMat.hideFlags = HideFlags.HideAndDontSave;
+            ring.sharedMaterial = ringMat;
             ring.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             ring.receiveShadows = false;
             RefreshGeometry(0f);

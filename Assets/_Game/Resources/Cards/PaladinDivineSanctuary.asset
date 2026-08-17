@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Divine Sanctuary
   description: Radiant Paladin Sanctuary Aura range increased to 11m and grants +25% Fire Rate and +15% Crit Rate to nearby defenders.
   icon: {fileID: 0}
-  cardCategory: 2
+  cardCategory: 0
   recruitHeroId: 
   requiredOwnedHeroId: radiant_paladin
   blockedIfOwnedHeroId: 

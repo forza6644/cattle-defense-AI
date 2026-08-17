@@ -1,19 +1,19 @@
 ================================================================================
  STAGE 2 (HIGHLANDS) REAL-TIME COMBAT TELEMETRY REPORT
 ================================================================================
-Timestamp:                  2026-08-16 22:52:26
+Timestamp:                  2026-08-17 17:15:49
 Stage ID:                   stage_2_highlands
 Final Game State:           Victory
-Total Run Duration:         63.82 seconds
+Total Run Duration:         65.01 seconds
 Total Waves Cleared:        10 / 10
-Total Enemies Spawned:      114
+Total Enemies Spawned:      116
 Total Enemies Defeated:     116
 Final Castle HP:            50 / 50
 Final Player Level:         9
 Final Player XP:            297
 Total Draft Triggers:       8
 Crossbow Raider Attacks:    0
-War Shaman Heal Pulses:     15
+War Shaman Heal Pulses:     14
 ================================================================================
  WAVE BREAKDOWN:
 --------------------------------------------------------------------------------
@@ -21,46 +21,46 @@ War Shaman Heal Pulses:     15
 --------------------------------------------------------------------------------
     1 |       0.0 |     3.2 |          3.2 |       6 |        6 |   50/50   |    8 |     2
     2 |       3.2 |     6.5 |          3.3 |       8 |        8 |   50/50   |    9 |     3
-    3 |       6.5 |    12.4 |          5.9 |       9 |        9 |   50/50   |   45 |     4
-    4 |      12.4 |    16.9 |          4.5 |      11 |       11 |   50/50   |   19 |     5
-    5 |      16.9 |    25.5 |          8.6 |      10 |       10 |   50/50   |   84 |     6
-    6 |      25.5 |    29.6 |          4.1 |      14 |       14 |   50/50   |  149 |     6
-    7 |      29.6 |    38.2 |          8.6 |      12 |       12 |   50/50   |  199 |     7
-    8 |      38.2 |    44.7 |          6.5 |      16 |       17 |   50/50   |   82 |     8
-    9 |      44.7 |    55.8 |         11.1 |      19 |       20 |   50/50   |    0 |     9
-   10 |      55.8 |    63.8 |          8.0 |       9 |        9 |   50/50   |  297 |     9
+    3 |       6.5 |    12.6 |          6.1 |       9 |        9 |   50/50   |   45 |     4
+    4 |      12.6 |    16.9 |          4.2 |      11 |       11 |   50/50   |   19 |     5
+    5 |      16.9 |    25.5 |          8.7 |      10 |       10 |   50/50   |   84 |     6
+    6 |      25.5 |    29.8 |          4.2 |      14 |       14 |   50/50   |  149 |     6
+    7 |      29.8 |    38.4 |          8.7 |      12 |       12 |   50/50   |  199 |     7
+    8 |      38.4 |    45.0 |          6.6 |      17 |       17 |   50/50   |   82 |     8
+    9 |      45.0 |    56.4 |         11.4 |      20 |       20 |   50/50   |    0 |     9
+   10 |      56.4 |    65.0 |          8.6 |       9 |        9 |   50/50   |  297 |     9
 ================================================================================
  DRAFT SELECTION LOG:
 --------------------------------------------------------------------------------
  Draft #1 @ 2.5s (Level 2)
-   Offered Choices:  Battle Rhythm | Echoing Nova | Extended Circuit
-   Selected Card:    Battle Rhythm
+   Offered Choices:  Fast Casting | Battle Rhythm | Wide Blast
+   Selected Card:    Fast Casting
 --------------------------------------------------------------------------------
  Draft #2 @ 5.9s (Level 3)
-   Offered Choices:  Wide Blast | Fast Casting | Echoing Nova
+   Offered Choices:  Forked Current | Piercing Arrows | Shard Volley
+   Selected Card:    Forked Current
+--------------------------------------------------------------------------------
+ Draft #3 @ 10.6s (Level 4)
+   Offered Choices:  Fast Casting | Empowered Abilities | Forked Current
+   Selected Card:    Fast Casting
+--------------------------------------------------------------------------------
+ Draft #4 @ 15.8s (Level 5)
+   Offered Choices:  Echoing Nova | Shard Volley | Piercing Arrows
+   Selected Card:    Echoing Nova
+--------------------------------------------------------------------------------
+ Draft #5 @ 22.9s (Level 6)
+   Offered Choices:  Wide Blast | War Training | Piercing Arrows
    Selected Card:    Wide Blast
 --------------------------------------------------------------------------------
- Draft #3 @ 10.5s (Level 4)
-   Offered Choices:  Piercing Arrows | Battle Rhythm | Forked Current
-   Selected Card:    Piercing Arrows
---------------------------------------------------------------------------------
- Draft #4 @ 15.6s (Level 5)
-   Offered Choices:  War Training | Echoing Nova | Battle Rhythm
-   Selected Card:    War Training
---------------------------------------------------------------------------------
- Draft #5 @ 22.5s (Level 6)
-   Offered Choices:  Frostbite | Forked Current | War Training
-   Selected Card:    Frostbite
---------------------------------------------------------------------------------
  Draft #6 @ 33.6s (Level 7)
-   Offered Choices:  Twin Volley | Cluster Shells | Extended Circuit
-   Selected Card:    Twin Volley
---------------------------------------------------------------------------------
- Draft #7 @ 43.0s (Level 8)
-   Offered Choices:  War Training | Piercing Arrows | Wide Blast
-   Selected Card:    War Training
---------------------------------------------------------------------------------
- Draft #8 @ 55.5s (Level 9)
-   Offered Choices:  Piercing Arrows | Cluster Shells | Shard Volley
+   Offered Choices:  Piercing Arrows | Twin Volley | Forked Current
    Selected Card:    Piercing Arrows
+--------------------------------------------------------------------------------
+ Draft #7 @ 42.4s (Level 8)
+   Offered Choices:  Wide Blast | Extended Circuit | Shard Volley
+   Selected Card:    Wide Blast
+--------------------------------------------------------------------------------
+ Draft #8 @ 56.1s (Level 9)
+   Offered Choices:  Battle Rhythm | Forked Current | Twin Volley
+   Selected Card:    Battle Rhythm
 --------------------------------------------------------------------------------

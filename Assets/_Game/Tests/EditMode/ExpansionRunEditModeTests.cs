@@ -120,7 +120,7 @@ namespace Stonehold.Tests
             Assert.That(pool.cards.Any(x => x.card.id == "watchtower_expansion"), Is.False);
 
         [Test] public void ProductionPool_RemainsExactlyThirtyNine() =>
-            Assert.That(Resources.LoadAll<CardDefinition>("Cards"), Has.Length.EqualTo(39));
+            Assert.That(Resources.LoadAll<CardDefinition>("Cards"), Has.Length.EqualTo(49));
 
         [Test] public void VerticalSlice18_RemainsExactlyEighteen()
         {

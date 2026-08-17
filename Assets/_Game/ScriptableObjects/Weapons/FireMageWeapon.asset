@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FireMageWeapon
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WeaponDefinition
   attackType: 4
-  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  projectilePrefab: {fileID: 1515439728010925128, guid: 95bbde90da43b0a41a0e0bb47b71a555, type: 3}
   splashRadius: 0
   statusEffectType: 2
   statusEffectValue: 3

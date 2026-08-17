@@ -369,12 +369,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.MainMenuUI
   gameSceneName: GameplayIntegration_V2
   heroDefinitions:
-  - {fileID: 11400000, guid: d8d745af09e293c428c7d050d09c11dd, type: 2}
-  - {fileID: 11400000, guid: b215e439c7288fd4f96e6cfea0ef20d9, type: 2}
-  - {fileID: 11400000, guid: 34bb2f6cd2de13d43a7c39ef8e4c1068, type: 2}
-  - {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120002, type: 2}
-  - {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120004, type: 2}
-  - {fileID: 11400000, guid: fa7a918a221f11ed861d0242ac120006, type: 2}
+  - {fileID: 11400000, guid: 5b9f9f4add84f784cae4b81279acf6f0, type: 2}
+  - {fileID: 11400000, guid: 994eb96321069a84cb3728495beccf12, type: 2}
+  - {fileID: 11400000, guid: 08bfca1e5376ff54db99ef8542d0bfa2, type: 2}
+  - {fileID: 11400000, guid: 6e926e1785cc2544ca0a37f746c19a3f, type: 2}
+  - {fileID: 11400000, guid: 7012e282335a74a44ab3dd09b91eda30, type: 2}
+  - {fileID: 11400000, guid: 29900d28fd51157408632d7f0f3340c4, type: 2}
+  - {fileID: 11400000, guid: c9d6a7a8bc632e641b2ab15002bd919c, type: 2}
+  - {fileID: 11400000, guid: 60f75a8078259e84a90e855083147256, type: 2}
+  - {fileID: 11400000, guid: f07d18dffa0c1eb4fa96c6476b2e2c50, type: 2}
+  - {fileID: 11400000, guid: 5ef8b65ece0cc564399d3ce459f54a95, type: 2}
 --- !u!4 &1933241609
 Transform:
   m_ObjectHideFlags: 0

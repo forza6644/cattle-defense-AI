@@ -139,6 +139,71 @@ namespace Stonehold.Editor
                 Debug.LogWarning($"[BuildPipeline] ⚠️ CANCELLED: {platformName} build was cancelled.");
             }
         }
+        private static bool isRunningPlayModeTests;
+
+        [MenuItem("Stonehold/Tests/Run All PlayMode Tests")]
+        public static void RunAllPlayModeTests()
+        {
+            Debug.Log("[TestRunner] Starting Automated PlayMode Test Execution...");
+            isRunningPlayModeTests = true;
+            var api = ScriptableObject.CreateInstance<UnityEditor.TestTools.TestRunner.Api.TestRunnerApi>();
+            var callbacks = new PlayModeTestCallbacks();
+            api.RegisterCallbacks(callbacks);
+            api.Execute(new UnityEditor.TestTools.TestRunner.Api.ExecutionSettings(
+                new UnityEditor.TestTools.TestRunner.Api.Filter()
+                {
+                    testMode = UnityEditor.TestTools.TestRunner.Api.TestMode.PlayMode
+                }
+            ));
+
+            EditorApplication.update += TestUpdateWait;
+        }
+
+        private static void TestUpdateWait()
+        {
+            if (!isRunningPlayModeTests)
+            {
+                EditorApplication.update -= TestUpdateWait;
+            }
+        }
+
+        private class PlayModeTestCallbacks : UnityEditor.TestTools.TestRunner.Api.ICallbacks
+        {
+            public void RunStarted(UnityEditor.TestTools.TestRunner.Api.ITestAdaptor testsToRun)
+            {
+                Debug.Log($"[TestRunner] PlayMode test run started. Total test cases: {testsToRun.TestCaseCount}");
+            }
+
+            public void RunFinished(UnityEditor.TestTools.TestRunner.Api.ITestResultAdaptor result)
+            {
+                isRunningPlayModeTests = false;
+                int passed = result.PassCount;
+                int failed = result.FailCount;
+                int skipped = result.SkipCount;
+                int total = passed + failed + skipped;
+
+                Debug.Log($"[TestRunner] PlayMode tests finished! Total: {total}, Passed: {passed}, Failed: {failed}, Inconclusive/Skipped: {skipped}");
+                if (failed > 0)
+                {
+                    Debug.LogError($"[TestRunner] ❌ {failed} PlayMode tests failed!");
+                }
+                else
+                {
+                    Debug.Log($"[TestRunner] ✅ ALL {passed} PlayMode tests passed (100%)!");
+                }
+                EditorApplication.Exit(failed > 0 ? 1 : 0);
+            }
+
+            public void TestStarted(UnityEditor.TestTools.TestRunner.Api.ITestAdaptor test) { }
+
+            public void TestFinished(UnityEditor.TestTools.TestRunner.Api.ITestResultAdaptor result)
+            {
+                if (result.TestStatus == UnityEditor.TestTools.TestRunner.Api.TestStatus.Failed)
+                {
+                    Debug.LogError($"[TestRunner] FAILED: {result.Test.FullName} - {result.Message}");
+                }
+            }
+        }
     }
 }
 #endif

@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f17e9e434a11340bf474dd4d821c57, type: 3}
+  m_Name: Stage5_VolcanicCaldera
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.StageData
+  stageId: stage_5_volcanic_caldera
+  stageDisplayName: Volcanic Caldera
+  stageDescription: Conquer the scorched infernal magma flows, living molten beasts,
+    and the Magma Core Lord.
+  stageNumber: 5
+  stageMode: 0
+  waves:
+  - {fileID: 11400000, guid: 44d658a6a43a2604ea765a59336aac8c, type: 2}
+  - {fileID: 11400000, guid: 0b44ceac3433c32428832e2fef49eae9, type: 2}
+  - {fileID: 11400000, guid: 21120bfb308ac4e4da05438057faa767, type: 2}
+  - {fileID: 11400000, guid: 2ef494c1f97617e4faaa6c6d22ddf2ca, type: 2}
+  - {fileID: 11400000, guid: 87d4a185df8bc8a489a6bcd491c79ee6, type: 2}
+  - {fileID: 11400000, guid: 1aa5644bb0bea92468f41f362750b8ff, type: 2}
+  - {fileID: 11400000, guid: 9607f6d37fee8254e87454aa26865d6c, type: 2}
+  - {fileID: 11400000, guid: f3067171dcb68914db13910a1d7b00fb, type: 2}
+  - {fileID: 11400000, guid: b60428ad57fc9804fb2c369207328efa, type: 2}
+  - {fileID: 11400000, guid: 96145958349fb6841b2947c54b4455d7, type: 2}
+  cardPoolOverride: {fileID: 0}
+  startingHeroId: archer
+  battlefieldFixturePrefab: {fileID: 0}
+  useExactWaveCounts: 1
+  enemyCountMultiplier: 1.35
+  spawnIntervalMultiplier: 0.85
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+  - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+  - {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+  - {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+  - {fileID: 11400000, guid: 94490734d9d14e2d929ee334fc31ca44, type: 2}

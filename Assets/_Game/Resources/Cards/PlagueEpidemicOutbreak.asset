@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Epidemic Outbreak
   description: Enemies infected with Poison explode into a toxic miasma upon defeat, applying full Poison to nearby invaders.
   icon: {fileID: 0}
-  cardCategory: 2
+  cardCategory: 0
   recruitHeroId: 
   requiredOwnedHeroId: plague_doctor
   blockedIfOwnedHeroId: 

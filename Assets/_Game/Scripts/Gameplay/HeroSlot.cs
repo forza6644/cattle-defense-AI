@@ -30,12 +30,18 @@ namespace Stonehold
             Renderer r = pad.GetComponent<Renderer>();
             if (r != null)
             {
-                r.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                r.material.color = new Color(0.2f, 0.25f, 0.3f);
+                Material padMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                padMat.hideFlags = HideFlags.HideAndDontSave;
+                padMat.color = new Color(0.2f, 0.25f, 0.3f);
+                r.sharedMaterial = padMat;
             }
 
-            HeroSelectionProxy selection = pad.AddComponent<HeroSelectionProxy>();
-            selection.Configure(this);
+            Collider padCollider = pad.GetComponent<Collider>();
+            if (padCollider != null)
+            {
+                HeroSelectionProxy selection = pad.AddComponent<HeroSelectionProxy>();
+                selection.Configure(this);
+            }
 
             if (HeroRosterManager.Instance != null)
             {
@@ -122,6 +128,10 @@ namespace Stonehold
                 case "fire_mage": return new Color(1f, 0.22f, 0.08f);
                 case "electric_engineer": return new Color(1f, 0.92f, 0.12f);
                 case "sniper": return new Color(0.75f, 0.4f, 1f);
+                case "plague_doctor": return new Color(0.35f, 0.95f, 0.25f);
+                case "radiant_paladin": return new Color(1f, 0.88f, 0.25f);
+                case "shadow_assassin": return new Color(0.70f, 0.25f, 0.95f);
+                case "storm_druid": return new Color(0.25f, 0.85f, 0.95f);
                 default: return Color.white;
             }
         }
@@ -133,7 +143,14 @@ namespace Stonehold
                 return;
             }
 
-            Destroy(currentHero.gameObject);
+            if (Application.isPlaying)
+            {
+                Destroy(currentHero.gameObject);
+            }
+            else
+            {
+                DestroyImmediate(currentHero.gameObject);
+            }
             currentHero = null;
         }
 
@@ -175,6 +192,26 @@ namespace Stonehold
                     accentColor = new Color(0.7f, 0.5f, 0.85f);  // lighter indigo
                     scaleMultiplier = new Vector3(0.85f, 1.1f, 0.85f);
                     break;
+                case "plague_doctor":
+                    bodyColor = new Color(0.18f, 0.35f, 0.18f);  // dark toxic emerald
+                    accentColor = new Color(0.35f, 0.95f, 0.25f); // vibrant plague green
+                    scaleMultiplier = new Vector3(0.98f, 1.0f, 0.98f);
+                    break;
+                case "radiant_paladin":
+                    bodyColor = new Color(0.45f, 0.40f, 0.25f);  // gilded knight plate
+                    accentColor = new Color(1f, 0.88f, 0.25f);   // radiant holy sun gold
+                    scaleMultiplier = new Vector3(1.12f, 1.05f, 1.12f);
+                    break;
+                case "shadow_assassin":
+                    bodyColor = new Color(0.15f, 0.12f, 0.22f);  // shadow obsidian
+                    accentColor = new Color(0.70f, 0.25f, 0.95f); // venomous violet glow
+                    scaleMultiplier = new Vector3(0.95f, 1.0f, 0.95f);
+                    break;
+                case "storm_druid":
+                    bodyColor = new Color(0.15f, 0.32f, 0.35f);  // deep storm teal
+                    accentColor = new Color(0.25f, 0.85f, 0.95f); // tempest lightning cyan
+                    scaleMultiplier = new Vector3(1.02f, 1.02f, 1.02f);
+                    break;
                 default:
                     bodyColor = new Color(0.5f, 0.5f, 0.5f);
                     accentColor = Color.white;
@@ -182,8 +219,6 @@ namespace Stonehold
             }
 
             // Blend each renderer toward the hero identity color via MaterialPropertyBlock.
-            // Blending (not replacing) keeps the prefab's per-part material variation
-            // visible, and property blocks avoid creating material instances.
             Renderer[] renderers = instance.GetComponentsInChildren<Renderer>();
             MaterialPropertyBlock mpb = new MaterialPropertyBlock();
             int baseColorId = Shader.PropertyToID("_BaseColor");
@@ -198,9 +233,7 @@ namespace Stonehold
                 rend.SetPropertyBlock(mpb);
             }
 
-            // Keep gameplay transforms, colliders, and projectile origins untouched. Imported
-            // characters are normalized through their visual child only so every hero reads at
-            // a similar scale on the wall without changing combat behaviour.
+            // Normalize visual scale on character root
             NormalizeCharacterVisual(instance.transform, hero.id, scaleMultiplier);
 
             // Color the slot pad accent
@@ -216,7 +249,7 @@ namespace Stonehold
                 }
             }
 
-            // Hide default weapon meshes when the presentation replaces them.
+            // Hide default weapon meshes when presentation replaces them.
             if (hero.id == "bombardier")
             {
                 Transform sword = FindTransformRecursive(instance.transform, "Warrior_Sword");
@@ -233,19 +266,21 @@ namespace Stonehold
 
         private static void NormalizeCharacterVisual(Transform heroRoot, string heroId, Vector3 profileScale)
         {
-            Transform visualRoot = FindTransformRecursive(heroRoot, "QuaterniusVisual");
+            Transform visualRoot = FindTransformRecursive(heroRoot, "VisualRoot") ?? FindTransformRecursive(heroRoot, "QuaterniusVisual");
             if (visualRoot == null)
             {
                 return;
             }
 
-            // The portrait camera needs a little more body mass than the first pass,
-            // but this remains a visual-child adjustment only.
             float normalizedScale = 1.03f;
             switch (heroId)
             {
                 case "bombardier": normalizedScale = 1.08f; break;
                 case "sniper": normalizedScale = 0.99f; break;
+                case "radiant_paladin": normalizedScale = 1.10f; break;
+                case "shadow_assassin": normalizedScale = 0.96f; break;
+                case "plague_doctor": normalizedScale = 1.01f; break;
+                case "storm_druid": normalizedScale = 1.02f; break;
             }
 
             visualRoot.localScale = Vector3.Scale(visualRoot.localScale, profileScale * normalizedScale);
@@ -256,7 +291,14 @@ namespace Stonehold
             Transform previous = heroRoot.Find(PresentationRootName);
             if (previous != null)
             {
-                Destroy(previous.gameObject);
+                if (Application.isPlaying)
+                {
+                    Destroy(previous.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(previous.gameObject);
+                }
             }
 
             GameObject presentation = new GameObject(PresentationRootName);
@@ -291,7 +333,92 @@ namespace Stonehold
                 case "sniper":
                     CreateSniperPresentation(presentation.transform, accentColor);
                     break;
+                case "plague_doctor":
+                    CreatePlagueDoctorPresentation(presentation.transform, accentColor);
+                    break;
+                case "radiant_paladin":
+                    CreatePaladinPresentation(presentation.transform, accentColor);
+                    break;
+                case "shadow_assassin":
+                    CreateAssassinPresentation(presentation.transform, accentColor);
+                    break;
+                case "storm_druid":
+                    CreateDruidPresentation(presentation.transform, accentColor);
+                    break;
             }
+        }
+
+        private static void CreatePlagueDoctorPresentation(Transform parent, Color accentColor)
+        {
+            CreatePresentationPiece(parent, "FlaskBody", PrimitiveType.Sphere,
+                new Vector3(0.24f, 0.46f, 0.16f), Vector3.one * 0.19f,
+                Quaternion.identity, accentColor);
+            CreatePresentationPiece(parent, "FlaskNeck", PrimitiveType.Cylinder,
+                new Vector3(0.24f, 0.58f, 0.16f), new Vector3(0.06f, 0.08f, 0.06f),
+                Quaternion.identity, new Color(0.15f, 0.22f, 0.15f));
+            CreatePresentationPiece(parent, "FlaskCap", PrimitiveType.Cylinder,
+                new Vector3(0.24f, 0.63f, 0.16f), new Vector3(0.08f, 0.03f, 0.08f),
+                Quaternion.identity, new Color(0.45f, 0.32f, 0.18f));
+            CreatePresentationPiece(parent, "AlchemicalSatchel", PrimitiveType.Cube,
+                new Vector3(-0.20f, 0.36f, -0.08f), new Vector3(0.18f, 0.22f, 0.14f),
+                Quaternion.identity, new Color(0.16f, 0.18f, 0.14f));
+            CreatePresentationPiece(parent, "MiasmaRune", PrimitiveType.Cube,
+                new Vector3(-0.16f, 0.54f, -0.10f), new Vector3(0.12f, 0.12f, 0.12f),
+                Quaternion.Euler(45f, 45f, 45f), accentColor * 0.85f);
+        }
+
+        private static void CreatePaladinPresentation(Transform parent, Color accentColor)
+        {
+            CreatePresentationPiece(parent, "HolyShieldBody", PrimitiveType.Cube,
+                new Vector3(-0.32f, 0.50f, 0.15f), new Vector3(0.10f, 0.52f, 0.34f),
+                Quaternion.Euler(0f, -15f, 0f), new Color(0.22f, 0.24f, 0.28f));
+            CreatePresentationPiece(parent, "ShieldSunEmblem", PrimitiveType.Cylinder,
+                new Vector3(-0.37f, 0.50f, 0.15f), new Vector3(0.16f, 0.02f, 0.16f),
+                Quaternion.Euler(0f, 0f, 90f), accentColor);
+            CreatePresentationPiece(parent, "SmiteSwordBlade", PrimitiveType.Cube,
+                new Vector3(0.32f, 0.58f, 0.18f), new Vector3(0.06f, 0.54f, 0.10f),
+                Quaternion.Euler(0f, 0f, -10f), new Color(0.85f, 0.88f, 0.95f));
+            CreatePresentationPiece(parent, "SmiteCrossguard", PrimitiveType.Cylinder,
+                new Vector3(0.30f, 0.32f, 0.18f), new Vector3(0.05f, 0.22f, 0.05f),
+                Quaternion.Euler(90f, 0f, 0f), accentColor);
+            CreatePresentationPiece(parent, "HolyHalo", PrimitiveType.Cylinder,
+                new Vector3(0f, 1.15f, 0f), new Vector3(0.36f, 0.02f, 0.36f),
+                Quaternion.identity, accentColor * 0.95f);
+        }
+
+        private static void CreateAssassinPresentation(Transform parent, Color accentColor)
+        {
+            CreatePresentationPiece(parent, "MainDaggerBlade", PrimitiveType.Cube,
+                new Vector3(0.28f, 0.44f, 0.18f), new Vector3(0.05f, 0.32f, 0.07f),
+                Quaternion.Euler(0f, 0f, -35f), new Color(0.12f, 0.10f, 0.16f));
+            CreatePresentationPiece(parent, "MainDaggerTip", PrimitiveType.Sphere,
+                new Vector3(0.38f, 0.58f, 0.18f), Vector3.one * 0.08f,
+                Quaternion.identity, accentColor);
+            CreatePresentationPiece(parent, "OffhandDaggerBlade", PrimitiveType.Cube,
+                new Vector3(-0.28f, 0.44f, 0.18f), new Vector3(0.05f, 0.32f, 0.07f),
+                Quaternion.Euler(0f, 0f, 35f), new Color(0.12f, 0.10f, 0.16f));
+            CreatePresentationPiece(parent, "OffhandDaggerTip", PrimitiveType.Sphere,
+                new Vector3(-0.38f, 0.58f, 0.18f), Vector3.one * 0.08f,
+                Quaternion.identity, accentColor);
+            CreatePresentationPiece(parent, "ShadowSmokeGem", PrimitiveType.Sphere,
+                new Vector3(0f, 0.92f, -0.12f), Vector3.one * 0.12f,
+                Quaternion.identity, accentColor * 0.75f);
+        }
+
+        private static void CreateDruidPresentation(Transform parent, Color accentColor)
+        {
+            CreatePresentationPiece(parent, "StormTotemShaft", PrimitiveType.Cylinder,
+                new Vector3(0.26f, 0.50f, 0.18f), new Vector3(0.055f, 0.52f, 0.055f),
+                Quaternion.Euler(0f, 0f, -8f), new Color(0.20f, 0.16f, 0.12f));
+            CreatePresentationPiece(parent, "LightningRodHead", PrimitiveType.Cube,
+                new Vector3(0.30f, 0.88f, 0.18f), new Vector3(0.14f, 0.18f, 0.14f),
+                Quaternion.identity, new Color(0.18f, 0.28f, 0.32f));
+            CreatePresentationPiece(parent, "CycloneFocusOrb", PrimitiveType.Sphere,
+                new Vector3(0.30f, 1.02f, 0.18f), Vector3.one * 0.16f,
+                Quaternion.identity, accentColor);
+            CreatePresentationPiece(parent, "WindRuneRing", PrimitiveType.Cube,
+                new Vector3(-0.20f, 0.48f, -0.10f), new Vector3(0.14f, 0.14f, 0.14f),
+                Quaternion.Euler(30f, 45f, 60f), accentColor * 0.8f);
         }
 
         private static void CreateArcherPresentation(Transform parent, Color accentColor)
@@ -387,7 +514,14 @@ namespace Stonehold
             Collider collider = piece.GetComponent<Collider>();
             if (collider != null)
             {
-                Destroy(collider);
+                if (Application.isPlaying)
+                {
+                    Destroy(collider);
+                }
+                else
+                {
+                    DestroyImmediate(collider);
+                }
             }
 
             Renderer renderer = piece.GetComponent<Renderer>();

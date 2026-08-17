@@ -259,7 +259,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e80834b37bc12ec4398380e818037e58, type: 2}
+  - {fileID: 2100000, guid: d8b2e9cfec086c943aca86e059944318, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -775,8 +775,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 589f93b4b85a1444db56dcfbf96ccd9c, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.ProceduralAnimator
+  m_Name: 
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.ProceduralAnimator
   model: {fileID: 8263082499337840639}
   idleBobAmp: 0.05
   idleBobSpeed: 2.2
@@ -793,8 +793,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 11f7d658eec0d674ea33054e20afa743, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Stonehold.ArtAdapter
+  m_Name: 
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.ArtAdapter
   visualScale: {x: 1, y: 1, z: 1}
   visualRotation: {x: 0, y: 0, z: 0}
   visualOffset: {x: 0, y: 0, z: 0}
@@ -1219,7 +1219,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e80834b37bc12ec4398380e818037e58, type: 2}
+  - {fileID: 2100000, guid: d8b2e9cfec086c943aca86e059944318, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1535,7 +1535,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e80834b37bc12ec4398380e818037e58, type: 2}
+  - {fileID: 2100000, guid: d8b2e9cfec086c943aca86e059944318, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1616,7 +1616,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e80834b37bc12ec4398380e818037e58, type: 2}
+  - {fileID: 2100000, guid: d8b2e9cfec086c943aca86e059944318, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1782,7 +1782,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e80834b37bc12ec4398380e818037e58, type: 2}
+  - {fileID: 2100000, guid: d8b2e9cfec086c943aca86e059944318, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1921,7 +1921,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage:
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -2155,7 +2155,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ba7e8b6d5ff6d58428ef6d9e1cff011a, type: 2}
+  - {fileID: 2100000, guid: 1da525387b2ff4d4793fc4ed30f15fa7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

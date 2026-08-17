@@ -17,10 +17,16 @@ MonoBehaviour:
   sellRefundPercent: 0.6
   castleMaxHealth: 50
   stages:
-  - {fileID: 11400000, guid: cec3e989e4237f848a3ee7578ea50c47, type: 2}
-  - {fileID: 11400000, guid: 0d2527df5daa42346b8231035ce6fb8d, type: 2}
-  - {fileID: 11400000, guid: 078a2a06fed778a4bb8943557477ecda, type: 2}
-  - {fileID: 11400000, guid: b0000000000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: be6fa5682899c064ea13225e16d347fb, type: 2}
+  - {fileID: 11400000, guid: f6da9509a88e5d346a87caea7f330825, type: 2}
+  - {fileID: 11400000, guid: 70ab5bdb88c6c8442bc9a8f9d2eee196, type: 2}
+  - {fileID: 11400000, guid: 8b32c9cae8c972146b6e5d5845b28001, type: 2}
+  - {fileID: 11400000, guid: 46dfe6f9b1827bd43af6cd7a72e07f31, type: 2}
+  - {fileID: 11400000, guid: f8f58fae8877d6f479dbf32046ad4a97, type: 2}
+  - {fileID: 11400000, guid: 514c5c3fa2ace574788b5c4eb909dac3, type: 2}
+  - {fileID: 11400000, guid: 03dfd87688d3b55489438b4d534fead2, type: 2}
+  - {fileID: 11400000, guid: 0c872ee6f96486845817f87d5e404b18, type: 2}
+  - {fileID: 11400000, guid: 666ca6f07bf4798429fc449278826485, type: 2}
   waves:
   - {fileID: 11400000, guid: ca2339b7cda3a0e47976d9750e641abf, type: 2}
   - {fileID: 11400000, guid: a203b083d7c5ee04185017e607525b7e, type: 2}

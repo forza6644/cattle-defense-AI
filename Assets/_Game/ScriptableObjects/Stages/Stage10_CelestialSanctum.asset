@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f17e9e434a11340bf474dd4d821c57, type: 3}
+  m_Name: Stage10_CelestialSanctum
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.StageData
+  stageId: stage_10_celestial_sanctum
+  stageDisplayName: Celestial Sanctum
+  stageDescription: Face the ultimate celestial trial atop the Throne of Eternity
+    against the Ancient King.
+  stageNumber: 10
+  stageMode: 0
+  waves:
+  - {fileID: 11400000, guid: 8f25e110d12413140b3e86246622e30d, type: 2}
+  - {fileID: 11400000, guid: b02f17b0815605741a56bea310c3e5c5, type: 2}
+  - {fileID: 11400000, guid: 58ec53758e81214459367a17543e0df2, type: 2}
+  - {fileID: 11400000, guid: 12007873997c01846984e4f726590504, type: 2}
+  - {fileID: 11400000, guid: 05f532bc54cf2794aa98503826fc097e, type: 2}
+  - {fileID: 11400000, guid: 68bda2b05eb738441943ec52dd14cc0f, type: 2}
+  - {fileID: 11400000, guid: d9f8f90b6c486f9449bf700221aa094f, type: 2}
+  - {fileID: 11400000, guid: 5e37d90350f1ad044b39aa2b26c89ef2, type: 2}
+  - {fileID: 11400000, guid: 420e8ffddd4785346bd819d3197d7716, type: 2}
+  - {fileID: 11400000, guid: 699cc2e9e10b9924a99096cd32f28df0, type: 2}
+  cardPoolOverride: {fileID: 0}
+  startingHeroId: archer
+  battlefieldFixturePrefab: {fileID: 0}
+  useExactWaveCounts: 1
+  enemyCountMultiplier: 1.85
+  spawnIntervalMultiplier: 0.7
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+  - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+  - {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+  - {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+  - {fileID: 11400000, guid: 94490734d9d14e2d929ee334fc31ca44, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000001, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000002, type: 2}
+  - {fileID: 11400000, guid: e1a00001000000000000000000000003, type: 2}

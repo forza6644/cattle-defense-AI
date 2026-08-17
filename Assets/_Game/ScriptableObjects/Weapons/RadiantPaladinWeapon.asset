@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: RadiantPaladinWeapon
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WeaponDefinition
   attackType: 0
-  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  projectilePrefab: {fileID: 7965922067191009867, guid: 5331fb26863f86542aced183878edd3a, type: 3}
   splashRadius: 0
   statusEffectType: 0
   statusEffectValue: 0

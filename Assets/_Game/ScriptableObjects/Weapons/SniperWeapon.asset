@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SniperWeapon
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WeaponDefinition
   attackType: 0
-  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  projectilePrefab: {fileID: 8939774027519633401, guid: b39b24384cecec74d826e3753bf8c203, type: 3}
   splashRadius: 0
   statusEffectType: 0
   statusEffectValue: 0

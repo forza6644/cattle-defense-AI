@@ -2,7 +2,9 @@
   "name": "Stonehold.PlayModeTests",
   "rootNamespace": "Stonehold.Tests",
   "references": [
-    "Stonehold.Runtime"
+    "Stonehold.Runtime",
+    "Unity.RenderPipelines.Core.Runtime",
+    "Unity.RenderPipelines.Universal.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

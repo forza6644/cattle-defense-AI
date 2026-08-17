@@ -33,6 +33,7 @@ namespace Stonehold
             }
 
             Instance = this;
+            LoadAllHeroDefinitions();
         }
 
         private void Start()
@@ -172,6 +173,7 @@ namespace Stonehold
                 return;
             }
 
+            LoadAllHeroDefinitions();
             RefreshSlots();
 
             for (int i = 0; i < slots.Count; i++)
@@ -313,18 +315,19 @@ namespace Stonehold
 
         private void KeepOneSlotPerName()
         {
+            HashSet<HeroSlot> seenSlots = new HashSet<HeroSlot>();
             HashSet<string> seenNames = new HashSet<string>();
             for (int i = slots.Count - 1; i >= 0; i--)
             {
                 HeroSlot slot = slots[i];
-                if (slot == null)
+                if (slot == null || !seenSlots.Add(slot))
                 {
                     slots.RemoveAt(i);
                     continue;
                 }
 
                 string slotName = slot.name;
-                if (seenNames.Contains(slotName))
+                if (slotName.StartsWith("HeroSlot_", System.StringComparison.OrdinalIgnoreCase) && seenNames.Contains(slotName))
                 {
                     slots.RemoveAt(i);
                     continue;
@@ -334,6 +337,43 @@ namespace Stonehold
             }
 
             slots.Sort(CompareSlots);
+        }
+
+        private void LoadAllHeroDefinitions()
+        {
+            HeroDefinition[] loaded = Resources.LoadAll<HeroDefinition>("Heroes");
+            if (loaded != null && loaded.Length > 0)
+            {
+                for (int i = 0; i < loaded.Length; i++)
+                {
+                    CaptureDefinition(loaded[i]);
+                }
+            }
+
+            HeroDefinition[] allFallback = Resources.LoadAll<HeroDefinition>("");
+            if (allFallback != null && allFallback.Length > 0)
+            {
+                for (int i = 0; i < allFallback.Length; i++)
+                {
+                    CaptureDefinition(allFallback[i]);
+                }
+            }
+
+#if UNITY_EDITOR
+            if (heroDefinitions.Count < 10)
+            {
+                string[] guids = UnityEditor.AssetDatabase.FindAssets("t:HeroDefinition");
+                for (int i = 0; i < guids.Length; i++)
+                {
+                    string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[i]);
+                    HeroDefinition hd = UnityEditor.AssetDatabase.LoadAssetAtPath<HeroDefinition>(path);
+                    if (hd != null)
+                    {
+                        CaptureDefinition(hd);
+                    }
+                }
+            }
+#endif
         }
 
         private void CaptureDefinition(HeroDefinition hero)

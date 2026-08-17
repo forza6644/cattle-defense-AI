@@ -442,21 +442,29 @@ namespace Stonehold
             MainMenuUI mainMenuUI = UnityEngine.Object.FindAnyObjectByType<MainMenuUI>();
             if (mainMenuUI != null)
             {
-                string[] guids = AssetDatabase.FindAssets("t:HeroDefinition", new string[] { "Assets/_Game/ScriptableObjects/Heroes" });
+                string[] guids = AssetDatabase.FindAssets("t:HeroDefinition", new string[] { "Assets/_Game/ScriptableObjects/Heroes", "Assets/_Game/Resources/Heroes" });
                 List<HeroDefinition> heroes = new List<HeroDefinition>();
+                HashSet<string> addedIds = new HashSet<string>();
                 foreach (var guid in guids)
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
                     HeroDefinition hd = AssetDatabase.LoadAssetAtPath<HeroDefinition>(path);
-                    if (hd != null)
+                    if (hd != null && !string.IsNullOrEmpty(hd.id) && !addedIds.Contains(hd.id))
                     {
                         heroes.Add(hd);
+                        addedIds.Add(hd.id);
                     }
                 }
                 heroes.Sort((a, b) => {
-                    List<string> order = new List<string> { "archer", "bombardier", "frost_mage", "fire_mage", "electric_engineer", "sniper" };
+                    List<string> order = new List<string> {
+                        "archer", "bombardier", "frost_mage", "fire_mage",
+                        "electric_engineer", "sniper", "plague_doctor",
+                        "radiant_paladin", "shadow_assassin", "storm_druid"
+                    };
                     int indexA = order.IndexOf(a.id);
                     int indexB = order.IndexOf(b.id);
+                    if (indexA < 0) indexA = 999;
+                    if (indexB < 0) indexB = 999;
                     return indexA.CompareTo(indexB);
                 });
 
@@ -481,6 +489,10 @@ namespace Stonehold
                 case "fire_mage": return "FireMageHero.asset";
                 case "electric_engineer": return "ElectricEngineerHero.asset";
                 case "sniper": return "SniperHero.asset";
+                case "plague_doctor": return "PlagueDoctorHero.asset";
+                case "radiant_paladin": return "RadiantPaladinHero.asset";
+                case "shadow_assassin": return "ShadowAssassinHero.asset";
+                case "storm_druid": return "StormDruidHero.asset";
                 default: return heroId + "Hero.asset";
             }
         }
@@ -500,7 +512,11 @@ namespace Stonehold
                 new { id = "frost_mage", fbx = "Cleric.fbx", controller = "Cleric_Idle.controller", scale = 1.0f },
                 new { id = "fire_mage", fbx = "Wizard.fbx", controller = "Wizard_Idle.controller", scale = 1.0f },
                 new { id = "electric_engineer", fbx = "Monk.fbx", controller = "Monk_Idle.controller", scale = 1.0f },
-                new { id = "sniper", fbx = "Rogue.fbx", controller = "Rogue_Idle.controller", scale = 0.85f }
+                new { id = "sniper", fbx = "Rogue.fbx", controller = "Rogue_Idle.controller", scale = 0.85f },
+                new { id = "plague_doctor", fbx = "Wizard.fbx", controller = "Wizard_Idle.controller", scale = 0.98f },
+                new { id = "radiant_paladin", fbx = "Warrior.fbx", controller = "Warrior_Idle.controller", scale = 1.10f },
+                new { id = "shadow_assassin", fbx = "Rogue.fbx", controller = "Rogue_Idle.controller", scale = 0.95f },
+                new { id = "storm_druid", fbx = "Monk.fbx", controller = "Monk_Idle.controller", scale = 1.02f }
             };
 
             foreach (var mapping in heroMappings)
@@ -598,13 +614,17 @@ namespace Stonehold
                 PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
                 UnityEngine.Object.DestroyImmediate(root);
 
-                string soPath = HeroSOFolder + GetHeroAssetName(mapping.id);
-                var heroSO = AssetDatabase.LoadAssetAtPath<HeroDefinition>(soPath);
-                if (heroSO != null)
+                string[] targetFolders = new[] { HeroSOFolder, "Assets/_Game/Resources/Heroes/" };
+                foreach (string folder in targetFolders)
                 {
-                    heroSO.heroPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
-                    EditorUtility.SetDirty(heroSO);
-                    Debug.Log($"Assigned adapter prefab to {soPath}");
+                    string soPath = folder + GetHeroAssetName(mapping.id);
+                    var heroSO = AssetDatabase.LoadAssetAtPath<HeroDefinition>(soPath);
+                    if (heroSO != null)
+                    {
+                        heroSO.heroPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+                        EditorUtility.SetDirty(heroSO);
+                        Debug.Log($"Assigned adapter prefab to {soPath}");
+                    }
                 }
             }
         }

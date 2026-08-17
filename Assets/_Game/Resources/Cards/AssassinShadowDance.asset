@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Shadow Dance
   description: Shadow Step resets its cooldown immediately whenever the target enemy is killed.
   icon: {fileID: 0}
-  cardCategory: 2
+  cardCategory: 0
   recruitHeroId: 
   requiredOwnedHeroId: shadow_assassin
   blockedIfOwnedHeroId: 

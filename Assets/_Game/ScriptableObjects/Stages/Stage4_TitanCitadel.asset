@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f17e9e434a11340bf474dd4d821c57, type: 3}
+  m_Name: Stage4_TitanCitadel
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.StageData
+  stageId: stage_4_titan_citadel
+  stageDisplayName: Titan Citadel
+  stageDescription: Endure the ancient titan ruins, massive colossi, and speed vanguards.
+  stageNumber: 4
+  stageMode: 0
+  waves:
+  - {fileID: 11400000, guid: 9177b5155b502b143bf3bc7aa76eebd8, type: 2}
+  - {fileID: 11400000, guid: a6736630ca8e0974185677013897e51b, type: 2}
+  - {fileID: 11400000, guid: 4d5f1f31dee53af44b1f512bb3e7efae, type: 2}
+  - {fileID: 11400000, guid: f5f9e4140160e98499ec053b81e8b81f, type: 2}
+  - {fileID: 11400000, guid: 266f8d5c687139a4691ff864ec53a908, type: 2}
+  - {fileID: 11400000, guid: a1bc6412e77063d46be865eee5271dc0, type: 2}
+  - {fileID: 11400000, guid: 852d54253be24a640927b092eaf67211, type: 2}
+  - {fileID: 11400000, guid: fd434b469773af445b8c677d49b076b9, type: 2}
+  - {fileID: 11400000, guid: b007c2cc2136293468347375a888437c, type: 2}
+  - {fileID: 11400000, guid: 2eaa91f4545d9d64a952dbbec0fe5982, type: 2}
+  cardPoolOverride: {fileID: 0}
+  startingHeroId: archer
+  battlefieldFixturePrefab: {fileID: 0}
+  useExactWaveCounts: 1
+  enemyCountMultiplier: 1.25
+  spawnIntervalMultiplier: 0.9
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+  - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+  - {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+  - {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+  - {fileID: 11400000, guid: 94490734d9d14e2d929ee334fc31ca44, type: 2}

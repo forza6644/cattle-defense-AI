@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f17e9e434a11340bf474dd4d821c57, type: 3}
+  m_Name: Stage6_ToxicMire
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.StageData
+  stageId: stage_6_toxic_mire
+  stageDisplayName: Toxic Mire
+  stageDescription: Survive noxious rot wetlands swarming with caustic abominations
+    and toxic chimeras.
+  stageNumber: 6
+  stageMode: 0
+  waves:
+  - {fileID: 11400000, guid: 957c018afac465f4c84a502c87a523df, type: 2}
+  - {fileID: 11400000, guid: 22dbfe48bb6f56b4798d4a2c15f7f599, type: 2}
+  - {fileID: 11400000, guid: 277e849c7b1c7b249ab46cf1e53b4de2, type: 2}
+  - {fileID: 11400000, guid: c45f627677198c641b9c2c763000c304, type: 2}
+  - {fileID: 11400000, guid: 0d7ec28d44b3e804f95b9e73bb9c7d57, type: 2}
+  - {fileID: 11400000, guid: 24c238bc2b540a14193dfab49a0cd1fe, type: 2}
+  - {fileID: 11400000, guid: 09c062fdcb4f67f40997dbc83758c155, type: 2}
+  - {fileID: 11400000, guid: 74df4236aa90132449cc11847e1deb84, type: 2}
+  - {fileID: 11400000, guid: fa1e3908b2e893a42bd3a9fd945a93e9, type: 2}
+  - {fileID: 11400000, guid: 96854a3be1842584ea623f7d596830d6, type: 2}
+  cardPoolOverride: {fileID: 0}
+  startingHeroId: archer
+  battlefieldFixturePrefab: {fileID: 0}
+  useExactWaveCounts: 1
+  enemyCountMultiplier: 1.42
+  spawnIntervalMultiplier: 0.82
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+  - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+  - {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+  - {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+  - {fileID: 11400000, guid: 94490734d9d14e2d929ee334fc31ca44, type: 2}

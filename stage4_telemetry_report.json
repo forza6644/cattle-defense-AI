@@ -4,5 +4,5 @@
   "status": "Completed",
   "targetFrameRate": 60,
   "vSyncCount": 0,
-  "gcMemoryDeltaBytes": 757760
+  "gcMemoryDeltaBytes": 131072
 }

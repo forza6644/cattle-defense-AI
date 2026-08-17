@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f17e9e434a11340bf474dd4d821c57, type: 3}
+  m_Name: Stage2_HighlandsFortress
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.StageData
+  stageId: stage_2_highlands
+  stageDisplayName: Highlands Fortress
+  stageDescription: Defend the highland pass against heavier enemy formations and
+    shield phalanxes.
+  stageNumber: 2
+  stageMode: 0
+  waves:
+  - {fileID: 11400000, guid: ae5937595ab96194398e4d9301114e45, type: 2}
+  - {fileID: 11400000, guid: 82a6b03ba065e5b4ababfa1080ca7d86, type: 2}
+  - {fileID: 11400000, guid: 02cc623db8cc1c44599a4012bc48ad6d, type: 2}
+  - {fileID: 11400000, guid: 144692cff0c63084488542a9c8835565, type: 2}
+  - {fileID: 11400000, guid: 367428f6c3f8a124c8b9b3676a3831cf, type: 2}
+  - {fileID: 11400000, guid: 46d35c5a1552d6043a3312742027a1ef, type: 2}
+  - {fileID: 11400000, guid: bd83ed7ba66145745accbfd48c135564, type: 2}
+  - {fileID: 11400000, guid: 0d17640464a7f9a45b2c3c92a8e92b35, type: 2}
+  - {fileID: 11400000, guid: 9eaba665c20039d4aaceaf961e3e69d9, type: 2}
+  - {fileID: 11400000, guid: b1a1862125702054585a5f99392a10c2, type: 2}
+  cardPoolOverride: {fileID: 0}
+  startingHeroId: archer
+  battlefieldFixturePrefab: {fileID: 0}
+  useExactWaveCounts: 1
+  enemyCountMultiplier: 1.05
+  spawnIntervalMultiplier: 0.95
+  expectedEnemyTypes:
+  - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+  - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+  - {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+  - {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+  - {fileID: 11400000, guid: 94490734d9d14e2d929ee334fc31ca44, type: 2}

@@ -273,9 +273,11 @@ namespace Stonehold
 
             if (card.cardCategory == CardCategory.RecruitHero)
             {
-                if (HeroRosterManager.Instance != null)
+                var roster = HeroRosterManager.Instance ?? FindAnyObjectByType<HeroRosterManager>();
+                if (roster != null)
                 {
-                    HeroRosterManager.Instance.RecruitHero(card.recruitHeroId);
+                    string targetId = !string.IsNullOrEmpty(card.recruitHeroId) ? card.recruitHeroId : card.targetHeroId;
+                    roster.RecruitHero(targetId);
                 }
                 return;
             }

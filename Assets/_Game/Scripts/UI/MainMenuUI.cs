@@ -19,6 +19,8 @@ namespace Stonehold
         private RectTransform canvasRect;
         private CanvasGroup settingsGroup;
         private Text qualityLabel;
+        private Text qualityDescriptionText;
+        private readonly System.Collections.Generic.List<Button> qualityTierButtons = new System.Collections.Generic.List<Button>();
         private RectTransform titleRect;
         private float introTime;
         private Text statsText;
@@ -156,11 +158,20 @@ namespace Stonehold
                 DontDestroyOnLoad(relicGo);
             }
 
+            if (heroDefinitions == null || heroDefinitions.Length == 0)
+            {
+                heroDefinitions = Resources.LoadAll<HeroDefinition>("Heroes");
+                if (heroDefinitions == null || heroDefinitions.Length == 0)
+                {
+                    heroDefinitions = Resources.LoadAll<HeroDefinition>("");
+                }
+            }
+
             Camera cam = Camera.main;
             if (cam != null)
             {
                 cam.clearFlags = CameraClearFlags.SolidColor;
-                cam.backgroundColor = new Color(0.07f, 0.09f, 0.14f);
+                cam.backgroundColor = new Color(0.04f, 0.03f, 0.06f);
             }
         }
 
@@ -212,13 +223,44 @@ namespace Stonehold
 
         private void SetQuality(int level)
         {
-            QualitySettings.SetQualityLevel(level, true);
+            MobileQualityManager.SetQualityTier(level);
             RefreshQualityLabel();
         }
 
         private void RefreshQualityLabel()
         {
-            qualityLabel.text = "Quality: " + QualitySettings.names[QualitySettings.GetQualityLevel()];
+            if (qualityLabel != null)
+            {
+                var tier = MobileQualityManager.CurrentTier;
+                qualityLabel.text = "Graphics: " + MobileQualityManager.GetTierDisplayName(tier);
+            }
+            if (qualityDescriptionText != null)
+            {
+                var tier = MobileQualityManager.CurrentTier;
+                qualityDescriptionText.text = MobileQualityManager.GetTierDescription(tier);
+            }
+            RefreshQualityButtonHighlights();
+        }
+
+        private void RefreshQualityButtonHighlights()
+        {
+            int current = (int)MobileQualityManager.CurrentTier;
+            for (int i = 0; i < qualityTierButtons.Count; i++)
+            {
+                if (qualityTierButtons[i] == null) continue;
+                Image img = qualityTierButtons[i].GetComponent<Image>();
+                Text txt = qualityTierButtons[i].GetComponentInChildren<Text>();
+                bool isActive = (i == current);
+                if (img != null)
+                {
+                    img.color = isActive ? new Color(0.85f, 0.65f, 0.20f, 1f) : new Color(0.18f, 0.22f, 0.28f, 0.9f);
+                }
+                if (txt != null)
+                {
+                    txt.color = isActive ? new Color(0.08f, 0.08f, 0.1f, 1f) : new Color(0.9f, 0.9f, 0.95f, 1f);
+                    txt.fontStyle = isActive ? FontStyle.Bold : FontStyle.Normal;
+                }
+            }
         }
 
         private void ShowSettings(bool visible)
@@ -257,15 +299,25 @@ namespace Stonehold
             }
             scaler.matchWidthOrHeight = 0.5f;
 
-            // Background
-            Image background = CreateImage(canvasRect, "Background", new Color(0.07f, 0.09f, 0.14f, 0f));
+            // Background (High-Fidelity Castle Interior)
+            Sprite bgSprite = LoadSprite("UI/menu_bg_castle");
+            Image background = CreateImage(canvasRect, "Background", bgSprite != null ? Color.white : new Color(0.06f, 0.05f, 0.09f, 1f));
+            if (bgSprite != null)
+            {
+                background.sprite = bgSprite;
+                background.type = Image.Type.Simple;
+                background.preserveAspect = false;
+            }
             Stretch(background.rectTransform);
+
+            // Ambient floating embers & dust motes
+            CreateAmbientMenuParticles(canvasObject.transform);
 
             // Safe Area
             RectTransform safeAreaRect = CreateSafeArea(canvasRect);
 
             // 1. Top Header Bar
-            Image headerBar = CreateImage(safeAreaRect, "HeaderBar", new Color(0.05f, 0.06f, 0.08f, 0.95f));
+            Image headerBar = CreateImage(safeAreaRect, "HeaderBar", new Color(0.04f, 0.05f, 0.08f, 0.94f));
             if (isPortrait)
             {
                 headerBar.rectTransform.anchorMin = new Vector2(0f, 1f);
@@ -280,19 +332,19 @@ namespace Stonehold
             }
 
             // Player Profile (Top-Left)
-            Image profileAvatar = CreateImage(headerBar.rectTransform, "ProfileAvatar", new Color(0.2f, 0.28f, 0.4f, 1.0f));
+            Image profileAvatar = CreateImage(headerBar.rectTransform, "ProfileAvatar", new Color(0.24f, 0.32f, 0.44f, 1.0f));
             Place(profileAvatar.rectTransform, new Vector2(0f, 0.5f), new Vector2(80f, 0f), new Vector2(64f, 64f));
 
             Text profileName = CreateText(headerBar.rectTransform, "ProfileName", "Commander_01", 24, new Color(1f, 0.85f, 0.35f));
             profileName.alignment = TextAnchor.MiddleLeft;
             Place(profileName.rectTransform, new Vector2(0f, 0.5f), new Vector2(250f, 12f), new Vector2(240f, 32f));
 
-            Text profileLevel = CreateText(headerBar.rectTransform, "ProfileLevel", "Lv.15", 18, Color.white);
+            Text profileLevel = CreateText(headerBar.rectTransform, "ProfileLevel", "Lv.15", 18, new Color(0.9f, 0.9f, 0.95f));
             profileLevel.alignment = TextAnchor.MiddleLeft;
             Place(profileLevel.rectTransform, new Vector2(0f, 0.5f), new Vector2(250f, -14f), new Vector2(240f, 24f));
 
             // Currencies (Top-Right Area)
-            currencyText = CreateText(headerBar.rectTransform, "Currencies", "", isPortrait ? 15 : 22, new Color(0.9f, 0.9f, 0.95f));
+            currencyText = CreateText(headerBar.rectTransform, "Currencies", "", isPortrait ? 15 : 22, new Color(1f, 0.95f, 0.8f));
             if (isPortrait)
             {
                 Place(currencyText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(320f, 40f));
@@ -305,79 +357,60 @@ namespace Stonehold
             }
             RefreshCurrencies();
 
-            // Top Bar Buttons (Settings, Treasury, Daily, Quests, Relics, Quit)
+            // Top Bar Buttons (Relics, Quests, Daily, Treasury)
             CreateButton(headerBar.rectTransform, "RelicsButton", "🛡️ Relics", new Vector2(130f, 54f),
-                new Vector2(1f, 0.5f), new Vector2(-610f, 0f), () => ShowRelicsDrawer(true));
+                new Vector2(1f, 0.5f), new Vector2(-480f, 0f), () => ShowRelicsDrawer(true));
 
             CreateButton(headerBar.rectTransform, "QuestsButton", "📜 Quests", new Vector2(130f, 54f),
-                new Vector2(1f, 0.5f), new Vector2(-470f, 0f), () => ShowQuestsDrawer(true));
+                new Vector2(1f, 0.5f), new Vector2(-340f, 0f), () => ShowQuestsDrawer(true));
 
             CreateButton(headerBar.rectTransform, "DailyButton", "🎁 Daily", new Vector2(120f, 54f),
-                new Vector2(1f, 0.5f), new Vector2(-335f, 0f), () => ShowDailyRewardsDrawer(true));
+                new Vector2(1f, 0.5f), new Vector2(-210f, 0f), () => ShowDailyRewardsDrawer(true));
 
             CreateButton(headerBar.rectTransform, "TreasuryButton", "📦 Vault", new Vector2(120f, 54f),
-                new Vector2(1f, 0.5f), new Vector2(-210f, 0f), () => ShowTreasuryModal(true));
+                new Vector2(1f, 0.5f), new Vector2(-80f, 0f), () => ShowTreasuryModal(true));
 
-            CreateButton(headerBar.rectTransform, "SettingsButton", "Settings", new Vector2(130f, 54f),
-                new Vector2(1f, 0.5f), new Vector2(-80f, 0f), () => ShowSettings(true));
-
-            if (!Application.isMobilePlatform)
+            // 2. Title (Runic Stone Block with Emerald Rune Inlay)
+            Sprite titleSprite = LoadSprite("UI/title_stonehold");
+            if (titleSprite != null)
             {
-                CreateButton(headerBar.rectTransform, "QuitButton", "Quit", new Vector2(90f, 54f),
-                    new Vector2(1f, 0.5f), new Vector2(-730f, 0f), QuitGame);
-            }
-
-            // 2. Title
-            Text title = CreateText(safeAreaRect, "Title", "STONEHOLD", 110, new Color(1f, 0.85f, 0.35f));
-            title.fontStyle = FontStyle.Bold;
-            if (isPortrait)
-            {
-                Place(title.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(1000f, 130f));
-            }
-            else
-            {
-                Place(title.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(1200f, 130f));
-            }
-            titleRect = title.rectTransform;
-
-            Text subtitle = CreateText(safeAreaRect, "Subtitle", "Defend the keep. Hold the line.", 24, new Color(0.8f, 0.8f, 0.85f));
-            if (isPortrait)
-            {
-                Place(subtitle.rectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(900f, 40f));
+                Image titleImage = CreateImage(safeAreaRect, "TitleBlock", Color.white);
+                titleImage.sprite = titleSprite;
+                titleImage.preserveAspect = true;
+                if (isPortrait)
+                {
+                    Place(titleImage.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(920f, 210f));
+                }
+                else
+                {
+                    Place(titleImage.rectTransform, new Vector2(0.5f, 0.82f), Vector2.zero, new Vector2(760f, 170f));
+                }
+                titleRect = titleImage.rectTransform;
             }
             else
             {
-                Place(subtitle.rectTransform, new Vector2(0.5f, 0.70f), Vector2.zero, new Vector2(900f, 40f));
+                Text title = CreateText(safeAreaRect, "Title", "STONEHOLD", 110, new Color(0.35f, 0.95f, 0.65f));
+                title.fontStyle = FontStyle.Bold;
+                if (isPortrait)
+                {
+                    Place(title.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(1000f, 130f));
+                }
+                else
+                {
+                    Place(title.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(1200f, 130f));
+                }
+                titleRect = title.rectTransform;
             }
 
-            // 3. Stats & Progress Panel (Left Side Container)
-            Image statsBg = CreateImage(safeAreaRect, "StatsPanel", new Color(0.12f, 0.16f, 0.24f, 0.5f));
+            // 3. Central Stage Select Panel
+            Image stageBg = CreateImage(safeAreaRect, "StagePanel", new Color(0.06f, 0.08f, 0.12f, 0.88f));
             if (isPortrait)
             {
-                Place(statsBg.rectTransform, new Vector2(0.5f, 0.24f), new Vector2(-220f, 0f), new Vector2(400f, 440f));
+                Place(stageBg.rectTransform, new Vector2(0.5f, 0.74f), Vector2.zero, new Vector2(860f, 200f));
             }
             else
             {
-                Place(statsBg.rectTransform, new Vector2(0f, 0.5f), new Vector2(260f, 50f), new Vector2(400f, 400f));
-            }
-
-            statsText = CreateText(statsBg.rectTransform, "StatsText", "", 22, new Color(0.85f, 0.85f, 0.9f));
-            statsText.alignment = TextAnchor.UpperLeft;
-            Place(statsText.rectTransform, new Vector2(0.5f, 0.6f), Vector2.zero, new Vector2(340f, 260f));
-            RefreshStats();
-
-            CreateButton(statsBg.rectTransform, "ResetStatsButton", "Reset Stats", new Vector2(180f, 48f),
-                new Vector2(0.5f, 0.12f), Vector2.zero, ResetStats);
-
-            // 4. Central Stage Select Panel
-            Image stageBg = CreateImage(safeAreaRect, "StagePanel", new Color(0.12f, 0.16f, 0.24f, 0.8f));
-            if (isPortrait)
-            {
-                Place(stageBg.rectTransform, new Vector2(0.5f, 0.76f), Vector2.zero, new Vector2(800f, 220f));
-            }
-            else
-            {
-                Place(stageBg.rectTransform, new Vector2(0.5f, 0.53f), Vector2.zero, new Vector2(800f, 220f));
+                Place(stageBg.rectTransform, new Vector2(0.5f, 0.58f), Vector2.zero, new Vector2(860f, 200f));
             }
 
             stageNumText = CreateText(stageBg.rectTransform, "StageNumText", "STAGE 1", 20, new Color(1f, 0.85f, 0.35f));
@@ -390,7 +423,7 @@ namespace Stonehold
             stageDescText = CreateText(stageBg.rectTransform, "StageDesc", "", 18, new Color(0.85f, 0.85f, 0.9f));
             Place(stageDescText.rectTransform, new Vector2(0.5f, 0.34f), Vector2.zero, new Vector2(700f, 60f));
 
-            stageRewardText = CreateText(stageBg.rectTransform, "StageRewardText", "Rewards: 🪙 Gold  💎 Gems  📦 Loot Box", 16, new Color(0.7f, 0.7f, 0.75f));
+            stageRewardText = CreateText(stageBg.rectTransform, "StageRewardText", "Rewards: 🪙 Gold  💎 Gems  📦 Loot Box", 16, new Color(0.75f, 0.75f, 0.8f));
             Place(stageRewardText.rectTransform, new Vector2(0.5f, 0.12f), Vector2.zero, new Vector2(700f, 24f));
 
             prevStageBtn = CreateButton(stageBg.rectTransform, "PrevStage", "<", new Vector2(46f, 46f),
@@ -439,15 +472,15 @@ namespace Stonehold
                 mapLabel.color = new Color(0.5f, 1f, 0.5f);
             }
 
-            // 5. Starter Crystal Selection Panel
-            Image defenderBg = CreateImage(safeAreaRect, "DefenderPanel", new Color(0.12f, 0.16f, 0.24f, 0.7f));
+            // 4. Starter Crystal Selection Panel
+            Image defenderBg = CreateImage(safeAreaRect, "DefenderPanel", new Color(0.06f, 0.08f, 0.12f, 0.88f));
             if (isPortrait)
             {
-                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.60f), Vector2.zero, new Vector2(800f, 340f));
+                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.58f), Vector2.zero, new Vector2(860f, 250f));
             }
             else
             {
-                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.40f), new Vector2(0f, -20f), new Vector2(800f, 280f));
+                Place(defenderBg.rectTransform, new Vector2(0.5f, 0.40f), new Vector2(0f, -20f), new Vector2(860f, 240f));
             }
 
             Text defenderTitleText = CreateText(defenderBg.rectTransform, "DefenderTitle", "FORTRESS STARTER CRYSTAL", 16, new Color(1f, 0.85f, 0.35f));
@@ -483,77 +516,163 @@ namespace Stonehold
 
             RefreshCrystalSelection();
 
-            // 6. Large Premium Battle Button
-            if (isPortrait)
+            // 5. Primary Action Buttons (Vertical Stack: CAMPAIGN + UPGRADES)
+            Sprite campaignSprite = LoadSprite("UI/btn_campaign");
+            Sprite upgradesSprite = LoadSprite("UI/btn_upgrades");
+            Sprite secondarySprite = LoadSprite("UI/btn_secondary");
+
+            Vector2 primBtnSize = isPortrait ? new Vector2(680f, 130f) : new Vector2(460f, 90f);
+
+            // CAMPAIGN Button
+            if (campaignSprite != null)
             {
-                startButton = CreateButton(safeAreaRect, "StartButton", "BATTLE", new Vector2(400f, 96f), new Vector2(0.5f, 0.44f), Vector2.zero, Play);
+                startButton = CreateSpriteButton(safeAreaRect, "CampaignButton", "", campaignSprite, primBtnSize,
+                    isPortrait ? new Vector2(0.5f, 0.44f) : new Vector2(0.5f, 0.22f), Vector2.zero, Play);
             }
             else
             {
-                startButton = CreateButton(safeAreaRect, "StartButton", "BATTLE", new Vector2(400f, 96f), new Vector2(0.5f, 0.23f), Vector2.zero, Play);
+                startButton = CreateButton(safeAreaRect, "StartButton", "CAMPAIGN", primBtnSize,
+                    isPortrait ? new Vector2(0.5f, 0.44f) : new Vector2(0.5f, 0.22f), Vector2.zero, Play);
+                ColorBlock scb = startButton.colors;
+                scb.normalColor = new Color(0.8f, 0.2f, 0.15f, 1.0f);
+                scb.highlightedColor = new Color(0.95f, 0.3f, 0.25f, 1.0f);
+                startButton.colors = scb;
             }
             startButtonLabel = startButton.GetComponentInChildren<Text>();
-            startButtonLabel.fontStyle = FontStyle.Bold;
-            startButtonLabel.fontSize = 36;
-            startButtonLabel.color = new Color(1f, 0.9f, 0.3f);
+            if (startButtonLabel != null)
+            {
+                startButtonLabel.fontStyle = FontStyle.Bold;
+                startButtonLabel.fontSize = 34;
+                startButtonLabel.color = new Color(1f, 0.9f, 0.35f);
+            }
 
-            ColorBlock cb = startButton.colors;
-            cb.normalColor = new Color(0.8f, 0.2f, 0.15f, 1.0f);
-            cb.highlightedColor = new Color(0.95f, 0.3f, 0.25f, 1.0f);
-            cb.pressedColor = new Color(0.6f, 0.15f, 0.1f, 1.0f);
-            cb.selectedColor = new Color(0.8f, 0.2f, 0.15f, 1.0f);
-            startButton.colors = cb;
+            // UPGRADES Button
+            Button upgradesBtn;
+            if (upgradesSprite != null)
+            {
+                upgradesBtn = CreateSpriteButton(safeAreaRect, "UpgradesMainButton", "", upgradesSprite, primBtnSize,
+                    isPortrait ? new Vector2(0.5f, 0.35f) : new Vector2(0.5f, 0.12f), Vector2.zero, () => ShowRelicsDrawer(true));
+            }
+            else
+            {
+                upgradesBtn = CreateButton(safeAreaRect, "UpgradesMainButton", "UPGRADES", primBtnSize,
+                    isPortrait ? new Vector2(0.5f, 0.35f) : new Vector2(0.5f, 0.12f), Vector2.zero, () => ShowRelicsDrawer(true));
+                ColorBlock ucb = upgradesBtn.colors;
+                ucb.normalColor = new Color(0.85f, 0.65f, 0.2f, 1.0f);
+                ucb.highlightedColor = new Color(0.95f, 0.78f, 0.3f, 1.0f);
+                upgradesBtn.colors = ucb;
+            }
 
-            // 7. Right Meta Upgrades Container
-            Image upgradesBg = CreateImage(safeAreaRect, "UpgradesPanel", new Color(0.12f, 0.16f, 0.24f, 0.8f));
+            // 6. Secondary Buttons Row (Settings, About, Quit)
+            Vector2 secBtnSize = isPortrait ? new Vector2(230f, 54f) : new Vector2(180f, 48f);
+            Vector2 secRowAnchor = isPortrait ? new Vector2(0.5f, 0.27f) : new Vector2(0.18f, 0.12f);
+
+            float secSpacing = isPortrait ? 250f : 190f;
+            float secStartX = Application.isMobilePlatform ? -secSpacing / 2f : -secSpacing;
+
+            // Settings Button
+            if (secondarySprite != null)
+            {
+                CreateSpriteButton(safeAreaRect, "SettingsBtnSec", "⚙️ SETTINGS", secondarySprite, secBtnSize,
+                    secRowAnchor, new Vector2(secStartX, 0f), () => ShowSettings(true), new Color(0.9f, 0.92f, 0.98f), 17);
+            }
+            else
+            {
+                CreateButton(safeAreaRect, "SettingsBtnSec", "⚙️ Settings", secBtnSize,
+                    secRowAnchor, new Vector2(secStartX, 0f), () => ShowSettings(true));
+            }
+
+            // About Button
+            if (secondarySprite != null)
+            {
+                CreateSpriteButton(safeAreaRect, "AboutBtnSec", "ℹ️ ABOUT", secondarySprite, secBtnSize,
+                    secRowAnchor, new Vector2(secStartX + secSpacing, 0f), () =>
+                    {
+                        Debug.Log("[Stonehold] V2.0 - Defend the Keep against relentless enemy sieges!");
+                    }, new Color(0.9f, 0.92f, 0.98f), 17);
+            }
+            else
+            {
+                CreateButton(safeAreaRect, "AboutBtnSec", "ℹ️ About", secBtnSize,
+                    secRowAnchor, new Vector2(secStartX + secSpacing, 0f), () =>
+                    {
+                        Debug.Log("[Stonehold] V2.0 - Defend the Keep against relentless enemy sieges!");
+                    });
+            }
+
+            // Quit Button (Desktop only)
+            if (!Application.isMobilePlatform)
+            {
+                if (secondarySprite != null)
+                {
+                    CreateSpriteButton(safeAreaRect, "QuitBtnSec", "✖ QUIT", secondarySprite, secBtnSize,
+                        secRowAnchor, new Vector2(secStartX + secSpacing * 2f, 0f), QuitGame, new Color(1f, 0.6f, 0.6f), 17);
+                }
+                else
+                {
+                    CreateButton(safeAreaRect, "QuitBtnSec", "✖ Quit", secBtnSize,
+                        secRowAnchor, new Vector2(secStartX + secSpacing * 2f, 0f), QuitGame);
+                }
+            }
+
+            // 7. Stats & Meta Upgrades Panels (Preserved for compatibility and deep progression)
+            Image statsBg = CreateImage(safeAreaRect, "StatsPanel", new Color(0.06f, 0.08f, 0.12f, 0.7f));
             if (isPortrait)
             {
-                Place(upgradesBg.rectTransform, new Vector2(0.5f, 0.24f), new Vector2(220f, 0f), new Vector2(400f, 440f));
+                Place(statsBg.rectTransform, new Vector2(0.5f, 0.17f), new Vector2(-220f, 0f), new Vector2(400f, 210f));
+            }
+            else
+            {
+                Place(statsBg.rectTransform, new Vector2(0f, 0.5f), new Vector2(260f, 50f), new Vector2(400f, 400f));
+            }
+
+            statsText = CreateText(statsBg.rectTransform, "StatsText", "", 18, new Color(0.85f, 0.85f, 0.9f));
+            statsText.alignment = TextAnchor.UpperLeft;
+            Place(statsText.rectTransform, new Vector2(0.5f, 0.55f), Vector2.zero, new Vector2(340f, 130f));
+            RefreshStats();
+
+            CreateButton(statsBg.rectTransform, "ResetStatsButton", "Reset Stats", new Vector2(160f, 38f),
+                new Vector2(0.5f, 0.18f), Vector2.zero, ResetStats);
+
+            Image upgradesBg = CreateImage(safeAreaRect, "UpgradesPanel", new Color(0.06f, 0.08f, 0.12f, 0.7f));
+            if (isPortrait)
+            {
+                Place(upgradesBg.rectTransform, new Vector2(0.5f, 0.17f), new Vector2(220f, 0f), new Vector2(400f, 210f));
             }
             else
             {
                 Place(upgradesBg.rectTransform, new Vector2(1f, 0.5f), new Vector2(-260f, 30f), new Vector2(400f, 460f));
             }
 
-            Text upgradesTitle = CreateText(upgradesBg.rectTransform, "Title", "META UPGRADES", 22, new Color(1f, 0.85f, 0.35f));
-            Place(upgradesTitle.rectTransform, new Vector2(0.5f, 0.92f), Vector2.zero, new Vector2(340f, 32f));
-
-            // Populate all permanent upgrades.
-            float rowStartY = 0.79f;
-            float rowSpacingY = 0.16f;
+            Text upgradesTitle = CreateText(upgradesBg.rectTransform, "Title", "META UPGRADES", 18, new Color(1f, 0.85f, 0.35f));
+            Place(upgradesTitle.rectTransform, new Vector2(0.5f, 0.88f), Vector2.zero, new Vector2(340f, 26f));
 
             if (MetaUpgradeManager.Instance != null)
             {
                 var list = MetaUpgradeManager.Instance.Upgrades;
                 int rowCount = Mathf.Min(list.Count, metaUpgradeNameTexts.Length);
+                float rowStartY = 0.65f;
+                float rowSpacingY = 0.30f;
                 for (int i = 0; i < rowCount; i++)
                 {
                     int index = i;
                     var upgrade = list[i];
 
-                    // Name & level text
-                    metaUpgradeNameTexts[index] = CreateText(upgradesBg.rectTransform, $"UpgradeName_{index}", "", 18, Color.white);
+                    metaUpgradeNameTexts[index] = CreateText(upgradesBg.rectTransform, $"UpgradeName_{index}", "", 14, Color.white);
                     metaUpgradeNameTexts[index].alignment = TextAnchor.MiddleLeft;
-                    Place(metaUpgradeNameTexts[index].rectTransform, new Vector2(0.5f, rowStartY - index * rowSpacingY), new Vector2(-50f, 20f), new Vector2(260f, 24f));
+                    Place(metaUpgradeNameTexts[index].rectTransform, new Vector2(0.5f, rowStartY - index * rowSpacingY), new Vector2(-50f, 12f), new Vector2(240f, 20f));
 
-                    // Description text (subtext)
-                    Text descText = CreateText(upgradesBg.rectTransform, $"UpgradeDesc_{index}", upgrade.description, 13, new Color(0.7f, 0.7f, 0.75f));
-                    descText.alignment = TextAnchor.MiddleLeft;
-                    Place(descText.rectTransform, new Vector2(0.5f, rowStartY - index * rowSpacingY), new Vector2(-50f, -8f), new Vector2(260f, 20f));
-
-                    // Buy button
-                    metaUpgradeButtons[index] = CreateButton(upgradesBg.rectTransform, $"BuyBtn_{index}", "", new Vector2(110f, 44f),
-                        new Vector2(0.5f, rowStartY - index * rowSpacingY), new Vector2(130f, 6f), () => OnMetaUpgradeClicked(upgrade.id));
+                    metaUpgradeButtons[index] = CreateButton(upgradesBg.rectTransform, $"BuyBtn_{index}", "", new Vector2(90f, 32f),
+                        new Vector2(0.5f, rowStartY - index * rowSpacingY), new Vector2(130f, 4f), () => OnMetaUpgradeClicked(upgrade.id));
                     metaUpgradeButtonLabels[index] = metaUpgradeButtons[index].GetComponentInChildren<Text>();
-                    metaUpgradeButtonLabels[index].fontSize = 16;
+                    metaUpgradeButtonLabels[index].fontSize = 13;
                     metaUpgradeButtonLabels[index].fontStyle = FontStyle.Bold;
                 }
             }
-
             RefreshMetaUpgradesPanel();
 
-            // 8. Bottom Navigation Bar Placeholder
-            Image bottomBar = CreateImage(safeAreaRect, "BottomBar", new Color(0.05f, 0.06f, 0.08f, 1.0f));
+            // 8. Bottom Navigation Bar
+            Image bottomBar = CreateImage(safeAreaRect, "BottomBar", new Color(0.04f, 0.05f, 0.08f, 0.98f));
             if (isPortrait)
             {
                 bottomBar.rectTransform.anchorMin = new Vector2(0f, 0f);
@@ -594,14 +713,14 @@ namespace Stonehold
                 ColorBlock tcb = tabBtn.colors;
                 if (labelText == "BATTLES")
                 {
-                    tcb.normalColor = new Color(0.8f, 0.2f, 0.15f, 1.0f);
-                    tcb.highlightedColor = new Color(0.95f, 0.3f, 0.25f, 1.0f);
-                    tabBtnLabel.color = new Color(1f, 0.9f, 0.3f);
+                    tcb.normalColor = new Color(0.85f, 0.25f, 0.18f, 1.0f);
+                    tcb.highlightedColor = new Color(0.98f, 0.35f, 0.28f, 1.0f);
+                    tabBtnLabel.color = new Color(1f, 0.92f, 0.4f);
                 }
                 else
                 {
-                    tcb.normalColor = new Color(0.12f, 0.16f, 0.24f, 0.95f);
-                    tcb.highlightedColor = new Color(0.20f, 0.26f, 0.38f, 1.0f);
+                    tcb.normalColor = new Color(0.10f, 0.14f, 0.20f, 0.95f);
+                    tcb.highlightedColor = new Color(0.18f, 0.24f, 0.35f, 1.0f);
                 }
                 tabBtn.colors = tcb;
             }
@@ -659,20 +778,29 @@ namespace Stonehold
             header.fontStyle = FontStyle.Bold;
             Place(header.rectTransform, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(700f, 80f));
 
-            qualityLabel = CreateText(dim.rectTransform, "QualityLabel", "Quality:", 28, new Color(0.85f, 0.85f, 0.9f));
-            Place(qualityLabel.rectTransform, new Vector2(0.5f, 0.69f), Vector2.zero, new Vector2(700f, 40f));
+            qualityLabel = CreateText(dim.rectTransform, "QualityLabel", "Graphics:", 28, new Color(0.85f, 0.85f, 0.9f));
+            Place(qualityLabel.rectTransform, new Vector2(0.5f, 0.72f), Vector2.zero, new Vector2(700f, 36f));
 
-            string[] names = QualitySettings.names;
+            qualityTierButtons.Clear();
+            string[] tierLabels = { "Low\n(Saver)", "Medium\n(Balanced)", "High\n(Crisp)" };
             float spacing = 220f;
-            float startX = -(Mathf.Min(names.Length, 3) - 1) * spacing / 2f;
-            int shown = Mathf.Min(names.Length, 3);
-            for (int i = 0; i < shown; i++)
+            float startX = -(3 - 1) * spacing / 2f;
+            for (int i = 0; i < 3; i++)
             {
-                int level = names.Length <= 3 ? i : Mathf.RoundToInt(i * (names.Length - 1) / (float)(shown - 1));
-                string label = names[level];
-                CreateButton(dim.rectTransform, "Quality_" + label, label, new Vector2(200f, 52f),
-                    new Vector2(0.5f, 0.60f), new Vector2(startX + i * spacing, 0f), () => SetQuality(level));
+                int level = i;
+                Button btn = CreateButton(dim.rectTransform, "QualityTier_" + i, tierLabels[i], new Vector2(200f, 54f),
+                    new Vector2(0.5f, 0.63f), new Vector2(startX + i * spacing, 0f), () => SetQuality(level));
+                Text btnText = btn.GetComponentInChildren<Text>();
+                if (btnText != null)
+                {
+                    btnText.fontSize = 18;
+                    btnText.alignment = TextAnchor.MiddleCenter;
+                }
+                qualityTierButtons.Add(btn);
             }
+
+            qualityDescriptionText = CreateText(dim.rectTransform, "QualityDesc", "", 18, new Color(0.72f, 0.78f, 0.88f, 0.9f));
+            Place(qualityDescriptionText.rectTransform, new Vector2(0.5f, 0.56f), Vector2.zero, new Vector2(720f, 32f));
 
             Button fpsBtn = CreateButton(dim.rectTransform, "FpsToggleBtn", GetFpsButtonText(), new Vector2(250f, 50f),
                 new Vector2(0.5f, 0.50f), new Vector2(-140f, 0f), () =>
@@ -1253,7 +1381,8 @@ namespace Stonehold
             if (worldMapStarsTotalText != null)
             {
                 int earned = manager.GetTotalStarsEarned();
-                worldMapStarsTotalText.text = $"⭐ CAMPAIGN STARS: {earned} / 18   •   Select a node to inspect sector recon & deploy!";
+                int maxStars = (manager.AllNodes != null && manager.AllNodes.Count > 0) ? manager.AllNodes.Count * 3 : 30;
+                worldMapStarsTotalText.text = $"⭐ CAMPAIGN STARS: {earned} / {maxStars}   •   Select a node to inspect sector recon & deploy!";
             }
 
             for (int i = 0; i < worldMapNodeObjects.Count; i++)
@@ -1953,6 +2082,131 @@ namespace Stonehold
             return button;
         }
 
+        private static Sprite LoadSprite(string resourcePath)
+        {
+            Sprite sp = Resources.Load<Sprite>(resourcePath);
+            if (sp != null) return sp;
+
+            Texture2D tex = Resources.Load<Texture2D>(resourcePath);
+            if (tex != null)
+            {
+                return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            }
+
+            // Direct file system fallback (Editor / Dev)
+            try
+            {
+                string[] extensions = { ".jpg", ".png", ".jpeg" };
+                foreach (string ext in extensions)
+                {
+                    string diskPath = System.IO.Path.Combine(Application.dataPath, "_Game/Resources", resourcePath + ext);
+                    if (System.IO.File.Exists(diskPath))
+                    {
+                        byte[] bytes = System.IO.File.ReadAllBytes(diskPath);
+                        Texture2D diskTex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                        if (diskTex.LoadImage(bytes))
+                        {
+                            return Sprite.Create(diskTex, new Rect(0, 0, diskTex.width, diskTex.height), new Vector2(0.5f, 0.5f));
+                        }
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[MainMenuUI] Could not load sprite from disk: {resourcePath} - {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private Button CreateSpriteButton(RectTransform parent, string name, string label, Sprite sprite, Vector2 size,
+            Vector2 anchor, Vector2 position, UnityEngine.Events.UnityAction onClick, Color? labelColor = null, int fontSize = 28)
+        {
+            Image bg = CreateImage(parent, name, Color.white);
+            bg.raycastTarget = true;
+            if (sprite != null)
+            {
+                bg.sprite = sprite;
+                bg.type = Image.Type.Simple;
+                bg.preserveAspect = false;
+            }
+            Place(bg.rectTransform, anchor, position, size);
+
+            Button button = bg.gameObject.AddComponent<Button>();
+            button.targetGraphic = bg;
+            button.transition = Selectable.Transition.ColorTint;
+
+            ColorBlock cb = button.colors;
+            cb.normalColor = Color.white;
+            cb.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+            cb.pressedColor = new Color(0.82f, 0.82f, 0.82f, 1f);
+            cb.selectedColor = Color.white;
+            cb.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
+            button.colors = cb;
+
+            button.onClick.AddListener(() =>
+            {
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayButton();
+                }
+
+                onClick();
+            });
+
+            if (!string.IsNullOrEmpty(label))
+            {
+                Text text = CreateText(bg.rectTransform, "Label", label, fontSize, labelColor ?? new Color(1f, 0.92f, 0.7f));
+                text.fontStyle = FontStyle.Bold;
+                Stretch(text.rectTransform);
+            }
+            return button;
+        }
+
+        private void CreateAmbientMenuParticles(Transform parent)
+        {
+            if (parent.Find("MenuAmbientParticles") != null) return;
+
+            GameObject psGo = new GameObject("MenuAmbientParticles");
+            psGo.transform.SetParent(parent, false);
+
+            ParticleSystem ps = psGo.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.loop = true;
+            main.startLifetime = 8.0f;
+            main.startSpeed = 20.0f;
+            main.startSize = 4.0f;
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                new Color(1f, 0.85f, 0.4f, 0.6f),
+                new Color(1f, 0.5f, 0.15f, 0.8f)
+            );
+            main.maxParticles = 25;
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 3.0f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(Screen.width > 0 ? Screen.width : 1080f, 60f, 1f);
+
+            psGo.transform.localPosition = new Vector3(0f, -(Screen.height > 0 ? Screen.height / 2f : 960f), 0f);
+
+            var vel = ps.velocityOverLifetime;
+            vel.enabled = true;
+            vel.y = new ParticleSystem.MinMaxCurve(25f, 50f);
+            vel.x = new ParticleSystem.MinMaxCurve(-10f, 10f);
+
+            var colorOverLifetime = ps.colorOverLifetime;
+            colorOverLifetime.enabled = true;
+            Gradient grad = new Gradient();
+            grad.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(new Color(1f, 0.85f, 0.4f), 0f), new GradientColorKey(new Color(1f, 0.45f, 0.1f), 1f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.8f, 0.3f), new GradientAlphaKey(0.8f, 0.7f), new GradientAlphaKey(0f, 1f) }
+            );
+            colorOverLifetime.color = grad;
+        }
+
         private static void Place(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size)
         {
             rect.anchorMin = anchor;
@@ -2001,15 +2255,31 @@ namespace Stonehold
             int selected = SaveManager.SelectedStageIndex;
             if (stageNameText != null && stageDescText != null)
             {
-                string[] names = { "Castle Road", "Highlands", "Frozen Frontier", "Desert Ruins", "Volcanic Pinnacle", "Abyssal Void Rift" };
+                string[] names =
+                {
+                    "Castle Road",
+                    "Highlands",
+                    "Frozen Frontier",
+                    "Titan Citadel",
+                    "Volcanic Caldera",
+                    "Toxic Mire",
+                    "Thunder Peaks",
+                    "Sunken Necropolis",
+                    "The Void Rift",
+                    "Celestial Sanctum"
+                };
                 string[] descriptions =
                 {
                     "Defend the road to the keep against grunts, armored troops, runners, and the final boss.",
-                    "Defend the highland pass against heavier enemy formations.",
-                    "Hold the frozen frontier against faster and tougher waves.",
-                    "Endure the harsh desert ruins and swarm incursions.",
-                    "Conquer the relentless assault of volcanic inferno waves and the Volcanic Warlord.",
-                    "Survive the cosmic horrors of the Abyssal Void Rift, phase-shifting stalkers, nullifiers, and the Void Lord."
+                    "Defend the highland pass against heavier enemy formations and shield phalanxes.",
+                    "Hold the frozen frontier against sub-zero blizzards and rapid frostbite waves.",
+                    "Endure the ancient titan ruins, massive colossi, and speed vanguards.",
+                    "Conquer the scorched infernal magma flows, living molten beasts, and the Magma Core Lord.",
+                    "Survive noxious rot wetlands swarming with caustic abominations and toxic chimeras.",
+                    "Withstand high-voltage storm cliffs whipped by galvanic harpies and the Tempest Archon.",
+                    "Purge ancient cursed crypts swarming with undead skeleton legions and the Dread Necromancer.",
+                    "Survive the cosmic horrors of the Abyssal Void Rift, phase-shifting stalkers, and the Void Lord.",
+                    "Face the ultimate celestial trial atop the Throne of Eternity against the Ancient King."
                 };
                 string[] rewards =
                 {
@@ -2018,7 +2288,11 @@ namespace Stonehold
                     "Rewards: 🪙 Gold  💎 Gems  📦 Epic Chest",
                     "Rewards: 🪙 Gold  💎 Gems  📦 Mythic Chest",
                     "Rewards: 🪙 Gold  💎 Gems  📦 Radiant Chest",
-                    "Rewards: 🪙 Gold  💎 Gems  📦 Cosmic Abyssal Chest"
+                    "Rewards: 🪙 Gold  💎 Gems  📦 Toxic Abyssal Chest",
+                    "Rewards: 🪙 Gold  💎 Gems  📦 Tempest Storm Chest",
+                    "Rewards: 🪙 Gold  💎 Gems  📦 Necrotic Bone Chest",
+                    "Rewards: 🪙 Gold  💎 Gems  📦 Cosmic Singularity Chest",
+                    "Rewards: 🪙 Gold  💎 Gems  📦 Crown of Eternity Divine Chest"
                 };
 
                 int stageIndex = Mathf.Clamp(selected, 0, names.Length - 1);
@@ -2043,7 +2317,7 @@ namespace Stonehold
         private void CycleStage(int delta)
         {
             int newIndex = SaveManager.SelectedStageIndex + delta;
-            if (newIndex >= 0 && newIndex < 6)
+            if (newIndex >= 0 && newIndex < 10)
             {
                 SaveManager.SetSelectedStage(newIndex);
                 RefreshStageSelection();
@@ -2055,7 +2329,15 @@ namespace Stonehold
             switch (heroId)
             {
                 case "archer": return "Common";
+                case "bombardier": return "Rare";
+                case "frost_mage": return "Rare";
+                case "fire_mage": return "Rare";
+                case "electric_engineer": return "Rare";
                 case "sniper": return "Epic";
+                case "plague_doctor": return "Epic";
+                case "radiant_paladin": return "Legendary";
+                case "shadow_assassin": return "Epic";
+                case "storm_druid": return "Legendary";
                 default: return "Rare";
             }
         }
@@ -2087,6 +2369,8 @@ namespace Stonehold
                 case HeroAbilityType.PowerShot: return "Power Shot";
                 case HeroAbilityType.PlagueFlask: return "Plague Flask";
                 case HeroAbilityType.Consecration: return "Consecration";
+                case HeroAbilityType.ShadowStep: return "Shadow Step";
+                case HeroAbilityType.TempestCyclone: return "Tempest Cyclone";
                 default: return "None";
             }
         }
@@ -2103,6 +2387,8 @@ namespace Stonehold
                 case HeroAbilityType.PowerShot: return "Fires a piercing line trace that damages all enemies in its path.";
                 case HeroAbilityType.PlagueFlask: return "Throws a caustic flask releasing toxic poison and reanimating spectral minions.";
                 case HeroAbilityType.Consecration: return "Smites the ground with radiant holy energy, shattering kinetic shields.";
+                case HeroAbilityType.ShadowStep: return "Instantly strikes high-priority targets with lethal critical damage and resets on kill.";
+                case HeroAbilityType.TempestCyclone: return "Conjures a whirling vortex drawing enemies inward while striking with continuous lightning.";
                 default: return "No active ability.";
             }
         }
@@ -2478,6 +2764,10 @@ namespace Stonehold
                 case "fire_mage": return new Color(1f, 0.5f, 0.1f);
                 case "electric_engineer": return new Color(0.3f, 0.3f, 0.35f);
                 case "sniper": return new Color(0.7f, 0.5f, 0.85f);
+                case "plague_doctor": return new Color(0.35f, 0.95f, 0.25f);
+                case "radiant_paladin": return new Color(1f, 0.88f, 0.25f);
+                case "shadow_assassin": return new Color(0.70f, 0.25f, 0.95f);
+                case "storm_druid": return new Color(0.25f, 0.85f, 0.95f);
                 default: return Color.white;
             }
         }
@@ -2523,6 +2813,28 @@ namespace Stonehold
                     localPos = new Vector3(0.35f, 0.3f, 0f);
                     localScale = new Vector3(0.04f, 0.3f, 0.04f);
                     localRot = Quaternion.Euler(0f, 0f, 90f);
+                    break;
+                case "plague_doctor":
+                    shape = PrimitiveType.Sphere;
+                    localPos = new Vector3(0.24f, 0.45f, 0.16f);
+                    localScale = new Vector3(0.18f, 0.18f, 0.18f);
+                    break;
+                case "radiant_paladin":
+                    shape = PrimitiveType.Cube;
+                    localPos = new Vector3(-0.30f, 0.48f, 0.15f);
+                    localScale = new Vector3(0.10f, 0.48f, 0.30f);
+                    break;
+                case "shadow_assassin":
+                    shape = PrimitiveType.Cube;
+                    localPos = new Vector3(0.26f, 0.40f, 0.18f);
+                    localScale = new Vector3(0.05f, 0.30f, 0.06f);
+                    localRot = Quaternion.Euler(0f, 0f, -30f);
+                    break;
+                case "storm_druid":
+                    shape = PrimitiveType.Cylinder;
+                    localPos = new Vector3(0.26f, 0.50f, 0.18f);
+                    localScale = new Vector3(0.055f, 0.50f, 0.055f);
+                    localRot = Quaternion.Euler(0f, 0f, -8f);
                     break;
                 default:
                     return;

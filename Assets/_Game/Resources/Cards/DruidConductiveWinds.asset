@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Conductive Winds
   description: Enemies shocked by Storm Druid take +25% additional Lightning & Elemental damage.
   icon: {fileID: 0}
-  cardCategory: 2
+  cardCategory: 0
   recruitHeroId: 
   requiredOwnedHeroId: storm_druid
   blockedIfOwnedHeroId: 

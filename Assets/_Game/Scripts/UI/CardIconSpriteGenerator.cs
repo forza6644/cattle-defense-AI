@@ -95,6 +95,14 @@ namespace Stonehold
                 return new Color(0.85f, 0.72f, 0.10f);
             if (h.Contains("sniper") || t.Contains("precision") || t.Contains("deadeye"))
                 return new Color(0.45f, 0.22f, 0.65f);
+            if (h.Contains("plague") || h.Contains("doctor") || t.Contains("poison") || t.Contains("toxic"))
+                return new Color(0.08f, 0.40f, 0.22f);
+            if (h.Contains("radiant") || h.Contains("paladin") || t.Contains("holy") || t.Contains("divine") || t.Contains("smite"))
+                return new Color(0.88f, 0.85f, 0.90f);
+            if (h.Contains("shadow") || h.Contains("assassin") || t.Contains("void") || t.Contains("stealth"))
+                return new Color(0.15f, 0.12f, 0.22f);
+            if (h.Contains("storm") || h.Contains("druid") || t.Contains("tempest") || t.Contains("gale"))
+                return new Color(0.08f, 0.48f, 0.48f);
 
             if (type == "Add") return new Color(0.10f, 0.60f, 0.35f);
             if (type == "Upgrade") return new Color(0.85f, 0.45f, 0.10f);
@@ -119,6 +127,14 @@ namespace Stonehold
                 return new Color(0.40f, 0.85f, 1.00f);
             if (h.Contains("sniper") || t.Contains("deadeye"))
                 return new Color(0.85f, 0.60f, 1.00f);
+            if (h.Contains("plague") || h.Contains("doctor") || t.Contains("poison"))
+                return new Color(0.30f, 0.95f, 0.45f);
+            if (h.Contains("radiant") || h.Contains("paladin") || t.Contains("holy"))
+                return new Color(1.00f, 0.85f, 0.20f);
+            if (h.Contains("shadow") || h.Contains("assassin") || t.Contains("void"))
+                return new Color(0.75f, 0.30f, 1.00f);
+            if (h.Contains("storm") || h.Contains("druid") || t.Contains("tempest"))
+                return new Color(0.25f, 0.95f, 0.95f);
 
             return new Color(0.90f, 0.90f, 0.95f);
         }

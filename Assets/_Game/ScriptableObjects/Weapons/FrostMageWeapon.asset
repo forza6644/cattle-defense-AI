@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FrostMageWeapon
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WeaponDefinition
   attackType: 2
-  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  projectilePrefab: {fileID: 5314765350081546121, guid: ca14d9bc6ea37624ca59cde407b44cb8, type: 3}
   splashRadius: 0
   statusEffectType: 1
   statusEffectValue: 0.5

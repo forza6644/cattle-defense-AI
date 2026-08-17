@@ -1,64 +1,72 @@
 ================================================================================
  STAGE 1 REAL-TIME COMBAT TELEMETRY REPORT
 ================================================================================
-Timestamp:                  2026-08-16 22:51:16
+Timestamp:                  2026-08-17 17:14:22
 Stage ID:                   stage_1_castle_road
 Final Game State:           Victory
-Total Run Duration:         69.26 seconds
+Total Run Duration:         87.30 seconds
 Total Waves Cleared:        10 / 10
-Total Enemies Spawned:      120
-Total Enemies Defeated:     120
+Total Enemies Spawned:      279
+Total Enemies Defeated:     289
 Final Castle HP:            50 / 50
-Final Player Level:         9
-Final Player XP:            128
-Total Draft Triggers:       8
+Final Player Level:         11
+Final Player XP:            51
+Total Draft Triggers:       10
 ================================================================================
  WAVE BREAKDOWN:
 --------------------------------------------------------------------------------
  Wave | Start (s) | End (s) | Duration (s) | Spawned | Defeated | Castle HP | XP   | Level
 --------------------------------------------------------------------------------
-    1 |       0.0 |     3.0 |          3.0 |       4 |        4 |   50/50   |    0 |     2
-    2 |       3.0 |     9.0 |          5.9 |       5 |        5 |   50/50   |    0 |     3
-    3 |       9.0 |    14.3 |          5.3 |       9 |        9 |   50/50   |    3 |     4
-    4 |      14.3 |    22.1 |          7.8 |      12 |       12 |   50/50   |   24 |     5
-    5 |      22.1 |    31.5 |          9.4 |      19 |       19 |   50/50   |  109 |     6
-    6 |      31.5 |    38.5 |          7.0 |      18 |       18 |   50/50   |   55 |     7
-    7 |      38.5 |    41.4 |          2.9 |      12 |       12 |   50/50   |  103 |     7
-    8 |      41.4 |    51.5 |         10.1 |      12 |       12 |   50/50   |  108 |     8
-    9 |      51.5 |    60.9 |          9.4 |      22 |       22 |   50/50   |  288 |     8
-   10 |      60.9 |    69.3 |          8.4 |       7 |        7 |   50/50   |  128 |     9
+    1 |       0.0 |     3.8 |          3.8 |      10 |       10 |   50/50   |   21 |     2
+    2 |       3.8 |     8.2 |          4.4 |      13 |       15 |   50/50   |    5 |     4
+    3 |       8.2 |    13.5 |          5.4 |      20 |       20 |   50/50   |   17 |     5
+    4 |      13.5 |    19.1 |          5.6 |      24 |       25 |   50/50   |    4 |     6
+    5 |      19.1 |    29.8 |         10.7 |      32 |       32 |   50/50   |   34 |     7
+    6 |      29.8 |    41.8 |         12.0 |      35 |       35 |   50/50   |  258 |     7
+    7 |      41.8 |    53.2 |         11.4 |      36 |       39 |   50/50   |  241 |     8
+    8 |      53.2 |    64.6 |         11.4 |      40 |       43 |   50/50   |  302 |     9
+    9 |      64.6 |    75.8 |         11.2 |      46 |       47 |   50/50   |  266 |    10
+   10 |      75.8 |    87.3 |         11.5 |      23 |       23 |   50/50   |   51 |    11
 ================================================================================
  DRAFT SELECTION LOG:
 --------------------------------------------------------------------------------
- Draft #1 @ 2.7s (Level 2)
-   Offered Choices:  Piercing Arrows | War Training | Shard Volley
-   Selected Card:    Piercing Arrows
+ Draft #1 @ 2.3s (Level 2)
+   Offered Choices:  Twin Volley | Empowered Abilities | Shard Volley
+   Selected Card:    Twin Volley
 --------------------------------------------------------------------------------
- Draft #2 @ 8.6s (Level 3)
-   Offered Choices:  Shard Volley | Wide Blast | Forked Current
-   Selected Card:    Shard Volley
+ Draft #2 @ 6.0s (Level 3)
+   Offered Choices:  War Training | Forked Current | Cluster Shells
+   Selected Card:    War Training
 --------------------------------------------------------------------------------
- Draft #3 @ 14.0s (Level 4)
-   Offered Choices:  Empowered Abilities | Twin Volley | Piercing Arrows
+ Draft #3 @ 7.8s (Level 4)
+   Offered Choices:  Wide Blast | Extended Circuit | War Training
+   Selected Card:    Wide Blast
+--------------------------------------------------------------------------------
+ Draft #4 @ 12.6s (Level 5)
+   Offered Choices:  Empowered Abilities | Piercing Arrows | Battle Rhythm
    Selected Card:    Empowered Abilities
 --------------------------------------------------------------------------------
- Draft #4 @ 21.8s (Level 5)
-   Offered Choices:  Fast Casting | Cluster Shells | Wide Blast
-   Selected Card:    Fast Casting
---------------------------------------------------------------------------------
- Draft #5 @ 28.7s (Level 6)
-   Offered Choices:  Forked Current | Cluster Shells | War Training
-   Selected Card:    Forked Current
---------------------------------------------------------------------------------
- Draft #6 @ 37.2s (Level 7)
-   Offered Choices:  Frostbite | War Training | Wide Blast
+ Draft #5 @ 18.5s (Level 6)
+   Offered Choices:  Frostbite | Piercing Arrows | Forked Current
    Selected Card:    Frostbite
 --------------------------------------------------------------------------------
- Draft #7 @ 49.2s (Level 8)
-   Offered Choices:  Echoing Nova | Battle Rhythm | Forked Current
+ Draft #6 @ 29.3s (Level 7)
+   Offered Choices:  Echoing Nova | Twin Volley | Frostbite
    Selected Card:    Echoing Nova
 --------------------------------------------------------------------------------
- Draft #8 @ 68.9s (Level 9)
-   Offered Choices:  Extended Circuit | Empowered Abilities | Frostbite
-   Selected Card:    Extended Circuit
+ Draft #7 @ 43.7s (Level 8)
+   Offered Choices:  Empowered Abilities | Twin Volley | Forked Current
+   Selected Card:    Empowered Abilities
+--------------------------------------------------------------------------------
+ Draft #8 @ 59.8s (Level 9)
+   Offered Choices:  Battle Rhythm | Frostbite | Twin Volley
+   Selected Card:    Battle Rhythm
+--------------------------------------------------------------------------------
+ Draft #9 @ 73.4s (Level 10)
+   Offered Choices:  Fast Casting | Extended Circuit | Twin Volley
+   Selected Card:    Fast Casting
+--------------------------------------------------------------------------------
+ Draft #10 @ 87.0s (Level 11)
+   Offered Choices:  Shard Volley | War Training | Forked Current
+   Selected Card:    Shard Volley
 --------------------------------------------------------------------------------

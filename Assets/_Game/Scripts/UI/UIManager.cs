@@ -1847,6 +1847,7 @@ namespace Stonehold
 
                 // Card Icon Art Frame
                 cardIconImages[i] = CreateImage(contentRoot, "CardIcon", Color.white);
+                cardIconImages[i].sprite = CardIconSpriteGenerator.GetSpriteForCard("DraftCard", "Boost");
                 cardIconImages[i].raycastTarget = false;
 
                 // Select Button

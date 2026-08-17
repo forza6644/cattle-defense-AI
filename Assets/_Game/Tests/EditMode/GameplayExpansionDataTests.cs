@@ -49,7 +49,7 @@ namespace Stonehold.Tests
         {
             CardDefinition[] cards = Resources.LoadAll<CardDefinition>("Cards");
 
-            Assert.That(cards, Has.Length.EqualTo(39));
+            Assert.That(cards, Has.Length.EqualTo(49));
             Assert.That(cards.All(card => card.cardCategory == CardCategory.Modifier || card.cardCategory == CardCategory.RecruitHero), Is.True);
         }
 
@@ -411,7 +411,7 @@ namespace Stonehold.Tests
         public void Resources_NormalDraftPool_ExcludesPrototypeCards()
         {
             var cards = Resources.LoadAll<CardDefinition>("Cards");
-            Assert.That(cards.Length, Is.EqualTo(39));
+            Assert.That(cards.Length, Is.EqualTo(49));
 
             foreach (var card in cards)
             {

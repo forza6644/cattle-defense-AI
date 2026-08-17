@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ElectricEngineerWeapon
   m_EditorClassIdentifier: Assembly-CSharp::Stonehold.WeaponDefinition
   attackType: 3
-  projectilePrefab: {fileID: 8602715280853987192, guid: f89358a05c331284fae44c4450f3b8a8, type: 3}
+  projectilePrefab: {fileID: 3085618546715824454, guid: e67a01690f7e60247bf637c2e3197684, type: 3}
   splashRadius: 0
   statusEffectType: 3
   statusEffectValue: 1
