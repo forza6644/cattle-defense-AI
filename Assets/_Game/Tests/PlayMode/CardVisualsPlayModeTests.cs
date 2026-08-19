@@ -80,6 +80,43 @@ namespace Stonehold.Tests
             Assert.AreEqual(3, validIconCount, "All 3 draft choice cards must have rendered CardIcon elements.");
         }
 
+        [UnityTest]
+        public IEnumerator CardDraftUI_FullCardSurface_IsTappable()
+        {
+            yield return null;
+
+            RunProgressionManager.CardChoice[] choices = new RunProgressionManager.CardChoice[]
+            {
+                new RunProgressionManager.CardChoice("Add Archer", "Recruit Archer.", () => { }, "Add", "Common"),
+                new RunProgressionManager.CardChoice("Add Bombardier", "Recruit Bombardier.", () => { }, "Add", "Rare"),
+                new RunProgressionManager.CardChoice("Deep Freeze", "Slow and freeze.", () => { }, "Card", "Epic")
+            };
+
+            uiManager.OnShowLevelUpDraft(choices);
+            yield return null;
+
+            int tappableCards = 0;
+            GameObject[] allObjects = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < allObjects.Length; i++)
+            {
+                GameObject go = allObjects[i];
+                if (go == null || !go.name.StartsWith("Card_"))
+                {
+                    continue;
+                }
+
+                Image image = go.GetComponent<Image>();
+                Button button = go.GetComponent<Button>();
+                Assert.IsNotNull(image, $"{go.name} must have an Image for full-surface raycasts.");
+                Assert.IsTrue(image.raycastTarget, $"{go.name} Image must receive taps; CreateImage defaults raycastTarget off.");
+                Assert.IsNotNull(button, $"{go.name} must have a Button covering the card body.");
+                Assert.IsTrue(button.interactable, $"{go.name} body button must be interactable while the draft is open.");
+                tappableCards++;
+            }
+
+            Assert.AreEqual(3, tappableCards, "All 3 draft cards must be full-surface tappable.");
+        }
+
         [Test]
         public void CardIconSpriteGenerator_ProducesUniqueHighContrastSpritesPerCategory()
         {

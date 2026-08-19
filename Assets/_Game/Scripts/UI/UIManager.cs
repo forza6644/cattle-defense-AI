@@ -1408,13 +1408,17 @@ namespace Stonehold
         {
             for (int i = 0; i < cardButtons.Length; i++)
             {
-                if (cardButtons[i] == null)
+                if (cardButtons[i] != null)
                 {
-                    continue;
+                    cardButtons[i].interactable = false;
+                    cardButtons[i].onClick.RemoveAllListeners();
                 }
 
-                cardButtons[i].interactable = false;
-                cardButtons[i].onClick.RemoveAllListeners();
+                if (cardBodyButtons[i] != null)
+                {
+                    cardBodyButtons[i].interactable = false;
+                    cardBodyButtons[i].onClick.RemoveAllListeners();
+                }
             }
 
             if (rerollButton != null)
@@ -1831,7 +1835,8 @@ namespace Stonehold
                 RectTransform cardRt = cardBg.rectTransform;
                 SetAnchored(cardRt, new Vector2(0.5f, 0.5f), new Vector2(startX + i * spacingX, startY + i * spacingY), cardSize);
 
-                // Full-surface card button for mobile touch interaction
+                // Full-surface card button for mobile touch. CreateImage disables raycasts by default.
+                cardBg.raycastTarget = true;
                 cardBodyButtons[i] = cardBg.gameObject.AddComponent<Button>();
 
                 Image border = CreateImage(cardRt, "Border", new Color(0.24f, 0.32f, 0.48f, 0.8f));
