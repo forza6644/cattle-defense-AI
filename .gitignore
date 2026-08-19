@@ -112,3 +112,18 @@ InitTestScene*.unity*
 *.slnx
 test_results*.xml
 *.log
+
+# Root-level Unity batch / device QA artifacts (do not commit)
+/editmode_*.xml
+/editmode_*.txt
+/TestResults-*.xml
+/*_test_results.xml
+/diagnostic_*.xml
+/android_*.txt
+/android_*.png
+/screen_*.png
+/stonehold_*.txt
+/pid_*_all_log.txt
+/fresh_gameplay_log.txt
+/playmode_*.xml
+/playmode_*.txt
