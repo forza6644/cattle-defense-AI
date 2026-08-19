@@ -14,7 +14,7 @@ namespace Stonehold
         public int requiredTotalStarsToUnlock = 0;
         public string star1Condition = "Clear all waves";
         public string star2Condition = "Clear with 70%+ Castle HP";
-        public string star3Condition = "Clear on Ascension Heat 2+";
+        public string star3Condition = "Clear on Hard";
         public string sceneName = "GameplayIntegration_V2";
         public Color themeColor = new Color(0.3f, 0.7f, 1f);
         public string biomeIcon = "🏰";

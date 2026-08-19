@@ -16,7 +16,8 @@ MonoBehaviour:
   enemyName: Grunt
   classification: 0
   prefab: {fileID: 5225040395024732567, guid: cdc605a01e222bf43b99d976ead66ad4, type: 3}
-  health: 22.5
-  moveSpeed: 3.4
+  health: 32
+  moveSpeed: 3.6
   goldReward: 5
+  xpValue: 5
   castleDamage: 1

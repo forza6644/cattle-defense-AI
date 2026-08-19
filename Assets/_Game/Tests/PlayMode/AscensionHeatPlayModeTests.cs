@@ -16,6 +16,7 @@ namespace Stonehold.Tests.PlayMode
         [SetUp]
         public void SetUp()
         {
+            PlayerPrefs.DeleteKey(DifficultyRuleset.PrefsSelectedMode);
             AscensionManager.ResetForTesting();
             testRoot = new GameObject("AscensionTestRoot");
             ascensionManager = testRoot.AddComponent<AscensionManager>();

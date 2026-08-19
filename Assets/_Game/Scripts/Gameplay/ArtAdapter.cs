@@ -9,9 +9,12 @@ namespace Stonehold
     public class ArtAdapter : MonoBehaviour
     {
         [Header("Visual Configuration")]
+        [Tooltip("Authored / Main Menu showcase scale applied to VisualRoot. Gameplay envelope scaling is applied separately by HeroSlot and must not change this value.")]
         public Vector3 visualScale = Vector3.one;
         public Vector3 visualRotation = Vector3.zero;
         public Vector3 visualOffset = Vector3.zero;
+
+        public Vector3 MenuShowcaseScale => visualScale;
 
         [Header("References")]
         public Transform visualRoot;

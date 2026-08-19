@@ -90,6 +90,11 @@ namespace Stonehold
         private BattlefieldDefenseRuntime blockingDefense;
         private float defenseAttackTimer;
 
+        private static MaterialPropertyBlock hitFlashPropertyBlock;
+        private static readonly int EmissionColorPropId = Shader.PropertyToID("_EmissionColor");
+        private static readonly WaitForSeconds HitFlashWait = new WaitForSeconds(0.06f);
+        private Coroutine hitFlashRoutine;
+
         public EnemyData Data => data;
         public float CurrentHealth => currentHealth;
         public float MaxHealth => data != null ? data.health : 0f;
@@ -102,6 +107,9 @@ namespace Stonehold
         public StatusEffectController StatusController => statusController;
         public string PoolKey => poolKey;
         public Castle TargetCastle => targetCastle;
+        /// <summary>Authoritative lane: 0 Left, 1 Center, 2 Right. -1 when inactive/pooled.</summary>
+        public int LaneIndex { get; private set; } = -1;
+        internal Vector3[] DebugPathPoints => pathPoints;
         public int BossPhase { get; private set; } = 1;
         public float CurrentShield { get; private set; }
         public float MaxShield { get; private set; }
@@ -191,12 +199,14 @@ namespace Stonehold
 
         private void OnDisable()
         {
+            ResetHitFlash();
             UnregisterOnce();
             isActiveActivation = false;
         }
 
         private void OnDestroy()
         {
+            ResetHitFlash();
             UnregisterOnce();
         }
 
@@ -215,6 +225,7 @@ namespace Stonehold
         {
             data = spawnData;
             CacheRuntimeComponents();
+            ResetHitFlash();
             if (data != null && !string.IsNullOrEmpty(data.stableId))
             {
                 BestiaryManager.Instance?.RegisterEncounter(data.stableId);
@@ -245,18 +256,30 @@ namespace Stonehold
             castleDamageApplied = false;
             pathPoints = null;
             targetCastle = null;
-
-            statusController?.ResetController();
-            animator?.ResetForReuse();
-            specialBehavior?.PrepareForSpawn(this);
+            LaneIndex = -1;
+            transform.SetPositionAndRotation(position, rotation);
+            gameObject.SetActive(true);
             SetRuntimeComponentsActive(true);
-            healthBar.Configure(this);
+            animator?.ResetForReuse();
+            statusController?.ResetController();
+            specialBehavior?.ResetForReuse();
+            if (healthBar != null && data != null)
+            {
+                healthBar.Configure(this);
+            }
+            if (specialBehavior != null)
+            {
+                specialBehavior.PrepareForSpawn(this);
+            }
         }
 
-        public void ActivateFromPool(Vector3[] points, Castle castle, float laneOffset = 0f, float spawnDepthOffset = 0f)
+        public void ActivateFromPool(Vector3[] points, Castle castle, float laneOffset = 0f, float spawnDepthOffset = 0f, int targetLane = -1)
         {
             AssignUniqueActivationId();
             isActiveActivation = true;
+            LaneIndex = targetLane >= 0 && targetLane <= 2
+                ? targetLane
+                : CombatLaneRouting.InferLaneFromPath(points);
             SetPath(points, castle, laneOffset, spawnDepthOffset);
             RegisterOnce();
             animator?.SetMoving(true);
@@ -265,6 +288,7 @@ namespace Stonehold
 
         public void DespawnToPool()
         {
+            ResetHitFlash();
             UnregisterOnce();
             isActiveActivation = false;
             StopAllCoroutines();
@@ -285,6 +309,7 @@ namespace Stonehold
             pathPoints = null;
             targetCastle = null;
             currentWaypointIndex = 0;
+            LaneIndex = -1;
             SetRuntimeComponentsActive(false);
             healthBar.ResetForReuse();
             gameObject.SetActive(false);
@@ -378,6 +403,7 @@ namespace Stonehold
                     CurrentShield -= reducedAmount;
                     AnyDamaged?.Invoke(this, reducedAmount);
                     AnyDamagedDetailed?.Invoke(this, reducedAmount, isCrit);
+                    TriggerHitFlash();
                     FloatingCombatTextManager.Instance?.SpawnCustomText(transform.position, $"🛡️ {Mathf.RoundToInt(reducedAmount)}", new Color(0.4f, 0.8f, 1f));
                     return reducedAmount;
                 }
@@ -393,6 +419,7 @@ namespace Stonehold
             currentHealth -= reducedAmount;
             AnyDamaged?.Invoke(this, reducedAmount);
             AnyDamagedDetailed?.Invoke(this, reducedAmount, isCrit);
+            TriggerHitFlash();
 
             if (data != null && currentHealth > 0f)
             {
@@ -772,6 +799,51 @@ namespace Stonehold
                             other.TakeDamage(dmg, true);
                         }
                     }
+                }
+            }
+        }
+
+        public void TriggerHitFlash()
+        {
+            if (!gameObject.activeInHierarchy || isDead) return;
+            if (hitFlashPropertyBlock == null) hitFlashPropertyBlock = new MaterialPropertyBlock();
+            if (hitFlashRoutine != null) StopCoroutine(hitFlashRoutine);
+            hitFlashRoutine = StartCoroutine(HitFlashCoroutine());
+        }
+
+        private System.Collections.IEnumerator HitFlashCoroutine()
+        {
+            if (renderers != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    Renderer r = renderers[i];
+                    if (r == null || !r.enabled || r is ParticleSystemRenderer || r is TrailRenderer) continue;
+                    hitFlashPropertyBlock.SetColor(EmissionColorPropId, new Color(0.85f, 0.85f, 0.85f, 1f));
+                    r.SetPropertyBlock(hitFlashPropertyBlock);
+                }
+            }
+
+            yield return HitFlashWait;
+
+            ResetHitFlash();
+        }
+
+        public void ResetHitFlash()
+        {
+            if (hitFlashRoutine != null)
+            {
+                StopCoroutine(hitFlashRoutine);
+                hitFlashRoutine = null;
+            }
+
+            if (renderers != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    Renderer r = renderers[i];
+                    if (r == null) continue;
+                    r.SetPropertyBlock(null);
                 }
             }
         }

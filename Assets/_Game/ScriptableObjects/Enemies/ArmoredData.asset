@@ -16,8 +16,9 @@ MonoBehaviour:
   enemyName: Armored
   classification: 0
   prefab: {fileID: 5225040395024732567, guid: 0ad8a56d117b47f4b377a11c99ee7950, type: 3}
-  health: 45
-  moveSpeed: 1.8
+  health: 65
+  moveSpeed: 2.15
   armor: 3
-  goldReward: 15
+  goldReward: 12
+  xpValue: 12
   castleDamage: 2

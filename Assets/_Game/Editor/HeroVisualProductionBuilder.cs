@@ -401,25 +401,21 @@ namespace Stonehold.EditorTools
 
         private static void AttachCustomClassProps(GameObject modelInstance, string weaponType, Material bodyMat, Material weaponMat)
         {
+            const float boneSpaceFromMeters = 0.01f;
             Transform weaponR = FindTransformRecursive(modelInstance.transform, "Weapon.R");
             Transform fistL = FindTransformRecursive(modelInstance.transform, "Fist.L");
             Transform torso = FindTransformRecursive(modelInstance.transform, "Torso");
 
             if (weaponType == "Cannon")
             {
-                // Disable default sword
                 Transform sword = FindTransformRecursive(modelInstance.transform, "Warrior_Sword");
                 if (sword != null) sword.gameObject.SetActive(false);
 
-                // Create heavy cannon prop on right hand
                 if (weaponR != null)
                 {
                     GameObject cannon = new GameObject("Bombardier_ArtilleryCannon");
-                    cannon.transform.SetParent(weaponR, false);
-                    cannon.transform.localPosition = new Vector3(0f, 0.05f, 0.15f);
-                    cannon.transform.localRotation = Quaternion.Euler(15f, 0f, 0f);
+                    AttachMeterContainerToBone(cannon.transform, weaponR, new Vector3(0f, 0.05f, 0.15f), Quaternion.Euler(15f, 0f, 0f), boneSpaceFromMeters);
 
-                    // Barrel
                     GameObject barrel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                     barrel.name = "Barrel";
                     barrel.transform.SetParent(cannon.transform, false);
@@ -428,7 +424,6 @@ namespace Stonehold.EditorTools
                     barrel.GetComponent<Renderer>().sharedMaterial = weaponMat;
                     UnityEngine.Object.DestroyImmediate(barrel.GetComponent<Collider>());
 
-                    // Brass reinforcement ring
                     GameObject ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                     ring.name = "BrassMuzzleRing";
                     ring.transform.SetParent(cannon.transform, false);
@@ -438,33 +433,25 @@ namespace Stonehold.EditorTools
                     UnityEngine.Object.DestroyImmediate(ring.GetComponent<Collider>());
                 }
 
-                // Ammo canister backpack on Torso
                 if (torso != null)
                 {
                     GameObject ammoPack = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     ammoPack.name = "AmmoCanisterPack";
-                    ammoPack.transform.SetParent(torso, false);
-                    ammoPack.transform.localPosition = new Vector3(0f, 0.08f, -0.16f);
-                    ammoPack.transform.localScale = new Vector3(0.24f, 0.28f, 0.14f);
+                    AttachMeterPrimitiveToBone(ammoPack.transform, torso, new Vector3(0f, 0.08f, -0.16f), Quaternion.identity, new Vector3(0.24f, 0.28f, 0.14f), boneSpaceFromMeters);
                     ammoPack.GetComponent<Renderer>().sharedMaterial = weaponMat;
                     UnityEngine.Object.DestroyImmediate(ammoPack.GetComponent<Collider>());
                 }
             }
             else if (weaponType == "SniperRifle")
             {
-                // Disable default dagger
                 Transform dagger = FindTransformRecursive(modelInstance.transform, "Rogue_Dagger");
                 if (dagger != null) dagger.gameObject.SetActive(false);
 
-                // Create precision sniper rifle prop on right hand
                 if (weaponR != null)
                 {
                     GameObject rifle = new GameObject("Sniper_PrecisionRifle");
-                    rifle.transform.SetParent(weaponR, false);
-                    rifle.transform.localPosition = new Vector3(0f, 0.02f, 0.10f);
-                    rifle.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+                    AttachMeterContainerToBone(rifle.transform, weaponR, new Vector3(0f, 0.02f, 0.10f), Quaternion.identity, boneSpaceFromMeters);
 
-                    // Long Barrel
                     GameObject barrel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                     barrel.name = "RifleBarrel";
                     barrel.transform.SetParent(rifle.transform, false);
@@ -473,7 +460,6 @@ namespace Stonehold.EditorTools
                     barrel.GetComponent<Renderer>().sharedMaterial = weaponMat;
                     UnityEngine.Object.DestroyImmediate(barrel.GetComponent<Collider>());
 
-                    // Optical Scope
                     GameObject scope = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                     scope.name = "OpticalScope";
                     scope.transform.SetParent(rifle.transform, false);
@@ -485,12 +471,10 @@ namespace Stonehold.EditorTools
             }
             else if (weaponType == "Tesla")
             {
-                // Twin Tesla coils on Torso
                 if (torso != null)
                 {
                     GameObject teslaBackpack = new GameObject("TeslaCapacitorRig");
-                    teslaBackpack.transform.SetParent(torso, false);
-                    teslaBackpack.transform.localPosition = new Vector3(0f, 0.12f, -0.15f);
+                    AttachMeterContainerToBone(teslaBackpack.transform, torso, new Vector3(0f, 0.12f, -0.15f), Quaternion.identity, boneSpaceFromMeters);
 
                     for (int side = -1; side <= 1; side += 2)
                     {
@@ -502,7 +486,6 @@ namespace Stonehold.EditorTools
                         coil.GetComponent<Renderer>().sharedMaterial = weaponMat;
                         UnityEngine.Object.DestroyImmediate(coil.GetComponent<Collider>());
 
-                        // Toroidal electrode head
                         GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                         head.name = "ElectrodeHead";
                         head.transform.SetParent(coil.transform, false);
@@ -515,22 +498,17 @@ namespace Stonehold.EditorTools
             }
             else if (weaponType == "SwordAndShield")
             {
-                // Holy Kite Shield on Left Forearm
                 if (fistL != null)
                 {
                     GameObject shield = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     shield.name = "Paladin_HolyKiteShield";
-                    shield.transform.SetParent(fistL, false);
-                    shield.transform.localPosition = new Vector3(-0.05f, 0f, 0f);
-                    shield.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
-                    shield.transform.localScale = new Vector3(0.06f, 0.48f, 0.32f);
+                    AttachMeterPrimitiveToBone(shield.transform, fistL, new Vector3(-0.05f, 0f, 0f), Quaternion.Euler(0f, 90f, 0f), new Vector3(0.06f, 0.48f, 0.32f), boneSpaceFromMeters);
                     shield.GetComponent<Renderer>().sharedMaterial = weaponMat;
                     UnityEngine.Object.DestroyImmediate(shield.GetComponent<Collider>());
                 }
             }
             else if (weaponType == "DualDaggers")
             {
-                // Second Dagger in Left Hand
                 if (fistL != null)
                 {
                     Transform rDagger = FindTransformRecursive(modelInstance.transform, "Rogue_Dagger");
@@ -548,42 +526,34 @@ namespace Stonehold.EditorTools
             }
             else if (weaponType == "FrostStaff")
             {
-                // Glacial Crystal Crown on staff head
                 Transform staff = FindTransformRecursive(modelInstance.transform, "Cleric_Staff");
                 if (staff != null)
                 {
                     GameObject crystal = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     crystal.name = "GlacialIceCrystal";
-                    crystal.transform.SetParent(staff, false);
-                    crystal.transform.localPosition = new Vector3(0f, 0.95f, 0f);
-                    crystal.transform.localScale = new Vector3(0.22f, 0.28f, 0.22f);
+                    AttachMeterPrimitiveToBone(crystal.transform, staff, new Vector3(0f, 0.95f, 0f), Quaternion.identity, new Vector3(0.22f, 0.28f, 0.22f), boneSpaceFromMeters);
                     crystal.GetComponent<Renderer>().sharedMaterial = weaponMat;
                     UnityEngine.Object.DestroyImmediate(crystal.GetComponent<Collider>());
                 }
             }
             else if (weaponType == "FireStaff")
             {
-                // Blazing brazier head on staff
                 Transform staff = FindTransformRecursive(modelInstance.transform, "Wizard_Staff");
                 if (staff != null)
                 {
                     GameObject brazier = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     brazier.name = "EmberFurnaceCore";
-                    brazier.transform.SetParent(staff, false);
-                    brazier.transform.localPosition = new Vector3(0f, 0.92f, 0f);
-                    brazier.transform.localScale = new Vector3(0.24f, 0.24f, 0.24f);
+                    AttachMeterPrimitiveToBone(brazier.transform, staff, new Vector3(0f, 0.92f, 0f), Quaternion.identity, new Vector3(0.24f, 0.24f, 0.24f), boneSpaceFromMeters);
                     brazier.GetComponent<Renderer>().sharedMaterial = weaponMat;
                     UnityEngine.Object.DestroyImmediate(brazier.GetComponent<Collider>());
                 }
             }
             else if (weaponType == "PlagueFlasks")
             {
-                // Poison flasks on torso bandolier
                 if (torso != null)
                 {
                     GameObject flasks = new GameObject("ToxicFlasksBandolier");
-                    flasks.transform.SetParent(torso, false);
-                    flasks.transform.localPosition = new Vector3(0.08f, -0.05f, 0.12f);
+                    AttachMeterContainerToBone(flasks.transform, torso, new Vector3(0.08f, -0.05f, 0.12f), Quaternion.identity, boneSpaceFromMeters);
 
                     for (int i = 0; i < 3; i++)
                     {
@@ -599,12 +569,10 @@ namespace Stonehold.EditorTools
             }
             else if (weaponType == "StormTotem")
             {
-                // Storm Totem Wings on Monk hand/staff
                 if (weaponR != null)
                 {
                     GameObject totem = new GameObject("StormTotemStaff");
-                    totem.transform.SetParent(weaponR, false);
-                    totem.transform.localPosition = new Vector3(0f, 0.10f, 0.05f);
+                    AttachMeterContainerToBone(totem.transform, weaponR, new Vector3(0f, 0.10f, 0.05f), Quaternion.identity, boneSpaceFromMeters);
 
                     GameObject shaft = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                     shaft.name = "TotemShaft";
@@ -622,6 +590,22 @@ namespace Stonehold.EditorTools
                     UnityEngine.Object.DestroyImmediate(head.GetComponent<Collider>());
                 }
             }
+        }
+
+        private static void AttachMeterContainerToBone(Transform propRoot, Transform bone, Vector3 localPosMeters, Quaternion localRot, float boneSpaceFromMeters)
+        {
+            propRoot.SetParent(bone, false);
+            propRoot.localPosition = localPosMeters * boneSpaceFromMeters;
+            propRoot.localRotation = localRot;
+            propRoot.localScale = Vector3.one * boneSpaceFromMeters;
+        }
+
+        private static void AttachMeterPrimitiveToBone(Transform primitive, Transform bone, Vector3 localPosMeters, Quaternion localRot, Vector3 localScaleMeters, float boneSpaceFromMeters)
+        {
+            primitive.SetParent(bone, false);
+            primitive.localPosition = localPosMeters * boneSpaceFromMeters;
+            primitive.localRotation = localRot;
+            primitive.localScale = localScaleMeters * boneSpaceFromMeters;
         }
 
         public static void UpdateWeaponAndHeroDefinitions()

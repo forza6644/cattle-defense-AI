@@ -33,7 +33,7 @@ namespace Stonehold
         /// <summary>
         /// Performs a 3D raycast from the given screen point to find an active HeroSlot.
         /// </summary>
-        public static bool TryRaycastHeroSlot(Vector3 screenPosition, Camera cameraToUse, out HeroSlot targetSlot)
+        public static bool TryRaycastHeroSlot(Vector3 screenPosition, Camera cameraToUse, out HeroSlot targetSlot, float maxDistance = 100f)
         {
             targetSlot = null;
             Camera cam = cameraToUse != null ? cameraToUse : Camera.main;
@@ -43,7 +43,7 @@ namespace Stonehold
             }
 
             Ray ray = cam.ScreenPointToRay(screenPosition);
-            RaycastHit[] hits = Physics.RaycastAll(ray, 100f);
+            RaycastHit[] hits = Physics.RaycastAll(ray, maxDistance);
 
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 

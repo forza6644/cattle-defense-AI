@@ -289,9 +289,9 @@ namespace Stonehold.Tests
             EnemyData warlord = LoadEnemyAssets().Single(enemy => enemy.stableId == "warlord_boss");
 
             Assert.That(warlord.classification, Is.EqualTo(EnemyClassification.Boss));
-            Assert.That(warlord.health, Is.EqualTo(450f));
-            Assert.That(warlord.moveSpeed, Is.EqualTo(1.2f));
-            Assert.That(warlord.armor, Is.EqualTo(8f));
+            Assert.That(warlord.health, Is.EqualTo(1200f));
+            Assert.That(warlord.moveSpeed, Is.EqualTo(1.25f));
+            Assert.That(warlord.armor, Is.EqualTo(6f));
             Assert.That(warlord.castleDamage, Is.EqualTo(10));
         }
 

@@ -277,10 +277,10 @@ namespace Stonehold
             AddDefault("achv_relic_collector", "Relic Hoarder", "Collect 3 Legendary Relics in a single run.", AchievementCategory.Progression, 3, 400, 30, "💍");
             AddDefault("achv_codex_discoverer", "Grand Archivist", "Discover and record 5 distinct enemies in the Codex.", AchievementCategory.Progression, 5, 300, 25, "📚");
 
-            // Mastery & Heat
-            AddDefault("achv_heat_1", "Ascension Initiate", "Clear any stage with Ascension Heat 1 or higher.", AchievementCategory.Mastery, 1, 350, 30, "🔥");
-            AddDefault("achv_heat_3", "Infernal Trial", "Clear any stage with Ascension Heat 3 or higher.", AchievementCategory.Mastery, 3, 700, 60, "🌋");
-            AddDefault("achv_heat_5", "Abyssal Crucible", "Clear any stage with Ascension Heat 5 or higher.", AchievementCategory.Mastery, 5, 1200, 100, "👹");
+            // Mastery (IDs kept so existing progress is not reset)
+            AddDefault("achv_heat_1", "Hardened Commander", "Clear any stage on Hard.", AchievementCategory.Mastery, 1, 350, 30, "⚔");
+            AddDefault("achv_heat_3", "Infernal Trial", "Clear any stage on Hard with a strong keep.", AchievementCategory.Mastery, 3, 700, 60, "🌋");
+            AddDefault("achv_heat_5", "Abyssal Crucible", "Clear any stage on Hard.", AchievementCategory.Mastery, 5, 1200, 100, "👹");
 
             // Endless Mode
             AddDefault("achv_abyss_5", "Into the Void", "Survive until Abyssal Wave 5 in Endless Survival.", AchievementCategory.Endless, 5, 500, 40, "🌌");

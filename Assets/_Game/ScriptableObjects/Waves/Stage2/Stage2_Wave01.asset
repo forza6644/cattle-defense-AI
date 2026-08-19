@@ -12,13 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f8a368fe325e4fbb2f112cc8a91c7, type: 3}
   m_Name: Stage2_Wave01
   m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.WaveData
-  waveLabel: Wave 1 - Vanguard Recon
+  waveLabel: Wave 1 - Highlands Vanguard
   spawns:
   - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
-    count: 6
-    spawnInterval: 0.8
+    count: 8
+    spawnInterval: 0.7
     startDelay: 0
+    laneAssignment: 2
   - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
-    count: 4
+    count: 3
     spawnInterval: 0.6
     startDelay: 1.5
+    laneAssignment: 1
+  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+    count: 3
+    spawnInterval: 0.6
+    startDelay: 1.5
+    laneAssignment: 3

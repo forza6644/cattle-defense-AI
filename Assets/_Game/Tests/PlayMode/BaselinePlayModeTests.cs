@@ -183,7 +183,7 @@ namespace Stonehold.Tests
             SaveManager.SetSelectedStartingDefender("archer");
             int startingGold = SaveManager.MetaGold;
 
-            AsyncOperation load = SceneManager.LoadSceneAsync("GameScene", LoadSceneMode.Single);
+            AsyncOperation load = SceneManager.LoadSceneAsync("GameplayIntegration_V2", LoadSceneMode.Single);
             while (!load.isDone)
             {
                 yield return null;

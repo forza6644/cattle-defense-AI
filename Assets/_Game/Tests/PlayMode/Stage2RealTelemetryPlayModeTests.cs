@@ -33,12 +33,9 @@ namespace Stonehold.Tests
 
             // Set Selected Stage to Stage 2 (Index 1) and set stage override
             SaveManager.SetSelectedStage(1);
-            StageData stage2 = Resources.Load<StageData>("Stage2_Highlands");
+            StageData stage2 = null;
 #if UNITY_EDITOR
-            if (stage2 == null)
-            {
-                stage2 = UnityEditor.AssetDatabase.LoadAssetAtPath<StageData>("Assets/_Game/ScriptableObjects/Stage2_Highlands.asset");
-            }
+            stage2 = UnityEditor.AssetDatabase.LoadAssetAtPath<StageData>("Assets/_Game/ScriptableObjects/Stages/Stage2_HighlandsFortress.asset");
 #endif
             if (stage2 != null)
             {
@@ -69,29 +66,40 @@ namespace Stonehold.Tests
             Assert.That(progression, Is.Not.Null, "RunProgressionManager must exist.");
 
             roster.InitializeRunRoster();
+            Assert.That(roster.OwnedHeroIds.Count, Is.EqualTo(0), "Run must start with 0 owned heroes.");
 
-            // Recruit full hero roster for Stage 2 tactical defense
-            string[] heroIds = { "archer", "bombardier", "frost_mage", "fire_mage", "electric_engineer", "sniper" };
-            foreach (string heroId in heroIds)
-            {
-                roster.RecruitHero(heroId);
-            }
+            // Authentic fresh campaign starting roster: 1 starting defender (Archer)
+            roster.RecruitHero("archer");
 
             RealCombatTelemetryLogger logger = new RealCombatTelemetryLogger();
             logger.StartRun();
-            logger.Report.reportTitle = "STAGE 2 (HIGHLANDS) REAL-TIME COMBAT TELEMETRY REPORT";
+            logger.Report.reportTitle = "STAGE 2 (HIGHLANDS FORTRESS) REAL-TIME COMBAT TELEMETRY REPORT";
             logger.Report.stageId = "stage_2_highlands";
 
             int currentWaveTracked = 0;
             int lastKnownAliveCount = 0;
-            int totalCrossbowRaiderAttacks = 0;
-            int totalWarShamanHealPulses = 0;
-            HashSet<int> countedProjectiles = new HashSet<int>();
-            HashSet<int> activeHealingCastSet = new HashSet<int>();
+
+            float closestEnemyZ = 999f;
+            int enemiesInCastleApproach75 = 0;
+            int enemiesInCastleGate95 = 0;
+            int enemiesReachedCastle = 0;
+            float bossSpawnTime = -1f;
+            float bossDefeatTime = -1f;
+            bool bossPhase2Triggered = false;
+
+            System.Action<Enemy, int, float> onBossPhase = (boss, phase, hpPercent) =>
+            {
+                if (phase == 2) bossPhase2Triggered = true;
+            };
+            Enemy.BossPhaseTransition += onBossPhase;
 
             System.Action<Enemy, int> onEnemyKilled = (enemy, gold) =>
             {
                 logger.OnEnemyDefeated(1);
+                if (enemy != null && enemy.Data != null && enemy.Data.classification == EnemyClassification.Boss)
+                {
+                    bossDefeatTime = Time.realtimeSinceStartup;
+                }
             };
             Enemy.AnyKilled += onEnemyKilled;
 
@@ -110,7 +118,7 @@ namespace Stonehold.Tests
             };
             progression.ShowLevelUpDraft += onShowDraft;
 
-            game.SetGameSpeed(2.5f); // Fast real-time simulation
+            game.SetGameSpeed(2.0f); // 2x game speed for real-time simulation
 
             float deadline = Time.realtimeSinceStartup + 330f;
             bool handledCurrentDraft = false;
@@ -142,38 +150,24 @@ namespace Stonehold.Tests
                     }
                     lastKnownAliveCount = activeEnemies;
 
-                    // Track tactical Crossbow Raider attacks (EnemyCastleProjectile)
-                    var projectiles = UnityEngine.Object.FindObjectsByType<EnemyCastleProjectile>(FindObjectsSortMode.None);
-                    foreach (var proj in projectiles)
+                    // Track active enemy positions and castle proximity
+                    var allAlive = EnemyManager.All;
+                    for (int i = 0; i < allAlive.Count; i++)
                     {
-                        if (proj != null)
-                        {
-                            int id = System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(proj);
-                            if (!countedProjectiles.Contains(id))
-                            {
-                                countedProjectiles.Add(id);
-                                totalCrossbowRaiderAttacks++;
-                            }
-                        }
-                    }
+                        Enemy e = allAlive[i];
+                        if (e == null || !e.IsActiveActivation || e.IsDead) continue;
+                        float z = e.transform.position.z;
+                        if (z < closestEnemyZ) closestEnemyZ = z;
 
-                    // Track tactical War Shaman healing pulses
-                    var specials = UnityEngine.Object.FindObjectsByType<EnemySpecialBehavior>(FindObjectsSortMode.None);
-                    foreach (var sb in specials)
-                    {
-                        if (sb != null)
+                        if (e.Data != null && e.Data.classification == EnemyClassification.Boss && bossSpawnTime < 0f)
                         {
-                            int id = System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(sb);
-                            if (sb.IsCasting && !activeHealingCastSet.Contains(id))
-                            {
-                                activeHealingCastSet.Add(id);
-                                totalWarShamanHealPulses++;
-                            }
-                            else if (!sb.IsCasting && activeHealingCastSet.Contains(id))
-                            {
-                                activeHealingCastSet.Remove(id);
-                            }
+                            bossSpawnTime = Time.realtimeSinceStartup;
                         }
+
+                        float depthPercent = Mathf.Clamp01((44.0f - z) / (44.0f - 0.4f));
+                        if (depthPercent >= 0.75f) enemiesInCastleApproach75++;
+                        if (depthPercent >= 0.95f || z <= 2.5f) enemiesInCastleGate95++;
+                        if (e.IsAttackingCastle || z <= 2.2f) enemiesReachedCastle++;
                     }
 
                     // Process Card Drafts automatically
@@ -208,13 +202,26 @@ namespace Stonehold.Tests
                 }
 
                 logger.CompleteRun(game.State, castle, progression);
+                logger.SaveReport(JsonReportPath, TxtReportPath);
 
-                // Write report files
-                SaveStage2Report(logger.Report, totalCrossbowRaiderAttacks, totalWarShamanHealPulses, JsonReportPath, TxtReportPath);
+                float bossDurationReal = (bossDefeatTime > 0 && bossSpawnTime > 0) ? (bossDefeatTime - bossSpawnTime) : 0f;
+                float bossDurationInGame = bossDurationReal * 2f;
+
+                TestContext.WriteLine("================================================================================");
+                TestContext.WriteLine("STAGE 2 (HIGHLANDS FORTRESS) AUTHENTIC FRESH-CAMPAIGN COMBAT TELEMETRY");
+                TestContext.WriteLine("================================================================================");
+                TestContext.WriteLine($"Total Run Duration (2x speed): {logger.Report.totalRunDurationSeconds:F2}s ({logger.Report.totalRunDurationSeconds * 2f:F2}s in-game)");
+                TestContext.WriteLine($"Final Castle HP:               {castle.CurrentHealth} / {castle.MaxHealth}");
+                TestContext.WriteLine($"Heroes Recruited:              {roster.OwnedHeroIds.Count} ({string.Join(", ", roster.OwnedHeroIds)})");
+                TestContext.WriteLine($"Closest Enemy Z:               {closestEnemyZ:F2}m");
+                TestContext.WriteLine($"Boss Duration (In-Game 1x):    {bossDurationInGame:F2}s (Real: {bossDurationReal:F2}s)");
+                TestContext.WriteLine($"Boss Phase 2 Triggered:        {bossPhase2Triggered}");
+                TestContext.WriteLine("================================================================================");
             }
             finally
             {
                 Enemy.AnyKilled -= onEnemyKilled;
+                Enemy.BossPhaseTransition -= onBossPhase;
                 progression.ShowLevelUpDraft -= onShowDraft;
                 ExpansionRunContext.Clear();
             }
@@ -298,7 +305,22 @@ namespace Stonehold.Tests
             var field = typeof(UIManager).GetField("cardButtons", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             var buttons = field?.GetValue(ui) as UnityEngine.UI.Button[];
             if (buttons == null || buttons.Length == 0 || buttons[0] == null) return false;
-            buttons[0].onClick.Invoke();
+
+            var titles = GetOfferedDraftTitles();
+            int clickIndex = 0;
+            if (HeroRosterManager.Instance != null && HeroRosterManager.Instance.OwnedHeroIds.Count < 4 && titles != null)
+            {
+                for (int i = 0; i < titles.Length && i < buttons.Length; i++)
+                {
+                    if (titles[i] != null && titles[i].StartsWith("Add ") && buttons[i] != null)
+                    {
+                        clickIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            buttons[clickIndex].onClick.Invoke();
             return true;
         }
     }

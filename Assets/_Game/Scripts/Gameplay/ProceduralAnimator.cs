@@ -89,6 +89,18 @@ namespace Stonehold
 
         public void SetMoving(bool value) => moving = value;
 
+        /// <summary>
+        /// Re-caches the visual root scale after gameplay envelope normalization
+        /// so idle breathe / recoil / hit squash keep the normalized size.
+        /// </summary>
+        public void CaptureCurrentScaleAsBase()
+        {
+            if (model != null)
+            {
+                baseScale = model.localScale;
+            }
+        }
+
         public void ResetForReuse()
         {
             bool shouldRebindAnimator = dead;

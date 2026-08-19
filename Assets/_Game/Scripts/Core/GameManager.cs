@@ -314,6 +314,7 @@ namespace Stonehold
             {
                 SaveManager.RecordWin();
                 SaveManager.CompleteStage(SaveManager.SelectedStageIndex);
+                RecordCampaignResult(true);
                 SetState(GameState.Victory);
             }
             else
@@ -321,6 +322,35 @@ namespace Stonehold
                 SaveManager.RecordLoss();
                 SetState(GameState.Defeat);
             }
+        }
+
+        private void RecordCampaignResult(bool victory)
+        {
+            if (CampaignProgressionManager.Instance == null)
+            {
+                return;
+            }
+
+            float healthPercent = 0f;
+            if (castle != null && castle.MaxHealth > 0)
+            {
+                healthPercent = (float)castle.CurrentHealth / castle.MaxHealth;
+            }
+
+            int heat = AscensionManager.Instance != null
+                ? AscensionManager.Instance.GetCurrentHeatLevel()
+                : 0;
+            int wave = waveManager != null ? waveManager.CurrentWave : 1;
+            float scoreMult = AscensionManager.Instance != null
+                ? AscensionManager.Instance.GetScoreMultiplier()
+                : 1f;
+            int score = Mathf.RoundToInt(Mathf.Max(1, wave) * 100f * scoreMult);
+            CampaignProgressionManager.Instance.RecordStageResult(
+                SaveManager.SelectedStageIndex,
+                victory,
+                healthPercent,
+                heat,
+                score);
         }
 
         private void OnApplicationPause(bool pauseStatus)

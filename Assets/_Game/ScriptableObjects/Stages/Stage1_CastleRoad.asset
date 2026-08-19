@@ -34,7 +34,7 @@ MonoBehaviour:
   battlefieldFixturePrefab: {fileID: 0}
   useExactWaveCounts: 1
   enemyCountMultiplier: 1
-  spawnIntervalMultiplier: 0.9
+  spawnIntervalMultiplier: 1
   expectedEnemyTypes:
   - {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
   - {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}

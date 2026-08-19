@@ -30,10 +30,21 @@ namespace Stonehold
             Renderer r = pad.GetComponent<Renderer>();
             if (r != null)
             {
-                Material padMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                padMat.hideFlags = HideFlags.HideAndDontSave;
-                padMat.color = new Color(0.2f, 0.25f, 0.3f);
-                r.sharedMaterial = padMat;
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit")
+                    ?? Shader.Find("Universal Render Pipeline/Unlit")
+                    ?? Shader.Find("Standard")
+                    ?? Shader.Find("Sprites/Default");
+                if (shader != null)
+                {
+                    Material padMat = new Material(shader);
+                    padMat.hideFlags = HideFlags.HideAndDontSave;
+                    padMat.color = new Color(0.2f, 0.25f, 0.3f);
+                    if (padMat.HasProperty("_BaseColor"))
+                    {
+                        padMat.SetColor("_BaseColor", new Color(0.2f, 0.25f, 0.3f));
+                    }
+                    r.sharedMaterial = padMat;
+                }
             }
 
             Collider padCollider = pad.GetComponent<Collider>();
@@ -95,9 +106,17 @@ namespace Stonehold
             if (instance.GetComponent<Collider>() == null)
             {
                 CapsuleCollider selectionCollider = instance.AddComponent<CapsuleCollider>();
-                selectionCollider.center = new Vector3(0f, 0.7f, 0f);
-                selectionCollider.radius = 0.45f;
-                selectionCollider.height = 1.4f;
+                Bounds visualBounds = HeroGameplayVisualNormalizer.MeasureGameplayBounds(instance.transform);
+                float colliderHeight = visualBounds.size.y > 0.4f
+                    ? Mathf.Clamp(visualBounds.size.y, 1.05f, 2.15f)
+                    : 1.4f;
+                float planar = Mathf.Max(visualBounds.size.x, visualBounds.size.z);
+                float colliderRadius = planar > 0.2f
+                    ? Mathf.Clamp(planar * 0.28f, 0.28f, 0.46f)
+                    : 0.45f;
+                selectionCollider.height = colliderHeight;
+                selectionCollider.radius = colliderRadius;
+                selectionCollider.center = new Vector3(0f, colliderHeight * 0.5f, 0f);
             }
 
             Collider[] heroColliders = instance.GetComponentsInChildren<Collider>();
@@ -162,7 +181,6 @@ namespace Stonehold
         {
             Color bodyColor;
             Color accentColor;
-            Vector3 scaleMultiplier = Vector3.one;
 
             switch (hero.id)
             {
@@ -173,7 +191,6 @@ namespace Stonehold
                 case "bombardier":
                     bodyColor = new Color(0.3f, 0.3f, 0.32f);    // dark grey
                     accentColor = new Color(0.9f, 0.5f, 0.15f);  // orange
-                    scaleMultiplier = new Vector3(1.05f, 1f, 1.05f);
                     break;
                 case "frost_mage":
                     bodyColor = new Color(0.35f, 0.7f, 0.85f);   // cyan/ice
@@ -190,27 +207,22 @@ namespace Stonehold
                 case "sniper":
                     bodyColor = new Color(0.35f, 0.2f, 0.55f);   // dark purple
                     accentColor = new Color(0.7f, 0.5f, 0.85f);  // lighter indigo
-                    scaleMultiplier = new Vector3(0.85f, 1.1f, 0.85f);
                     break;
                 case "plague_doctor":
                     bodyColor = new Color(0.18f, 0.35f, 0.18f);  // dark toxic emerald
                     accentColor = new Color(0.35f, 0.95f, 0.25f); // vibrant plague green
-                    scaleMultiplier = new Vector3(0.98f, 1.0f, 0.98f);
                     break;
                 case "radiant_paladin":
                     bodyColor = new Color(0.45f, 0.40f, 0.25f);  // gilded knight plate
                     accentColor = new Color(1f, 0.88f, 0.25f);   // radiant holy sun gold
-                    scaleMultiplier = new Vector3(1.12f, 1.05f, 1.12f);
                     break;
                 case "shadow_assassin":
                     bodyColor = new Color(0.15f, 0.12f, 0.22f);  // shadow obsidian
                     accentColor = new Color(0.70f, 0.25f, 0.95f); // venomous violet glow
-                    scaleMultiplier = new Vector3(0.95f, 1.0f, 0.95f);
                     break;
                 case "storm_druid":
                     bodyColor = new Color(0.15f, 0.32f, 0.35f);  // deep storm teal
                     accentColor = new Color(0.25f, 0.85f, 0.95f); // tempest lightning cyan
-                    scaleMultiplier = new Vector3(1.02f, 1.02f, 1.02f);
                     break;
                 default:
                     bodyColor = new Color(0.5f, 0.5f, 0.5f);
@@ -232,9 +244,6 @@ namespace Stonehold
                 mpb.SetColor(baseColorId, Color.Lerp(matColor, bodyColor, BodyTintBlend));
                 rend.SetPropertyBlock(mpb);
             }
-
-            // Normalize visual scale on character root
-            NormalizeCharacterVisual(instance.transform, hero.id, scaleMultiplier);
 
             // Color the slot pad accent
             Transform padTransform = transform.Find("SlotPad_Visual");
@@ -262,28 +271,7 @@ namespace Stonehold
             }
 
             CreateHeroPresentation(hero.id, instance.transform, accentColor);
-        }
-
-        private static void NormalizeCharacterVisual(Transform heroRoot, string heroId, Vector3 profileScale)
-        {
-            Transform visualRoot = FindTransformRecursive(heroRoot, "VisualRoot") ?? FindTransformRecursive(heroRoot, "QuaterniusVisual");
-            if (visualRoot == null)
-            {
-                return;
-            }
-
-            float normalizedScale = 1.03f;
-            switch (heroId)
-            {
-                case "bombardier": normalizedScale = 1.08f; break;
-                case "sniper": normalizedScale = 0.99f; break;
-                case "radiant_paladin": normalizedScale = 1.10f; break;
-                case "shadow_assassin": normalizedScale = 0.96f; break;
-                case "plague_doctor": normalizedScale = 1.01f; break;
-                case "storm_druid": normalizedScale = 1.02f; break;
-            }
-
-            visualRoot.localScale = Vector3.Scale(visualRoot.localScale, profileScale * normalizedScale);
+            HeroGameplayVisualNormalizer.NormalizeSpawnedHero(instance, hero);
         }
 
         private void CreateHeroPresentation(string heroId, Transform heroRoot, Color accentColor)

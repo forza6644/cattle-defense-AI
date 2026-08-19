@@ -12,17 +12,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f8a368fe325e4fbb2f112cc8a91c7, type: 3}
   m_Name: Stage3_Wave06
   m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.WaveData
-  waveLabel: Wave 6 - Heavy Siege Brigade
+  waveLabel: Wave 6 - Permafrost Siege
   spawns:
-  - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
-    count: 18
-    spawnInterval: 0.6
+  - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+    count: 2
+    spawnInterval: 1.8
     startDelay: 0
-  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
-    count: 11
-    spawnInterval: 0.5
-    startDelay: 2
+    laneAssignment: 1
+  - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
+    count: 2
+    spawnInterval: 1.8
+    startDelay: 0
+    laneAssignment: 3
   - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
-    count: 6
-    spawnInterval: 0.9
-    startDelay: 4
+    count: 10
+    spawnInterval: 0.8
+    startDelay: 1.0
+    laneAssignment: 2
+  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+    count: 4
+    spawnInterval: 0.45
+    startDelay: 5.0
+    laneAssignment: 0
+  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+    count: 5
+    spawnInterval: 0.45
+    startDelay: 8.0
+    laneAssignment: 0
+  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+    count: 5
+    spawnInterval: 0.45
+    startDelay: 11.0
+    laneAssignment: 0

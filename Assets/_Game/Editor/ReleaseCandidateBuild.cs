@@ -11,6 +11,7 @@ namespace Stonehold.Editor
     {
         private const string DevOutputPath = "Builds/Android/Stonehold-Development.apk";
         private const string ReleaseOutputPath = "Builds/Android/Stonehold-ReleaseCandidate.apk";
+        private const string DiagnosticOutputPath = "Builds/Android/StoneholdV2-Diagnostic.apk";
 
         [MenuItem("Stonehold/Android/Build Development APK")]
         public static void BuildDevelopment()
@@ -22,6 +23,12 @@ namespace Stonehold.Editor
         public static void BuildReleaseCandidate()
         {
             Build(false, ReleaseOutputPath);
+        }
+
+        [MenuItem("Stonehold/Android/Build Diagnostic APK")]
+        public static void BuildDiagnostic()
+        {
+            Build(true, DiagnosticOutputPath);
         }
 
         // Keep legacy method for test compatibility
@@ -50,6 +57,8 @@ namespace Stonehold.Editor
             ScriptingImplementation originalBackend = PlayerSettings.GetScriptingBackend(BuildTargetGroup.Android);
             AndroidArchitecture originalArchitecture = PlayerSettings.Android.targetArchitectures;
             UIOrientation originalOrientation = PlayerSettings.defaultInterfaceOrientation;
+            bool originalAutoGraphics = PlayerSettings.GetUseDefaultGraphicsAPIs(BuildTarget.Android);
+            var originalGraphicsAPIs = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
 
             try
             {
@@ -59,6 +68,10 @@ namespace Stonehold.Editor
 
                 // Force portrait mode
                 PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+
+                // Configure Graphics API to OpenGLES3 for maximum compatibility across Android devices/emulators
+                PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+                PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
 
                 // Configure Scripting Backend and Architecture
                 bool il2cppSupported = true;
@@ -142,7 +155,6 @@ namespace Stonehold.Editor
             string[] preferredScenes = new[]
             {
                 "Assets/_Game/Scenes/MainMenu.unity",
-                "Assets/_Game/Scenes/GameScene.unity",
                 "Assets/_Game/Scenes/V2/GameplayIntegration_V2.unity"
             };
 

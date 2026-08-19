@@ -15,7 +15,7 @@ namespace Stonehold.Tests
         public IEnumerator RealDraftManager_QualifiesOverrideRecruitCapsAndRestartClearing()
         {
             SaveManager.SetSelectedStartingDefender("archer");
-            AsyncOperation load = SceneManager.LoadSceneAsync("GameScene", LoadSceneMode.Single);
+            AsyncOperation load = SceneManager.LoadSceneAsync("GameplayIntegration_V2", LoadSceneMode.Single);
             while (!load.isDone) yield return null;
 
             float deadline = Time.realtimeSinceStartup + 15f;

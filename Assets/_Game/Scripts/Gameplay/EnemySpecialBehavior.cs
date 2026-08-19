@@ -38,6 +38,11 @@ namespace Stonehold
             ResetForReuse();
         }
 
+        public void Initialize(Enemy owner, EnemyData data = null)
+        {
+            PrepareForSpawn(owner);
+        }
+
         public void Activate(Castle targetCastle, int expectedActivationId)
         {
             castle = targetCastle;

@@ -26,3 +26,4 @@ MonoBehaviour:
   abilityPowerMultiplier: 1.35
   abilityRadius: 0
   abilityTargetCount: 4
+  gameplayVisualScaleMultiplier: 1

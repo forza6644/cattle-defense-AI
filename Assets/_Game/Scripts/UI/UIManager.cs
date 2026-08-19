@@ -34,10 +34,8 @@ namespace Stonehold
         private Text castleHpText;
         private RectTransform castleHpFill;
         private Image castleHpFillImage;
-        private CanvasGroup waveControlGroup;
-        private Text waveStatusText;
-        private Text waveCountdownText;
-        private Button startWaveButton;
+
+
         private Button rerollButton;
         private Text rerollButtonText;
 
@@ -72,6 +70,7 @@ namespace Stonehold
         private readonly Text[] cardTitleTexts = new Text[3];
         private readonly Text[] cardDescriptionTexts = new Text[3];
         private readonly Button[] cardButtons = new Button[3];
+        private readonly Button[] cardBodyButtons = new Button[3];
         private readonly Image[] cardBorders = new Image[3];
         private readonly Image[] cardInnerBgs = new Image[3];
         private readonly Image[] cardTypeBadges = new Image[3];
@@ -199,6 +198,10 @@ namespace Stonehold
         {
             if (isUiBuilt) return;
             isUiBuilt = true;
+            if (font == null)
+            {
+                font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            }
             economy = EconomyManager.Instance;
             waves = FindFirstObjectByType<WaveManager>();
             castle = FindFirstObjectByType<Castle>();
@@ -407,28 +410,12 @@ namespace Stonehold
         private void OnWaveStarted(int number, WaveData wave)
         {
             EnsureUIBuilt();
-            ShowPanel(waveControlGroup, false);
 
             int total = waves != null ? waves.TotalWaves : 0;
             string totalStr = total > 0 ? total.ToString() : "-";
             if (waveText != null)
             {
                 waveText.text = "WAVE  " + number + " / " + totalStr;
-            }
-
-            if (bannerText != null)
-            {
-                if (total > 0 && number == total)
-                {
-                    bannerText.color = new Color(1f, 0.25f, 0.2f); // High-contrast Red for Boss
-                    ShowBanner("!!! FINAL BOSS WAVE !!!");
-                }
-                else
-                {
-                    bannerText.color = Color.white;
-                    string label = wave != null && !string.IsNullOrEmpty(wave.waveLabel) ? wave.waveLabel : "Stage Battle";
-                    ShowBanner("WAVE " + number + " — " + label.ToUpperInvariant());
-                }
             }
 
             if (number == 2)
@@ -455,46 +442,32 @@ namespace Stonehold
                 waveText.text = "NEXT  " + number + " / " + (totalWaves > 0 ? totalWaves.ToString() : "-");
             }
 
-            if (waveStatusText != null)
-            {
-                string label = wave != null && !string.IsNullOrEmpty(wave.waveLabel) ? wave.waveLabel.ToUpperInvariant() : "STAGE BATTLE";
-                waveStatusText.text = "NEXT: " + label;
-            }
+            string waveName = wave != null && !string.IsNullOrEmpty(wave.waveLabel) ? wave.waveLabel : "Stage Battle";
 
-            OnWaveCountdownChanged(secondsRemaining);
-            if (startWaveButton != null)
+            if (bannerText != null)
             {
-                startWaveButton.interactable = true;
-            }
-
-            ShowPanel(waveControlGroup, true);
-
-            if (bannerText != null && totalWaves > 0 && number == totalWaves)
-            {
-                bannerText.color = new Color(1f, 0.5f, 0.2f); // Orange warning for Boss Countdown
-                ShowBanner("BOSS PREPARING...");
-                ShowHint("Final Boss incoming! Upgrade defenders and use targeting modes.");
+                if (totalWaves > 0 && number == totalWaves)
+                {
+                    bannerText.color = new Color(1f, 0.5f, 0.2f); // Orange warning for Boss Wave
+                    ShowBanner($"NEXT WAVE — {number}\nBOSS: {waveName.ToUpperInvariant()}");
+                    ShowHint("Final Boss incoming! Upgrade defenders and use targeting modes.");
+                }
+                else
+                {
+                    bannerText.color = Color.white;
+                    ShowBanner($"NEXT WAVE — {number}\n{waveName.ToUpperInvariant()}");
+                }
             }
         }
 
         private void OnWaveCountdownChanged(float secondsRemaining)
         {
-            EnsureUIBuilt();
-            if (waveCountdownText != null)
-            {
-                waveCountdownText.text = "Auto starts in " + Mathf.CeilToInt(secondsRemaining) + "s";
-            }
+            // Passive auto-start flow: no countdown timer text displayed
         }
 
         private void OnWaveCountdownFinished()
         {
-            EnsureUIBuilt();
-            if (startWaveButton != null)
-            {
-                startWaveButton.interactable = false;
-            }
-
-            ShowPanel(waveControlGroup, false);
+            // Transition completed: next wave begins automatically
         }
 
         private void OnWaveCleared(int number, WaveData wave)
@@ -548,13 +521,7 @@ namespace Stonehold
             ShowBanner("Wave Clear Bonus: +" + amount + " gold");
         }
 
-        private void OnStartNextWaveClicked()
-        {
-            if (waves != null)
-            {
-                waves.StartNextWaveNow();
-            }
-        }
+
 
         private void OnTowerUnlocked(string message)
         {
@@ -593,18 +560,37 @@ namespace Stonehold
 
             if (bannerGroup != null)
             {
-                for (float t = 0f; t < 0.15f; t += Time.unscaledDeltaTime)
+                RectTransform bannerRt = bannerGroup.GetComponent<RectTransform>();
+                Vector2 targetPos = new Vector2(0f, -145f);
+                Vector2 startPos = new Vector2(0f, -125f);
+                Vector3 startScale = new Vector3(0.92f, 0.92f, 1f);
+
+                for (float t = 0f; t < 0.18f; t += Time.unscaledDeltaTime)
                 {
-                    bannerGroup.alpha = t / 0.15f;
+                    float k = Mathf.Clamp01(t / 0.18f);
+                    float ease = Mathf.SmoothStep(0f, 1f, k);
+                    bannerGroup.alpha = ease;
+                    if (bannerRt != null)
+                    {
+                        bannerRt.anchoredPosition = Vector2.Lerp(startPos, targetPos, ease);
+                        bannerRt.localScale = Vector3.Lerp(startScale, Vector3.one, ease);
+                    }
                     yield return null;
                 }
 
                 bannerGroup.alpha = 1f;
-                yield return new WaitForSecondsRealtime(1.1f);
+                if (bannerRt != null)
+                {
+                    bannerRt.anchoredPosition = targetPos;
+                    bannerRt.localScale = Vector3.one;
+                }
+
+                yield return new WaitForSecondsRealtime(1.35f);
 
                 for (float t = 0f; t < 0.25f; t += Time.unscaledDeltaTime)
                 {
-                    bannerGroup.alpha = 1f - (t / 0.25f);
+                    float k = Mathf.Clamp01(t / 0.25f);
+                    bannerGroup.alpha = 1f - k;
                     yield return null;
                 }
 
@@ -1355,6 +1341,20 @@ namespace Stonehold
                     cardIconImages[i].gameObject.SetActive(iconSprite != null);
                 }
 
+                if (cardBodyButtons[i] != null)
+                {
+                    cardBodyButtons[i].onClick.RemoveAllListeners();
+                    cardBodyButtons[i].interactable = true;
+                    cardBodyButtons[i].onClick.AddListener(() => SelectDraftChoice(choices[index]));
+
+                    ColorBlock bodyCb = cardBodyButtons[i].colors;
+                    bodyCb.normalColor = Color.white;
+                    bodyCb.highlightedColor = new Color(1.08f, 1.08f, 1.15f, 1f);
+                    bodyCb.pressedColor = new Color(0.85f, 0.85f, 0.92f, 1f);
+                    bodyCb.selectedColor = Color.white;
+                    cardBodyButtons[i].colors = bodyCb;
+                }
+
                 if (cardButtons[i] != null)
                 {
                     cardButtons[i].onClick.RemoveAllListeners();
@@ -1599,6 +1599,7 @@ namespace Stonehold
             }
 
             GameObject canvasObject = new GameObject("HUD Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            canvasObject.transform.SetParent(transform, false);
             Canvas canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasRect = canvas.GetComponent<RectTransform>();
@@ -1660,10 +1661,10 @@ namespace Stonehold
 
             // Utility controls remain paired and receive matching touch targets.
             Image utilityPanel = CreateHudPanel(safeAreaRect, "UtilityControls");
-            SetAnchored(utilityPanel.rectTransform, new Vector2(1f, 1f), new Vector2(-20f, -22f), new Vector2(238f, 50f));
+            SetAnchored(utilityPanel.rectTransform, new Vector2(1f, 1f), new Vector2(-20f, -22f), new Vector2(264f, 56f));
             Button speedButton = CreateButton(utilityPanel.rectTransform, "SpeedButton",
                 game != null ? FormatSpeed(game.GameSpeed) : "1x",
-                new Vector2(108f, 40f), new Vector2(0f, 0.5f), new Vector2(5f, 0f),
+                new Vector2(120f, 48f), new Vector2(0f, 0.5f), new Vector2(6f, 0f),
                 () =>
                 {
                     GameManager activeGame = GameManager.Instance != null ? GameManager.Instance : game;
@@ -1674,8 +1675,8 @@ namespace Stonehold
                     }
                 });
             speedButtonLabel = speedButton.GetComponentInChildren<Text>();
-            CreateButton(utilityPanel.rectTransform, "PauseButton", "Pause", new Vector2(108f, 40f), new Vector2(1f, 0.5f),
-                new Vector2(-5f, 0f), () =>
+            CreateButton(utilityPanel.rectTransform, "PauseButton", "Pause", new Vector2(120f, 48f), new Vector2(1f, 0.5f),
+                new Vector2(-6f, 0f), () =>
                 {
                     GameManager activeGame = GameManager.Instance != null ? GameManager.Instance : game;
                     if (activeGame != null)
@@ -1719,8 +1720,6 @@ namespace Stonehold
             hintCanvasGroup.interactable = false;
             hintBg.gameObject.SetActive(false);
 
-            BuildWaveControl();
-
             // Castle health stays visible at the base but remains compact.
             Image hpBg = CreateHudPanel(safeAreaRect, "CastleHpBar");
             SetAnchored(hpBg.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 52f), new Vector2(540f, 42f));
@@ -1738,17 +1737,32 @@ namespace Stonehold
             castleHpText.rectTransform.offsetMin = Vector2.zero;
             castleHpText.rectTransform.offsetMax = Vector2.zero;
 
-            // Compact Wave announcement panel (top-center below wave progress bar, raycastTarget = false)
+            // Professional Top-Center Wave announcement banner (positioned below top HUD, raycastTarget = false)
             Image bannerBg = CreateHudPanel(safeAreaRect, "WaveBannerPanel");
-            SetAnchored(bannerBg.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -108f), new Vector2(340f, 38f));
+            bannerBg.rectTransform.anchorMin = new Vector2(0.5f, 1f);
+            bannerBg.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            bannerBg.rectTransform.pivot = new Vector2(0.5f, 1f);
+            bannerBg.rectTransform.anchoredPosition = new Vector2(0f, -145f);
+            bannerBg.rectTransform.sizeDelta = new Vector2(460f, 76f);
+            bannerBg.color = new Color(0.06f, 0.08f, 0.12f, 0.94f);
             bannerBg.raycastTarget = false;
+
+            Image bannerBorder = CreateHudPanel(bannerBg.rectTransform, "BannerBorder");
+            bannerBorder.rectTransform.anchorMin = Vector2.zero;
+            bannerBorder.rectTransform.anchorMax = Vector2.one;
+            bannerBorder.rectTransform.offsetMin = new Vector2(2f, 2f);
+            bannerBorder.rectTransform.offsetMax = new Vector2(-2f, -2f);
+            bannerBorder.color = new Color(1f, 0.82f, 0.35f, 0.25f);
+            bannerBorder.raycastTarget = false;
+
             bannerText = CreateText(bannerBg.rectTransform, "Label", "", 20, Color.white, TextAnchor.MiddleCenter);
             bannerText.fontStyle = FontStyle.Bold;
+            bannerText.lineSpacing = 1.15f;
             bannerText.raycastTarget = false;
             bannerText.rectTransform.anchorMin = Vector2.zero;
             bannerText.rectTransform.anchorMax = Vector2.one;
-            bannerText.rectTransform.offsetMin = Vector2.zero;
-            bannerText.rectTransform.offsetMax = Vector2.zero;
+            bannerText.rectTransform.offsetMin = new Vector2(10f, 4f);
+            bannerText.rectTransform.offsetMax = new Vector2(-10f, -4f);
             bannerGroup = bannerBg.gameObject.AddComponent<CanvasGroup>();
             bannerGroup.alpha = 0f;
             bannerGroup.blocksRaycasts = false;
@@ -1817,11 +1831,15 @@ namespace Stonehold
                 RectTransform cardRt = cardBg.rectTransform;
                 SetAnchored(cardRt, new Vector2(0.5f, 0.5f), new Vector2(startX + i * spacingX, startY + i * spacingY), cardSize);
 
+                // Full-surface card button for mobile touch interaction
+                cardBodyButtons[i] = cardBg.gameObject.AddComponent<Button>();
+
                 Image border = CreateImage(cardRt, "Border", new Color(0.24f, 0.32f, 0.48f, 0.8f));
                 border.rectTransform.anchorMin = Vector2.zero;
                 border.rectTransform.anchorMax = Vector2.one;
                 border.rectTransform.offsetMin = new Vector2(4f, 4f);
                 border.rectTransform.offsetMax = new Vector2(-4f, -4f);
+                border.raycastTarget = false;
                 cardBorders[i] = border;
 
                 Image innerBg = CreateImage(border.rectTransform, "InnerBg", new Color(0.08f, 0.1f, 0.15f, 0.95f));
@@ -1829,21 +1847,25 @@ namespace Stonehold
                 innerBg.rectTransform.anchorMax = Vector2.one;
                 innerBg.rectTransform.offsetMin = new Vector2(4f, 4f);
                 innerBg.rectTransform.offsetMax = new Vector2(-4f, -4f);
+                innerBg.raycastTarget = false;
                 cardInnerBgs[i] = innerBg;
 
                 RectTransform contentRoot = innerBg.rectTransform;
 
                 // Card Type Badge
                 cardTypeBadges[i] = CreateImage(contentRoot, "TypeBadge", new Color(0.1f, 0.1f, 0.1f, 0.9f));
+                cardTypeBadges[i].raycastTarget = false;
 
                 // Title
                 cardTitleTexts[i] = CreateText(contentRoot, "Title", "Card Title", 26, new Color(1f, 0.85f, 0.2f), isPortrait ? TextAnchor.MiddleLeft : TextAnchor.UpperCenter);
                 cardTitleTexts[i].fontStyle = FontStyle.Bold;
                 cardTitleTexts[i].horizontalOverflow = HorizontalWrapMode.Wrap;
+                cardTitleTexts[i].raycastTarget = false;
 
                 // Description
                 cardDescriptionTexts[i] = CreateText(contentRoot, "Description", "Card description...", 19, new Color(0.85f, 0.85f, 0.9f), isPortrait ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter);
                 cardDescriptionTexts[i].horizontalOverflow = HorizontalWrapMode.Wrap;
+                cardDescriptionTexts[i].raycastTarget = false;
 
                 // Card Icon Art Frame
                 cardIconImages[i] = CreateImage(contentRoot, "CardIcon", Color.white);
@@ -1876,6 +1898,7 @@ namespace Stonehold
                 cardTypeLabels[i].rectTransform.anchorMax = Vector2.one;
                 cardTypeLabels[i].rectTransform.offsetMin = Vector2.zero;
                 cardTypeLabels[i].rectTransform.offsetMax = Vector2.zero;
+                cardTypeLabels[i].raycastTarget = false;
             }
 
             rerollButton = CreateButton(rect, "RerollButton", "Reroll (20 Gold)", new Vector2(240f, 56f), new Vector2(0.5f, 0.08f),
@@ -1993,36 +2016,7 @@ namespace Stonehold
                 new Vector2(-30f, -28f), HideSelectionPanels);
         }
 
-        private void BuildWaveControl()
-        {
-            Image bg = CreateHudPanel(safeAreaRect != null ? safeAreaRect : canvasRect, "WaveControl");
-            bg.raycastTarget = false;
-            RectTransform panel = bg.rectTransform;
-            SetAnchored(panel, new Vector2(0.5f, 1f), new Vector2(0f, -114f), new Vector2(410f, 56f));
 
-            waveStatusText = CreateText(panel, "Status", "NEXT: STAGE BATTLE", 17, Color.white, TextAnchor.MiddleLeft);
-            waveStatusText.fontStyle = FontStyle.Bold;
-            waveStatusText.raycastTarget = false;
-            SetAnchored(waveStatusText.rectTransform, new Vector2(0f, 0.5f), new Vector2(16f, 10f), new Vector2(260f, 24f));
-
-            waveCountdownText = CreateText(panel, "Countdown", "Auto starts in 5s", 14, new Color(0.94f, 0.77f, 0.34f), TextAnchor.MiddleLeft);
-            waveCountdownText.raycastTarget = false;
-            SetAnchored(waveCountdownText.rectTransform, new Vector2(0f, 0.5f), new Vector2(16f, -12f), new Vector2(260f, 22f));
-
-            startWaveButton = CreateButton(panel, "StartNextWaveButton", "START", new Vector2(105f, 38f), new Vector2(1f, 0.5f),
-                new Vector2(-12f, 0f), OnStartNextWaveClicked);
-            Text btnText = startWaveButton.GetComponentInChildren<Text>();
-            if (btnText != null)
-            {
-                btnText.fontSize = 16;
-            }
-
-            waveControlGroup = bg.gameObject.AddComponent<CanvasGroup>();
-            waveControlGroup.alpha = 0f;
-            waveControlGroup.interactable = false;
-            waveControlGroup.blocksRaycasts = false;
-            startWaveButton.interactable = false;
-        }
 
         private CanvasGroup CreateBottomPanel(string name, out RectTransform panel)
         {
@@ -2413,6 +2407,12 @@ namespace Stonehold
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
             text.verticalOverflow = VerticalWrapMode.Overflow;
             text.raycastTarget = false;
+
+            Shadow shadow = go.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0.02f, 0.02f, 0.04f, 0.75f);
+            shadow.effectDistance = new Vector2(1.2f, -1.2f);
+            shadow.useGraphicAlpha = true;
+
             return text;
         }
 
@@ -3431,7 +3431,11 @@ namespace Stonehold
             renderer.endWidth = 0.08f;
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
-            renderer.material = new Material(Shader.Find("Sprites/Default"));
+            Shader shader = Shader.Find("Sprites/Default") ?? Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Standard");
+            if (shader != null)
+            {
+                renderer.material = new Material(shader);
+            }
             go.SetActive(false);
             return new RangeIndicator(renderer);
         }

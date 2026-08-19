@@ -127,7 +127,22 @@ namespace Stonehold
                 return;
             }
 
-            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit")
+                ?? Shader.Find("Sprites/Default")
+                ?? Shader.Find("Unlit/Color")
+                ?? Shader.Find("Standard");
+
+            if (shader == null)
+            {
+                GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                Renderer ren = temp.GetComponent<Renderer>();
+                if (ren != null && ren.sharedMaterial != null)
+                {
+                    shader = ren.sharedMaterial.shader;
+                }
+                Destroy(temp);
+            }
+
             backgroundMaterial = CreateMaterial(shader, new Color(0.04f, 0.05f, 0.06f, 0.92f));
             healthyMaterial = CreateMaterial(shader, new Color(0.25f, 0.9f, 0.28f, 1f));
             warningMaterial = CreateMaterial(shader, new Color(1f, 0.22f, 0.12f, 1f));
@@ -136,12 +151,21 @@ namespace Stonehold
 
         private static Material CreateMaterial(Shader shader, Color color)
         {
+            if (shader == null)
+            {
+                return null;
+            }
+
             Material material = new Material(shader)
             {
                 color = color,
                 enableInstancing = true,
                 hideFlags = HideFlags.HideAndDontSave
             };
+            if (material.HasProperty("_BaseColor"))
+            {
+                material.SetColor("_BaseColor", color);
+            }
             return material;
         }
     }

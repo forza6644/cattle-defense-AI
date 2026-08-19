@@ -176,7 +176,7 @@ namespace Stonehold.Tests
             ExpansionRunContext.SetStageOverride(stage);
             SaveManager.SetSelectedStartingDefender("archer");
 
-            AsyncOperation load = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("GameScene", UnityEngine.SceneManagement.LoadSceneMode.Single);
+            AsyncOperation load = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("GameplayIntegration_V2", UnityEngine.SceneManagement.LoadSceneMode.Single);
             while (!load.isDone) yield return null;
 
             float initializationDeadline = Time.realtimeSinceStartup + 20f;

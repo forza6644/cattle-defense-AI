@@ -16,7 +16,9 @@ MonoBehaviour:
   enemyName: Brute
   classification: 0
   prefab: {fileID: 5555025361673445348, guid: d97830f8f2ae43f4c9a978d818dcf3de, type: 3}
-  health: 162
-  moveSpeed: 1.4
-  goldReward: 30
-  castleDamage: 4
+  health: 220
+  moveSpeed: 1.7
+  armor: 2
+  goldReward: 25
+  xpValue: 25
+  castleDamage: 3

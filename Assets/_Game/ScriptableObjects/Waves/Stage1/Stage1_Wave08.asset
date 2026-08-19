@@ -12,17 +12,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b3f8a368fe325e4fbb2f112cc8a91c7, type: 3}
   m_Name: Stage1_Wave08
   m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.WaveData
-  waveLabel: Wave 8 - Elite Strike Team
+  waveLabel: Wave 8 - Elite Strike Column
   spawns:
-  - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
-    count: 13
-    spawnInterval: 0.7
-    startDelay: 0
   - enemy: {fileID: 11400000, guid: 0da65907bf22c7444915aec201c9f159, type: 2}
-    count: 6
+    count: 3
+    spawnInterval: 2.5
+    startDelay: 0
+    laneAssignment: 0
+  - enemy: {fileID: 11400000, guid: 2495cabda21947a2bab84cde1c1a4602, type: 2}
+    count: 10
     spawnInterval: 1.2
-    startDelay: 2.5
+    startDelay: 2
+    laneAssignment: 0
+  - enemy: {fileID: 11400000, guid: 663a9efa2b31cab45979827bd753160b, type: 2}
+    count: 12
+    spawnInterval: 1.0
+    startDelay: 4
+    laneAssignment: 0
   - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
-    count: 24
-    spawnInterval: 0.45
-    startDelay: 5
+    count: 3
+    spawnInterval: 0.5
+    startDelay: 7
+    laneAssignment: 0
+  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+    count: 3
+    spawnInterval: 0.5
+    startDelay: 10
+    laneAssignment: 0
+  - enemy: {fileID: 11400000, guid: 56eb8bff89a84d4d915c9ba8603238e4, type: 2}
+    count: 4
+    spawnInterval: 0.5
+    startDelay: 13
+    laneAssignment: 0

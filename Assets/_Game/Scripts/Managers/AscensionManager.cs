@@ -22,6 +22,8 @@ namespace Stonehold
         private readonly List<AscensionMutatorDefinition> allMutators = new List<AscensionMutatorDefinition>();
         public IReadOnlyList<AscensionMutatorDefinition> AllMutators => allMutators;
 
+        public DifficultyMode CurrentDifficulty { get; private set; } = DifficultyMode.Normal;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
@@ -51,7 +53,16 @@ namespace Stonehold
             }
             Instance = this;
             LoadAllMutators();
-            LoadActiveMutatorsFromPrefs();
+            CurrentDifficulty = DifficultyRuleset.GetSelectedMode();
+            if (CurrentDifficulty == DifficultyMode.Hard && DifficultyRuleset.IsHardUnlocked())
+            {
+                ApplyDifficulty(DifficultyMode.Hard, persist: false);
+            }
+            else
+            {
+                activeMutatorIds.Clear();
+                CurrentDifficulty = DifficultyMode.Normal;
+            }
         }
 
         private void OnDestroy()
@@ -120,9 +131,42 @@ namespace Stonehold
             if (activeMutatorIds.Count > 0)
             {
                 activeMutatorIds.Clear();
+                CurrentDifficulty = DifficultyMode.Normal;
                 SaveActiveMutatorsToPrefs();
                 OnAscensionChanged?.Invoke();
             }
+        }
+
+        public void ApplyDifficulty(DifficultyMode mode, bool persist = true)
+        {
+            DifficultyMode selectable = DifficultyRuleset.ClampSelectable(mode);
+            if (selectable == DifficultyMode.Hard && !DifficultyRuleset.IsHardUnlocked())
+            {
+                selectable = DifficultyMode.Normal;
+            }
+
+            activeMutatorIds.Clear();
+            CurrentDifficulty = selectable;
+            if (selectable == DifficultyMode.Hard)
+            {
+                for (int i = 0; i < DifficultyRuleset.HardMutatorIds.Length; i++)
+                {
+                    activeMutatorIds.Add(DifficultyRuleset.HardMutatorIds[i]);
+                }
+            }
+
+            if (persist)
+            {
+                DifficultyRuleset.SetSelectedMode(selectable);
+                SaveActiveMutatorsToPrefs();
+            }
+
+            OnAscensionChanged?.Invoke();
+        }
+
+        public bool IsHardActive()
+        {
+            return CurrentDifficulty == DifficultyMode.Hard;
         }
 
         public int GetCurrentHeatLevel()
@@ -208,6 +252,12 @@ namespace Stonehold
                     mult *= Mathf.Max(0.1f, 1.0f - m.effectValue);
                 }
             }
+
+            if (CurrentDifficulty == DifficultyMode.Hard)
+            {
+                mult *= DifficultyRuleset.HardGoldRewardMultiplier;
+            }
+
             return mult;
         }
 

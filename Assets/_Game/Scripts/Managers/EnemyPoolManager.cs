@@ -148,7 +148,8 @@ namespace Stonehold
             Vector3[] pathPoints,
             Castle castle,
             float laneOffset,
-            float spawnDepthOffset)
+            float spawnDepthOffset,
+            int laneIndex = -1)
         {
             if (!EnsurePool(data) || !poolsByKey.TryGetValue(data.stableId, out EnemyPool pool))
             {
@@ -178,7 +179,7 @@ namespace Stonehold
             enemy.transform.SetParent(null, false);
             enemy.PrepareForSpawn(data, position, rotation);
             enemy.gameObject.SetActive(true);
-            enemy.ActivateFromPool(pathPoints, castle, laneOffset, spawnDepthOffset);
+            enemy.ActivateFromPool(pathPoints, castle, laneOffset, spawnDepthOffset, laneIndex);
             return enemy;
         }
 

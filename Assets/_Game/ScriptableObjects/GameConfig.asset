@@ -38,6 +38,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e3df568a28da4fc0a3a1481e3f3705b1, type: 2}
   - {fileID: 11400000, guid: ad54c4adcaa748b7872efe454c6835f0, type: 2}
   - {fileID: 11400000, guid: 04def31d071444c180015196452e626e, type: 2}
-  timeBetweenWaves: 5
+  timeBetweenWaves: 3
   draftRunMode: 1
   defaultStartingDefender: {fileID: 0}

@@ -17,6 +17,16 @@ namespace Stonehold
         [SerializeField] private float maxShakeOffset = 0.6f;
         [SerializeField] private float maxShakeAngle = 2.5f;
 
+        [Header("Framing & Perspective")]
+        [Tooltip("Authored portrait vertical FOV for 9:16 reference framing. 48.5f provides ~23% more battlefield visibility over baseline.")]
+        [SerializeField] private float referenceVerticalFov = 48.5f;
+        [SerializeField] private Vector3 cameraPosition = new Vector3(0f, 37.5f, -10.5f);
+        [SerializeField] private Vector3 cameraRotation = new Vector3(68.5f, 0f, 0f);
+
+        public float ReferenceVerticalFov => referenceVerticalFov;
+        public Vector3 AuthoredCameraPosition => cameraPosition;
+        public Vector3 AuthoredCameraRotation => cameraRotation;
+
         private Vector3 basePosition;
         private Quaternion baseRotation;
         private float trauma;
@@ -36,10 +46,8 @@ namespace Stonehold
                 // enough vertical battlefield to read large enemy formations. Keep
                 // this composition in editor Free Aspect too, so changing the Game
                 // view does not fall back to the old close-up camera.
-                const float referenceVerticalFov = 44f;
-
-                transform.localPosition = new Vector3(0f, 35f, -10.1f);
-                transform.localRotation = Quaternion.Euler(70f, 0f, 0f);
+                transform.localPosition = cameraPosition;
+                transform.localRotation = Quaternion.Euler(cameraRotation);
 
                 float aspect = Mathf.Max(0.01f, (float)Screen.width / Screen.height);
                 float referenceHorizontalFov = Camera.VerticalToHorizontalFieldOfView(referenceVerticalFov, referenceAspect);

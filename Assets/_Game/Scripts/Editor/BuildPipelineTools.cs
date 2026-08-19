@@ -115,7 +115,7 @@ namespace Stonehold.Editor
                 scenes = new[]
                 {
                     "Assets/_Game/Scenes/MainMenu.unity",
-                    "Assets/_Game/Scenes/GameScene.unity"
+                    "Assets/_Game/Scenes/V2/GameplayIntegration_V2.unity"
                 };
             }
 
@@ -140,6 +140,71 @@ namespace Stonehold.Editor
             }
         }
         private static bool isRunningPlayModeTests;
+        private static bool isRunningEditModeTests;
+
+        [MenuItem("Stonehold/Tests/Run All EditMode Tests")]
+        public static void RunAllEditModeTests()
+        {
+            Debug.Log("[TestRunner] Starting Automated EditMode Test Execution...");
+            isRunningEditModeTests = true;
+            var api = ScriptableObject.CreateInstance<UnityEditor.TestTools.TestRunner.Api.TestRunnerApi>();
+            var callbacks = new EditModeTestCallbacks();
+            api.RegisterCallbacks(callbacks);
+            api.Execute(new UnityEditor.TestTools.TestRunner.Api.ExecutionSettings(
+                new UnityEditor.TestTools.TestRunner.Api.Filter()
+                {
+                    testMode = UnityEditor.TestTools.TestRunner.Api.TestMode.EditMode
+                }
+            ));
+
+            EditorApplication.update += EditModeTestUpdateWait;
+        }
+
+        private static void EditModeTestUpdateWait()
+        {
+            if (!isRunningEditModeTests)
+            {
+                EditorApplication.update -= EditModeTestUpdateWait;
+            }
+        }
+
+        private class EditModeTestCallbacks : UnityEditor.TestTools.TestRunner.Api.ICallbacks
+        {
+            public void RunStarted(UnityEditor.TestTools.TestRunner.Api.ITestAdaptor testsToRun)
+            {
+                Debug.Log($"[TestRunner] EditMode test run started. Total test cases: {testsToRun.TestCaseCount}");
+            }
+
+            public void RunFinished(UnityEditor.TestTools.TestRunner.Api.ITestResultAdaptor result)
+            {
+                isRunningEditModeTests = false;
+                int passed = result.PassCount;
+                int failed = result.FailCount;
+                int skipped = result.SkipCount;
+                int total = passed + failed + skipped;
+
+                Debug.Log($"[TestRunner] EditMode tests finished! Total: {total}, Passed: {passed}, Failed: {failed}, Inconclusive/Skipped: {skipped}");
+                if (failed > 0)
+                {
+                    Debug.LogError($"[TestRunner] ❌ {failed} EditMode tests failed!");
+                }
+                else
+                {
+                    Debug.Log($"[TestRunner] ✅ ALL {passed} EditMode tests passed (100%)!");
+                }
+                EditorApplication.Exit(failed > 0 ? 1 : 0);
+            }
+
+            public void TestStarted(UnityEditor.TestTools.TestRunner.Api.ITestAdaptor test) { }
+
+            public void TestFinished(UnityEditor.TestTools.TestRunner.Api.ITestResultAdaptor result)
+            {
+                if (result.TestStatus == UnityEditor.TestTools.TestRunner.Api.TestStatus.Failed)
+                {
+                    Debug.LogError($"[TestRunner] FAILED: {result.Test.FullName} - {result.Message}");
+                }
+            }
+        }
 
         [MenuItem("Stonehold/Tests/Run All PlayMode Tests")]
         public static void RunAllPlayModeTests()
