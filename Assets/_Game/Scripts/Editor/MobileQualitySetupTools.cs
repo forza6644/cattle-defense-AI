@@ -41,10 +41,10 @@ namespace Stonehold.Editor
             // Configure Low Tier (Battery Saver)
             ConfigureLowTier(lowAsset);
 
-            // Configure Medium Tier (Balanced 60 FPS)
+            // Configure Medium Tier (Balanced 60 FPS, MSAA Off — URP backbuffer match)
             ConfigureMediumTier(medAsset);
 
-            // Configure High Tier (Crisp 4x MSAA)
+            // Configure High Tier (Crisp shadows, MSAA Off — URP backbuffer match)
             ConfigureHighTier(highAsset);
 
             EditorUtility.SetDirty(lowAsset);
@@ -108,7 +108,7 @@ namespace Stonehold.Editor
         {
             SerializedObject so = new SerializedObject(asset);
             SetProp(so, "m_RenderScale", 1.0f);
-            SetProp(so, "m_MSAA", 2); // 2x MSAA
+            SetProp(so, "m_MSAA", 1); // Off — must match QualitySettings to avoid Android grey screen
             SetProp(so, "m_SupportsHDR", true);
             SetProp(so, "m_MainLightRenderingMode", 1);
             SetProp(so, "m_MainLightShadowsSupported", true);
@@ -129,7 +129,7 @@ namespace Stonehold.Editor
         {
             SerializedObject so = new SerializedObject(asset);
             SetProp(so, "m_RenderScale", 1.0f);
-            SetProp(so, "m_MSAA", 4); // 4x MSAA
+            SetProp(so, "m_MSAA", 1); // Off — must match QualitySettings to avoid Android grey screen
             SetProp(so, "m_SupportsHDR", true);
             SetProp(so, "m_MainLightRenderingMode", 1);
             SetProp(so, "m_MainLightShadowsSupported", true);
@@ -192,7 +192,7 @@ namespace Stonehold.Editor
             medTier.FindPropertyRelative("shadowDistance").floatValue = 40f;
             medTier.FindPropertyRelative("skinWeights").intValue = 2;
             medTier.FindPropertyRelative("anisotropicTextures").intValue = 1; // Supported
-            medTier.FindPropertyRelative("antiAliasing").intValue = 2; // 2x MSAA
+            medTier.FindPropertyRelative("antiAliasing").intValue = 0; // Off — URP MSAA match
             medTier.FindPropertyRelative("softParticles").intValue = 0;
             medTier.FindPropertyRelative("lodBias").floatValue = 1.2f;
             medTier.FindPropertyRelative("customRenderPipeline").objectReferenceValue = medAsset;
@@ -207,7 +207,7 @@ namespace Stonehold.Editor
             highTier.FindPropertyRelative("shadowDistance").floatValue = 55f;
             highTier.FindPropertyRelative("skinWeights").intValue = 4; // 4 bones
             highTier.FindPropertyRelative("anisotropicTextures").intValue = 2; // Forced On
-            highTier.FindPropertyRelative("antiAliasing").intValue = 4; // 4x MSAA
+            highTier.FindPropertyRelative("antiAliasing").intValue = 0; // Off — URP MSAA match
             highTier.FindPropertyRelative("softParticles").intValue = 1;
             highTier.FindPropertyRelative("lodBias").floatValue = 2.0f;
             highTier.FindPropertyRelative("customRenderPipeline").objectReferenceValue = highAsset;

@@ -64,7 +64,7 @@ namespace Stonehold.Tests
             Assert.AreEqual(MobileQualityTier.High, receivedTier);
             Assert.AreEqual(MobileQualityTier.High, MobileQualityManager.CurrentTier);
             Assert.AreEqual(2, QualitySettings.GetQualityLevel());
-            Assert.AreEqual("High (Crisp 4x MSAA)", MobileQualityManager.GetTierDisplayName(MobileQualityTier.High));
+            Assert.AreEqual("High (Crisp)", MobileQualityManager.GetTierDisplayName(MobileQualityTier.High));
         }
 
         [Test]
@@ -79,7 +79,9 @@ namespace Stonehold.Tests
             Assert.IsNotEmpty(highDesc);
             Assert.IsTrue(lowDesc.Contains("battery", System.StringComparison.OrdinalIgnoreCase));
             Assert.IsTrue(medDesc.Contains("60 FPS", System.StringComparison.OrdinalIgnoreCase));
-            Assert.IsTrue(highDesc.Contains("MSAA", System.StringComparison.OrdinalIgnoreCase));
+            Assert.IsTrue(highDesc.Contains("MSAA Off", System.StringComparison.OrdinalIgnoreCase));
+            Assert.IsTrue(medDesc.Contains("MSAA Off", System.StringComparison.OrdinalIgnoreCase));
+            Assert.IsFalse(highDesc.Contains("4x", System.StringComparison.OrdinalIgnoreCase));
         }
     }
 }

@@ -1,6 +1,9 @@
+using System.IO;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace Stonehold.Tests
 {
@@ -539,6 +542,79 @@ namespace Stonehold.Tests
 
             Assert.AreEqual(10, PlayerPrefs.GetInt("meta_upgrade_damage"),
                 "Excessive meta upgrade should be clamped to 10");
+        }
+
+        // ── Android MSAA / graphics API hardening ──
+
+        [Test]
+        public void Graphics_QualitySettingsTiers_HaveMsaaOff()
+        {
+#if UNITY_EDITOR
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "ProjectSettings", "QualitySettings.asset");
+            Assert.IsTrue(File.Exists(path), "QualitySettings.asset must exist");
+
+            string yaml = File.ReadAllText(path);
+            MatchCollection names = Regex.Matches(yaml, @"^\s+name: (Low|Medium|High)\s*$", RegexOptions.Multiline);
+            MatchCollection aa = Regex.Matches(yaml, @"^\s+antiAliasing: (\d+)\s*$", RegexOptions.Multiline);
+
+            Assert.AreEqual(3, names.Count, "QualitySettings must define Low, Medium, and High");
+            Assert.AreEqual(3, aa.Count, "QualitySettings must define antiAliasing for each tier");
+
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.AreEqual("0", aa[i].Groups[1].Value,
+                    $"QualitySettings {names[i].Groups[1].Value} antiAliasing must be 0 (Off) to match URP MSAA Off");
+            }
+#else
+            Assert.Ignore("Asset YAML checks run in EditMode/Editor only.");
+#endif
+        }
+
+        [Test]
+        public void Graphics_UrpAssets_HaveMsaaOff()
+        {
+#if UNITY_EDITOR
+            string[] paths =
+            {
+                "Assets/Settings/Mobile_RPAsset.asset",
+                "Assets/Settings/Low_RPAsset.asset",
+                "Assets/Settings/Medium_RPAsset.asset",
+                "Assets/Settings/High_RPAsset.asset"
+            };
+
+            for (int i = 0; i < paths.Length; i++)
+            {
+                var asset = UnityEditor.AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(paths[i]);
+                Assert.IsNotNull(asset, $"URP asset must load: {paths[i]}");
+                Assert.AreEqual(1, asset.msaaSampleCount,
+                    $"{paths[i]} msaaSampleCount must be 1 (Off) to avoid Android grey-screen backbuffer mismatch");
+            }
+#else
+            Assert.Ignore("AssetDatabase checks run in EditMode/Editor only.");
+#endif
+        }
+
+        [Test]
+        public void Graphics_AndroidPlayer_UsesOpenGLES3Only()
+        {
+#if UNITY_EDITOR
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "ProjectSettings", "ProjectSettings.asset");
+            Assert.IsTrue(File.Exists(path), "ProjectSettings.asset must exist");
+
+            string yaml = File.ReadAllText(path);
+            Match androidBlock = Regex.Match(
+                yaml,
+                @"m_BuildTarget: AndroidPlayer\s+m_APIs: ([0-9a-fA-F]+)\s+m_Automatic: (\d+)",
+                RegexOptions.Singleline);
+
+            Assert.IsTrue(androidBlock.Success, "AndroidPlayer graphics API block must exist");
+            Assert.AreEqual("0b000000", androidBlock.Groups[1].Value,
+                "Android graphics API must remain OpenGLES3 (0b000000)");
+            Assert.AreEqual("0", androidBlock.Groups[2].Value,
+                "Android graphics API Automatic must remain off");
+#else
+            Assert.Ignore("ProjectSettings YAML checks run in EditMode/Editor only.");
+#endif
         }
     }
 }

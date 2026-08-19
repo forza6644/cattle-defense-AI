@@ -9,9 +9,9 @@ namespace Stonehold
     /// </summary>
     public enum MobileQualityTier
     {
-        Low = 0,    // Battery Saver (0.85x scale, 1x MSAA, 512 hard shadows)
-        Medium = 1, // Balanced Default (1.0x scale, 2x MSAA, 1024 soft shadows)
-        High = 2    // Crisp High-End (1.0x native scale, 4x MSAA, 2048 soft shadows, 4-bone skinning)
+        Low = 0,    // Battery Saver (0.85x scale, MSAA Off, 512 hard shadows)
+        Medium = 1, // Balanced Default (1.0x scale, MSAA Off, 1024 soft shadows)
+        High = 2    // Crisp High-End (1.0x native scale, MSAA Off, 2048 soft shadows, 4-bone skinning)
     }
 
     /// <summary>
@@ -107,7 +107,7 @@ namespace Stonehold
                 case MobileQualityTier.Medium:
                     return "Medium (Balanced)";
                 case MobileQualityTier.High:
-                    return "High (Crisp 4x MSAA)";
+                    return "High (Crisp)";
                 default:
                     return tier.ToString();
             }
@@ -118,11 +118,11 @@ namespace Stonehold
             switch (tier)
             {
                 case MobileQualityTier.Low:
-                    return "0.85x scale, 1x MSAA, low shadows. Max battery life and low thermals.";
+                    return "0.85x scale, MSAA Off, low shadows. Max battery life and low thermals.";
                 case MobileQualityTier.Medium:
-                    return "1.0x native scale, 2x MSAA, 1024 soft shadows. Balanced for smooth 60 FPS.";
+                    return "1.0x native scale, MSAA Off, 1024 soft shadows. Balanced for smooth 60 FPS.";
                 case MobileQualityTier.High:
-                    return "1.0x native scale, 4x MSAA, 2048 soft shadows. Maximum visual sharpness.";
+                    return "1.0x native scale, MSAA Off, 2048 soft shadows. Maximum visual sharpness.";
                 default:
                     return string.Empty;
             }
