@@ -229,52 +229,11 @@ namespace Stonehold.Tests
             Assert.That(File.Exists(JsonReportPath), Is.True, "Stage 2 JSON telemetry report must exist.");
             Assert.That(File.Exists(TxtReportPath), Is.True, "Stage 2 TXT telemetry report must exist.");
             Assert.That(logger.Report.totalWavesCleared, Is.GreaterThanOrEqualTo(1), "Stage 2 telemetry run must clear waves.");
+            Assert.That(logger.Report.damageBreakdown, Is.Not.Null, "Damage breakdown list must not be null.");
+            Assert.That(logger.Report.damageBreakdown.Count, Is.GreaterThan(0), "Damage breakdown must contain recorded damage sources.");
+            Assert.That(logger.Report.damageBreakdown.Exists(d => d.sourceId == "archer" || d.sourceId.StartsWith("crystal")), Is.True,
+                "Damage breakdown must contain the starting defender or active crystal.");
             Assert.That(game.State, Is.EqualTo(GameState.Victory), "Stage 2 real combat run must reach Victory.");
-        }
-
-        private static void SaveStage2Report(Stage1TelemetryReportData report, int raiderAttacks, int shamanHeals, string jsonPath, string txtPath)
-        {
-            string json = JsonUtility.ToJson(report, true);
-            File.WriteAllText(jsonPath, json);
-
-            using (StreamWriter writer = new StreamWriter(txtPath, false))
-            {
-                writer.WriteLine("================================================================================");
-                writer.WriteLine($" {report.reportTitle}");
-                writer.WriteLine("================================================================================");
-                writer.WriteLine($"Timestamp:                  {report.generatedAtTimestamp}");
-                writer.WriteLine($"Stage ID:                   {report.stageId}");
-                writer.WriteLine($"Final Game State:           {report.finalGameState}");
-                writer.WriteLine($"Total Run Duration:         {report.totalRunDurationSeconds:F2} seconds");
-                writer.WriteLine($"Total Waves Cleared:        {report.totalWavesCleared} / 10");
-                writer.WriteLine($"Total Enemies Spawned:      {report.totalEnemiesSpawned}");
-                writer.WriteLine($"Total Enemies Defeated:     {report.totalEnemiesDefeated}");
-                writer.WriteLine($"Final Castle HP:            {report.finalCastleHp} / {report.finalCastleMaxHp}");
-                writer.WriteLine($"Final Player Level:         {report.finalPlayerLevel}");
-                writer.WriteLine($"Final Player XP:            {report.finalPlayerXp}");
-                writer.WriteLine($"Total Draft Triggers:       {report.totalDraftTriggersFired}");
-                writer.WriteLine($"Crossbow Raider Attacks:    {raiderAttacks}");
-                writer.WriteLine($"War Shaman Heal Pulses:     {shamanHeals}");
-                writer.WriteLine("================================================================================");
-                writer.WriteLine(" WAVE BREAKDOWN:");
-                writer.WriteLine("--------------------------------------------------------------------------------");
-                writer.WriteLine(" Wave | Start (s) | End (s) | Duration (s) | Spawned | Defeated | Castle HP | XP   | Level");
-                writer.WriteLine("--------------------------------------------------------------------------------");
-                foreach (var w in report.waveLogs)
-                {
-                    writer.WriteLine($" {w.waveNumber,4} | {w.realStartTimeSeconds,9:F1} | {w.realEndTimeSeconds,7:F1} | {w.durationSeconds,12:F1} | {w.enemiesSpawned,7} | {w.enemiesDefeated,8} | {w.castleHpRemaining,4}/{w.castleMaxHp,-4} | {w.playerXpAtWaveEnd,4} | {w.playerLevelAtWaveEnd,5}");
-                }
-                writer.WriteLine("================================================================================");
-                writer.WriteLine(" DRAFT SELECTION LOG:");
-                writer.WriteLine("--------------------------------------------------------------------------------");
-                foreach (var d in report.draftLogs)
-                {
-                    writer.WriteLine($" Draft #{d.draftIndex} @ {d.timestampSeconds:F1}s (Level {d.playerLevel})");
-                    writer.WriteLine($"   Offered Choices:  {string.Join(" | ", d.offeredCardTitles)}");
-                    writer.WriteLine($"   Selected Card:    {d.selectedCardTitle}");
-                    writer.WriteLine("--------------------------------------------------------------------------------");
-                }
-            }
         }
 
         private static string[] GetOfferedDraftTitles()

@@ -214,6 +214,10 @@ namespace Stonehold.Tests
             Assert.That(File.Exists(JsonReportPath), Is.True, "JSON telemetry report file must be generated.");
             Assert.That(File.Exists(TxtReportPath), Is.True, "TXT telemetry report file must be generated.");
             Assert.That(logger.Report.totalWavesCleared, Is.GreaterThanOrEqualTo(1), "Telemetry run must clear waves.");
+            Assert.That(logger.Report.damageBreakdown, Is.Not.Null, "Damage breakdown list must not be null.");
+            Assert.That(logger.Report.damageBreakdown.Count, Is.GreaterThan(0), "Damage breakdown must contain recorded damage sources.");
+            Assert.That(logger.Report.damageBreakdown.Exists(d => d.sourceId == "archer" || d.sourceId.StartsWith("crystal")), Is.True,
+                "Damage breakdown must contain the starting defender or active crystal.");
             Assert.That(game.State, Is.EqualTo(GameState.Victory), "Stage 1 real combat run must reach Victory.");
         }
 

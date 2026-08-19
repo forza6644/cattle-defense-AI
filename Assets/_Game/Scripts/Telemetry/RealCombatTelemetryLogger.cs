@@ -31,6 +31,17 @@ namespace Stonehold
     }
 
     [Serializable]
+    public class TelemetryDamageSourceData
+    {
+        public string sourceId;
+        public string displayName;
+        public float totalDamage;
+        public float damagePercentage;
+        public float dps;
+        public int critCount;
+    }
+
+    [Serializable]
     public class Stage1TelemetryReportData
     {
         public string reportTitle = "STAGE 1 REAL-TIME COMBAT TELEMETRY REPORT";
@@ -48,6 +59,7 @@ namespace Stonehold
         public int totalDraftTriggersFired;
         public List<TelemetryWaveData> waveLogs = new List<TelemetryWaveData>();
         public List<TelemetryDraftData> draftLogs = new List<TelemetryDraftData>();
+        public List<TelemetryDamageSourceData> damageBreakdown = new List<TelemetryDamageSourceData>();
     }
 
     public class RealCombatTelemetryLogger
@@ -122,7 +134,7 @@ namespace Stonehold
             report.totalDraftTriggersFired++;
         }
 
-        public void CompleteRun(GameState state, Castle castle, RunProgressionManager progression)
+        public void CompleteRun(GameState state, Castle castle, RunProgressionManager progression, CombatTelemetryManager combatTelemetry = null)
         {
             report.finalGameState = state.ToString();
             report.totalRunDurationSeconds = Time.realtimeSinceStartup - runStartTime;
@@ -137,6 +149,25 @@ namespace Stonehold
             {
                 report.finalPlayerLevel = progression.CurrentLevel;
                 report.finalPlayerXp = progression.CurrentXp;
+            }
+
+            var telemetry = combatTelemetry != null ? combatTelemetry : (CombatTelemetryManager.Instance ?? UnityEngine.Object.FindFirstObjectByType<CombatTelemetryManager>());
+            if (telemetry != null)
+            {
+                report.damageBreakdown.Clear();
+                var reports = telemetry.GetAllHeroReports();
+                foreach (var r in reports)
+                {
+                    report.damageBreakdown.Add(new TelemetryDamageSourceData
+                    {
+                        sourceId = r.heroId,
+                        displayName = r.displayName,
+                        totalDamage = r.totalDamage,
+                        damagePercentage = r.damagePercentage,
+                        dps = r.dps,
+                        critCount = r.critCount
+                    });
+                }
             }
         }
 
@@ -161,6 +192,22 @@ namespace Stonehold
                 writer.WriteLine($"Final Player Level:         {report.finalPlayerLevel}");
                 writer.WriteLine($"Final Player XP:            {report.finalPlayerXp}");
                 writer.WriteLine($"Total Draft Triggers:       {report.totalDraftTriggersFired}");
+                writer.WriteLine("================================================================================");
+                writer.WriteLine(" DAMAGE CONTRIBUTION BREAKDOWN:");
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                writer.WriteLine(" Source ID             | Display Name         | Total Dmg | Share % | DPS   | Crits");
+                writer.WriteLine("--------------------------------------------------------------------------------");
+                if (report.damageBreakdown != null && report.damageBreakdown.Count > 0)
+                {
+                    foreach (var d in report.damageBreakdown)
+                    {
+                        writer.WriteLine($" {d.sourceId,-21} | {d.displayName,-20} | {d.totalDamage,9:F1} | {d.damagePercentage,6:F1}% | {d.dps,5:F1} | {d.critCount,5}");
+                    }
+                }
+                else
+                {
+                    writer.WriteLine(" (No combat damage recorded)");
+                }
                 writer.WriteLine("================================================================================");
                 writer.WriteLine(" WAVE BREAKDOWN:");
                 writer.WriteLine("--------------------------------------------------------------------------------");

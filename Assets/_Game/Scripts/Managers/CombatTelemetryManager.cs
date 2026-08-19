@@ -76,11 +76,35 @@ namespace Stonehold
             ElapsedCombatTime = 0f;
         }
 
+        public static CombatTelemetryManager EnsureInstance()
+        {
+            if (Instance != null) return Instance;
+            var inst = FindFirstObjectByType<CombatTelemetryManager>();
+            if (inst != null)
+            {
+                Instance = inst;
+                return Instance;
+            }
+
+            GameObject host = DamageTracker.Instance != null ? DamageTracker.Instance.gameObject : (GameManager.Instance != null ? GameManager.Instance.gameObject : null);
+            if (host != null)
+            {
+                inst = host.AddComponent<CombatTelemetryManager>();
+            }
+            else
+            {
+                GameObject go = new GameObject("CombatTelemetryManager");
+                inst = go.AddComponent<CombatTelemetryManager>();
+            }
+            Instance = inst;
+            return Instance;
+        }
+
         public static void RecordDamage(string sourceId, float damage, bool isCrit = false)
         {
             if (string.IsNullOrEmpty(sourceId) || damage <= 0f) return;
 
-            var inst = Instance != null ? Instance : FindFirstObjectByType<CombatTelemetryManager>();
+            var inst = EnsureInstance();
             if (inst == null) return;
 
             if (!inst.damageByHero.ContainsKey(sourceId))
@@ -107,7 +131,7 @@ namespace Stonehold
 
         public static void TriggerMicroHitstop(float duration = 0.035f)
         {
-            var inst = Instance != null ? Instance : FindFirstObjectByType<CombatTelemetryManager>();
+            var inst = EnsureInstance();
             if (inst == null || GameManager.Instance == null || GameManager.Instance.State != GameState.Playing) return;
             if (inst.hitstopCoroutine != null)
             {
@@ -130,7 +154,7 @@ namespace Stonehold
 
         public static void RecordReaction(ElementalReactionType reactionType, float burstDamage)
         {
-            var inst = Instance != null ? Instance : FindFirstObjectByType<CombatTelemetryManager>();
+            var inst = EnsureInstance();
             if (inst == null) return;
 
             if (!inst.reactionCounts.ContainsKey(reactionType))
@@ -164,7 +188,7 @@ namespace Stonehold
 
         public static void RecordCastleDamage(float damage, float absorbedByShield)
         {
-            var inst = Instance != null ? Instance : FindFirstObjectByType<CombatTelemetryManager>();
+            var inst = EnsureInstance();
             if (inst == null) return;
 
             inst.TotalCastleDamageTaken += damage;
@@ -174,7 +198,7 @@ namespace Stonehold
 
         public static void RecordKill()
         {
-            var inst = Instance != null ? Instance : FindFirstObjectByType<CombatTelemetryManager>();
+            var inst = EnsureInstance();
             if (inst == null) return;
 
             inst.TotalEnemiesKilled++;
