@@ -3737,7 +3737,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: e40c8592bf4e3ff469f2a6324d5a1418, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5622,7 +5622,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: e40c8592bf4e3ff469f2a6324d5a1418, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -7165,7 +7165,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: e40c8592bf4e3ff469f2a6324d5a1418, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -7931,7 +7931,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: e40c8592bf4e3ff469f2a6324d5a1418, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -11979,6 +11979,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1771354743}
+  - component: {fileID: 1771354753}
   - component: {fileID: 1771354752}
   - component: {fileID: 1771354751}
   - component: {fileID: 1771354750}
@@ -12146,6 +12147,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36b3512ba7442a84ca69de3b56f10269, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.GameManager
+--- !u!114 &1771354753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1771354742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a339fb6d2e6b47bde69c712751518, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Stonehold.Runtime::Stonehold.EnemyPoolManager
+  defaultPrewarmCount: 3
+  bossPrewarmCount: 1
+  elitePrewarmCount: 1
 --- !u!1 &1774193795
 GameObject:
   m_ObjectHideFlags: 0
@@ -12665,7 +12681,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: e40c8592bf4e3ff469f2a6324d5a1418, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
