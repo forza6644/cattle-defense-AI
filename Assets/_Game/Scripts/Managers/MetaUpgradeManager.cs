@@ -72,6 +72,14 @@ namespace Stonehold
             LoadUpgrades();
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         private void InitializeUpgrades()
         {
             upgrades.Clear();

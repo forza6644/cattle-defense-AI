@@ -110,8 +110,17 @@ namespace Stonehold
             while (t < FadeDuration)
             {
                 t += Time.unscaledDeltaTime;
+                if (group == null)
+                {
+                    yield break;
+                }
                 group.alpha = Mathf.Lerp(from, to, t / FadeDuration);
                 yield return null;
+            }
+
+            if (group == null)
+            {
+                yield break;
             }
 
             group.alpha = to;

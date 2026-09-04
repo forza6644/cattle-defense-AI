@@ -14,8 +14,15 @@ namespace Stonehold.Tests.PlayMode
         [SetUp]
         public void SetUp()
         {
+            var existing = Object.FindObjectsByType<CombatTelemetryManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < existing.Length; i++)
+            {
+                if (existing[i] != null) Object.DestroyImmediate(existing[i].gameObject);
+            }
             testRoot = new GameObject("TelemetryTestRoot");
             telemetryManager = testRoot.AddComponent<CombatTelemetryManager>();
+            var prop = typeof(CombatTelemetryManager).GetProperty("Instance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+            prop?.SetValue(null, telemetryManager);
             telemetryManager.ResetTelemetry();
         }
 
@@ -26,6 +33,13 @@ namespace Stonehold.Tests.PlayMode
             {
                 Object.DestroyImmediate(testRoot);
             }
+            var existing = Object.FindObjectsByType<CombatTelemetryManager>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < existing.Length; i++)
+            {
+                if (existing[i] != null) Object.DestroyImmediate(existing[i].gameObject);
+            }
+            var prop = typeof(CombatTelemetryManager).GetProperty("Instance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+            prop?.SetValue(null, null);
         }
 
         [UnityTest]

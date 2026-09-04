@@ -39,6 +39,14 @@ namespace Stonehold
             DontDestroyOnLoad(gameObject);
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         public void AddCard(CardDefinition card)
         {
             TryAddCard(card);

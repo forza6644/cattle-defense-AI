@@ -27,17 +27,7 @@ namespace Stonehold.Tests
         [SetUp]
         public void SetUp()
         {
-            Time.timeScale = 1f;
-            DestroyAllComponents<HeroAttack>();
-            DestroyAllComponents<Enemy>();
-            DestroyAllComponents<Projectile>();
-            DestroyAllComponents<DamageTracker>();
-            DestroyAllComponents<RunModifierManager>();
-            DestroyAllComponents<EnemyPoolManager>();
-            DestroyAllComponents<EnemyManager>();
-            DestroyAllComponents<Castle>();
-            var resetProjectileStatics = typeof(Projectile).GetMethod("ResetStatics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-            resetProjectileStatics.Invoke(null, null);
+            CleanAllLingeringState();
 
             // Setup Enemy registry and pool
             enemyRegistryObject = new GameObject("Enemy Registry");
@@ -81,17 +71,64 @@ namespace Stonehold.Tests
         [TearDown]
         public void TearDown()
         {
-            Time.timeScale = 1f;
             if (RunModifierManager.Instance != null)
             {
                 RunModifierManager.Instance.ClearModifiers();
             }
 
-            foreach (var go in createdObjects)
+            for (int i = createdObjects.Count - 1; i >= 0; i--)
             {
-                if (go != null) Object.DestroyImmediate(go);
+                var go = createdObjects[i];
+                if (go != null)
+                {
+                    Object.DestroyImmediate(go);
+                }
             }
             createdObjects.Clear();
+
+            CleanAllLingeringState();
+        }
+
+        private static void CleanAllLingeringState()
+        {
+            Time.timeScale = 1f;
+            SaveManager.ResetAll();
+            PlayerPrefs.DeleteKey(DifficultyRuleset.PrefsSelectedMode);
+            PlayerPrefs.DeleteKey("stats_stage_1_completed");
+            PlayerPrefs.DeleteKey("campaign_stars_stage_0");
+            PlayerPrefs.DeleteKey("lobby_selected_difficulty");
+            AscensionManager.ResetForTesting();
+
+            DestroyAllComponents<StarterCrystal>();
+            DestroyAllComponents<TrapRuntimeZone>();
+            DestroyAllComponents<TrapRuntimeManager>();
+            DestroyAllComponents<BattlefieldDefenseRuntime>();
+            DestroyAllComponents<BattlefieldDefenseManager>();
+            DestroyAllComponents<BattlefieldAnchor>();
+            DestroyAllComponents<BattlefieldAnchorManager>();
+            DestroyAllComponents<GameManager>();
+            DestroyAllComponents<WaveManager>();
+            DestroyAllComponents<Tower>();
+            DestroyAllComponents<HeroSlot>();
+            DestroyAllComponents<HeroRosterManager>();
+            DestroyAllComponents<AscensionManager>();
+            DestroyAllComponents<RelicManager>();
+            DestroyAllComponents<FloatingCombatTextManager>();
+            DestroyAllComponents<HeroAttack>();
+            DestroyAllComponents<Enemy>();
+            DestroyAllComponents<Projectile>();
+            DestroyAllComponents<DamageTracker>();
+            DestroyAllComponents<RunModifierManager>();
+            DestroyAllComponents<MetaUpgradeManager>();
+            DestroyAllComponents<EnemyPoolManager>();
+            DestroyAllComponents<EnemyManager>();
+            DestroyAllComponents<Castle>();
+
+            var resetProjectileStatics = typeof(Projectile).GetMethod("ResetStatics", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            if (resetProjectileStatics != null)
+            {
+                resetProjectileStatics.Invoke(null, null);
+            }
         }
 
         private Enemy SpawnEnemy(float health = 100f, Vector3 startPos = default)
@@ -354,8 +391,8 @@ namespace Stonehold.Tests
             var useAbilityMethod = heroAttack.GetType().GetMethod("UseSignatureAbility", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             useAbilityMethod.Invoke(heroAttack, new object[] { enemy });
 
-            // Nova delay: 0f (instant hit in radius)
-            yield return new WaitForSeconds(0.1f);
+            // Nova delay: frost_mage has 0.25s delay
+            yield return new WaitForSeconds(0.35f);
             float hpAfterFirst = enemy.CurrentHealth;
 
             // Wait for Echo delay: 1.0s
@@ -450,7 +487,7 @@ namespace Stonehold.Tests
             // Spawn another enemy so it takes the position/pool slot
             Enemy enemy2 = SpawnEnemy(100f, new Vector3(2f, 0f, 0f));
 
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(0.35f);
 
             // enemy2 should not have taken any damage from the delayed archer shot targeting the old activation
             Assert.That(enemy2.CurrentHealth, Is.EqualTo(100f));
@@ -488,7 +525,7 @@ namespace Stonehold.Tests
 
             var useAbility = heroAttack.GetType().GetMethod("UseSignatureAbility", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             useAbility.Invoke(heroAttack, new object[] { enemy });
-            yield return new WaitForSeconds(0.4f);
+            yield return new WaitForSeconds(0.35f);
             float healthAfterFirstCast = enemy.CurrentHealth;
 
             RunModifierManager.Instance.ClearModifiers();
@@ -560,6 +597,9 @@ namespace Stonehold.Tests
             var secondaryCluster = typeof(Projectile).GetField("isSecondaryCluster", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             Assert.That(maxPierces.GetValue(reused), Is.EqualTo(0));
             Assert.That(secondaryCluster.GetValue(reused), Is.False);
+
+            returnMethod.Invoke(reused, null);
+            Object.DestroyImmediate(reused.gameObject);
         }
 
         private CardDefinition CreateBehaviorCard(string id, string heroId, HeroBehaviorEffectType effect, int count, float secondaryValue, int maxStacks)

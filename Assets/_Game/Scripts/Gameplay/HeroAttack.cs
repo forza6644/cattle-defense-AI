@@ -634,6 +634,11 @@ namespace Stonehold
             float elapsed = 0f;
             while (elapsed < 1.0f)
             {
+                if (this == null || !gameObject.activeInHierarchy)
+                {
+                    yield break;
+                }
+
                 if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
                 {
                     if (GameManager.Instance.State == GameState.Victory || GameManager.Instance.State == GameState.Defeat)
@@ -643,6 +648,14 @@ namespace Stonehold
                     yield return null;
                     continue;
                 }
+
+                if (RunModifierManager.Instance == null ||
+                    RunModifierManager.Instance.Revision != modifierRevision ||
+                    !RunModifierManager.Instance.HasBehavior("frost_mage", HeroBehaviorEffectType.ExtraCast))
+                {
+                    yield break;
+                }
+
                 elapsed += Time.deltaTime;
                 yield return null;
             }
@@ -1180,12 +1193,7 @@ namespace Stonehold
 
             if (target == null || !target.MatchesActivation(targetActivationId))
             {
-                target = EnemyManager.FindTarget(transform.position, GetModifiedRange(), currentTargetingMode);
-                if (target == null)
-                {
-                    yield break;
-                }
-                targetActivationId = target.ActivationId;
+                yield break;
             }
 
             if (definition.id == "archer" && abilityBuffTimer > 0f)

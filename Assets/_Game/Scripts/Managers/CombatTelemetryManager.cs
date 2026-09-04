@@ -56,6 +56,14 @@ namespace Stonehold
             ResetTelemetry();
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         private void Update()
         {
             if (GameManager.Instance != null && GameManager.Instance.State == GameState.Playing)

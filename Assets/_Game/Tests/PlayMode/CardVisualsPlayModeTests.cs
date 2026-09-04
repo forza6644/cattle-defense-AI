@@ -14,6 +14,23 @@ namespace Stonehold.Tests
         [SetUp]
         public void SetUp()
         {
+            Canvas[] existingCanvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < existingCanvases.Length; i++)
+            {
+                if (existingCanvases[i] != null && existingCanvases[i].gameObject != null && existingCanvases[i].gameObject.name != "FaderCanvas")
+                {
+                    Object.DestroyImmediate(existingCanvases[i].gameObject);
+                }
+            }
+            GameObject[] existingCards = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < existingCards.Length; i++)
+            {
+                if (existingCards[i] != null && existingCards[i].name.StartsWith("Card_"))
+                {
+                    Object.DestroyImmediate(existingCards[i]);
+                }
+            }
+
             uiObject = new GameObject("TestUIManager");
             uiManager = uiObject.AddComponent<UIManager>();
         }
@@ -24,6 +41,22 @@ namespace Stonehold.Tests
             if (uiObject != null)
             {
                 Object.DestroyImmediate(uiObject);
+            }
+            Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < canvases.Length; i++)
+            {
+                if (canvases[i] != null && canvases[i].gameObject != null && canvases[i].gameObject.name != "FaderCanvas")
+                {
+                    Object.DestroyImmediate(canvases[i].gameObject);
+                }
+            }
+            GameObject[] cards = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < cards.Length; i++)
+            {
+                if (cards[i] != null && cards[i].name.StartsWith("Card_"))
+                {
+                    Object.DestroyImmediate(cards[i]);
+                }
             }
         }
 

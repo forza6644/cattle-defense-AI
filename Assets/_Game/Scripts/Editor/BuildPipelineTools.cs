@@ -56,7 +56,10 @@ namespace Stonehold.Editor
             PlayerSettings.bundleVersion = "1.0.0";
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel34;
-            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64 | AndroidArchitecture.ARMv7;
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+            PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+            QualitySettings.antiAliasing = 0;
             EditorUserBuildSettings.buildAppBundle = false;
 
             BuildPlayerOptions options = new BuildPlayerOptions
@@ -69,6 +72,17 @@ namespace Stonehold.Editor
 
             BuildReport report = UnityEditor.BuildPipeline.BuildPlayer(options);
             PrintBuildSummary(report, "Android APK");
+
+            if (Application.isBatchMode)
+            {
+                EditorApplication.Exit(report.summary.result == BuildResult.Succeeded ? 0 : 1);
+            }
+        }
+
+        [MenuItem("Stonehold/Build/Build Android ARM64 Release Candidate")]
+        public static void BuildAndroidArm64()
+        {
+            BuildAndroidReleaseCandidate();
         }
 
         [MenuItem("Stonehold/Build/Build Android App Bundle (AAB)")]

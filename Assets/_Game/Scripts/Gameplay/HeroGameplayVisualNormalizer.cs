@@ -24,7 +24,7 @@ namespace Stonehold
         /// <summary>Weapons may extend toward the field more than sideways.</summary>
         public const float MaxGameplayDepth = 1.85f;
 
-        public const float MinUniformScale = 0.42f;
+        public const float MinUniformScale = 0.30f;
         public const float MaxUniformScale = 1.0f;
         public const float WeaponWidthSlack = 0.88f;
 
@@ -320,7 +320,12 @@ namespace Stonehold
                 return;
             }
 
-            marker.localPosition *= uniformFactor;
+            Vector3 pos = marker.localPosition * uniformFactor;
+            if (pos.y < 0.28f)
+            {
+                pos.y = 0.28f;
+            }
+            marker.localPosition = pos;
         }
 
         private static bool NameLooksLikeNonCharacterFx(string name)
